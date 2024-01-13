@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Filter, Eye, User, Building2 } from 'lucide-react';
+import { ArrowLeft, Search, Filter, Eye, User, Building2, Diamond, TrendingUp, Coins, ChevronDown } from 'lucide-react';
 import { TableSkeleton } from './LoadingSkeleton';
 import authService from '../services/authService';
 
@@ -7,6 +7,18 @@ const AgencyDetail = ({ agencyId, onBack }) => {
   const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [stats, setStats] = useState({
+    totalDiamonds: 0,
+    totalCoins: 0,
+    totalRedeem: 0,
+    hostCount: 0
+  });
+
+  // Mock targets
+  const goals = {
+    diamondTarget: 10000,
+    hostTarget: 10
+  };
   
   // We can fetch the agency details separately if needed, but for now we focus on the list of hosts
   // as per the requirement.
@@ -26,16 +38,26 @@ const AgencyDetail = ({ agencyId, onBack }) => {
                 owner: host.ownername || '-', // Agency Name
                 ownerId: host.owner || agencyId, // Agency Code
                 hosts: [], // Hosts don't have hosts
-                overalldiamonds: host.totaldiamonds || 0,
+                overalldiamonds: Number(host.totaldiamonds) || 0,
                 stage: host.stage || "Unknown",
                 currentslab: host.currentSlab || "Unknown",
                 activehost: host.activecashouthost || "-",
-                redeem: host.redeem || "--",
+                redeem: Number(host.redeem) || 0,
                 earnings: host.earning,
-                coins: host.coins || 0,
+                coins: Number(host.coins) || 0,
                 joiningDate: host.joiningdate || host.createdAt || new Date(),
             }));
             setHosts(transformedHosts);
+
+            // Calculate stats
+            const calculatedStats = transformedHosts.reduce((acc, curr) => ({
+                totalDiamonds: acc.totalDiamonds + (curr.overalldiamonds || 0),
+                totalCoins: acc.totalCoins + (curr.coins || 0),
+                totalRedeem: acc.totalRedeem + (curr.redeem || 0),
+                hostCount: acc.hostCount + 1
+            }), { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 });
+            setStats(calculatedStats);
+
         } else {
             console.error('Failed to fetch hosts:', result.error);
             setHosts([]);
@@ -57,9 +79,13 @@ const AgencyDetail = ({ agencyId, onBack }) => {
      return matchesSearch;
   });
 
+  const goalsCompleted = 
+    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) + 
+    (stats.hostCount >= goals.hostTarget ? 1 : 0);
+
   return (
-    <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
-       <div className="max-w-7xl mx-auto">
+    <main className="flex-1 p-4 sm:p-6 overflow-y-auto bg-[#000000]/20 backdrop-blur-md" role="main">
+       <div className="max-wmx-auto mx-auto">
          {/* Header with Back Button */}
          <div className="flex flex-col space-y-6 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 mb-8">
             <div className="flex items-center space-x-3">
@@ -83,6 +109,96 @@ const AgencyDetail = ({ agencyId, onBack }) => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full sm:w-80 pl-10 pr-4 py-2 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585]"
                   />
+                </div>
+            </div>
+         </div>
+
+         {/* Goals Section */}
+         <div className="w-full lg:w-[65%] mb-8 border border-gray-800 rounded-xl p-5">
+            <h2 className="text-xl font-bold text-white mb-6">{goalsCompleted}/2 Goals Remaining</h2>
+            
+            {/* Diamond Goal */}
+            <div className="mb-6">
+                <div className="flex items-center text-white mb-2">
+                <Diamond className="w-4 h-4 mr-2 text-blue-400" />
+                <span className="font-medium">{stats.totalDiamonds} / {goals.diamondTarget}</span>
+                </div>
+                <div className="flex items-center">
+                <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                    <div 
+                        className="h-full bg-pink-500 rounded-full transition-all duration-500" 
+                        style={{width: `${Math.min((stats.totalDiamonds/goals.diamondTarget)*100, 100)}%`}}
+                    ></div>
+                </div>
+                <div className={`w-5 h-5 border ${stats.totalDiamonds >= goals.diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                    {stats.totalDiamonds >= goals.diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                </div>
+                </div>
+            </div>
+
+            {/* Host Goal */}
+            <div className="mb-6">
+                <div className="flex items-center text-white mb-2">
+                <User className="w-4 h-4 mr-2 text-purple-400" />
+                <span className="font-medium">{stats.hostCount} / {goals.hostTarget}</span>
+                </div>
+                <div className="flex items-center">
+                <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                    <div 
+                        className="h-full bg-pink-500 rounded-full transition-all duration-500" 
+                        style={{width: `${Math.min((stats.hostCount/goals.hostTarget)*100, 100)}%`}}
+                    ></div>
+                </div>
+                <div className={`w-5 h-5 border ${stats.hostCount >= goals.hostTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                    {stats.hostCount >= goals.hostTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                </div>
+                </div>
+            </div>
+         </div>
+
+         {/* Stats & Filter Section */}
+         <div className="w-full lg:w-[65%] mb-10">
+            {/* Date Filter */}
+            <div className="mb-6">
+                <div className="relative inline-block">
+                    <select className="appearance-none bg-[#2A2A2A] text-white pl-4 pr-10 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-[#F72585] cursor-pointer hover:border-gray-600 transition-colors">
+                    <option>Current Month</option>
+                    <option>Last Month</option>
+                    <option>Last Week</option>
+                    <option>Last Year</option>
+                    <option>Custom</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                </div>
+            </div>
+
+            {/* Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Redeem Card */}
+                <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                    <p className="text-gray-400 text-sm mb-2">Redeemed Diamonds</p>
+                    <div className="flex items-center">
+                        <Diamond className="w-5 h-5 text-blue-400 mr-2" />
+                        <span className="text-xl font-bold text-white">{stats.totalRedeem.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                {/* Coins Card */}
+                <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                    <p className="text-gray-400 text-sm mb-2">Total Coins</p>
+                    <div className="flex items-center">
+                        <Coins className="w-5 h-5 text-yellow-400 mr-2" />
+                        <span className="text-xl font-bold text-white">{stats.totalCoins.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                {/* Growth Card */}
+                <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                    <p className="text-gray-400 text-sm mb-2">Growth</p>
+                    <div className="flex items-center">
+                        <TrendingUp className="w-5 h-5 text-green-400 mr-2" />
+                        <span className="text-xl font-bold text-white">+12.5%</span>
+                    </div>
                 </div>
             </div>
          </div>

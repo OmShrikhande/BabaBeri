@@ -99,8 +99,8 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
   }
 
   return (
-    <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
-      <div className="max-w-7xl mx-auto">
+    <main className="flex-1 p-4 sm:p-6 overflow-y-auto bg-[#000000]/20 backdrop-blur-md" role="main">
+      <div className="max-wmx-auto">
         {/* Header */}
         <div className="flex flex-col space-y-6 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 mb-8">
           <div className="flex items-center space-x-3">

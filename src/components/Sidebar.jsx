@@ -49,7 +49,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center glow-pink">
               <LayoutDashboard className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-white">PRO X STREAM</h1>
           </div>
           
           {/* Close button for mobile */}

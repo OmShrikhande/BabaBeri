@@ -59,26 +59,26 @@ export const supporterCardsData = {
 };
 
 export const navigationItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard', active: true },
-  { id: 'sub-admins', label: 'Sub-Admins', icon: 'Users' },
+  { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+  { id: 'sub-admins', label: 'Sub Admin', icon: 'Users' },
   { id: 'master-agency', label: 'Master Agency', icon: 'Building' },
-  { id: 'coin-recharge', label: 'Coin Recharge', icon: 'Coins' },
-  { id: 'diamonds-wallet', label: 'Diamonds Wallet (Cashout)', icon: 'Gem' },
-  { id: 'host-verification', label: 'Host Verification', icon: 'Shield' },
-  { id: 'users-details', label: 'Users Details', icon: 'UserCheck' },
-  { id: 'live-monitoring', label: 'Live Monitoring', icon: 'Eye' },
-  { id: 'voice-rooms', label: 'Voice Rooms (Party)', icon: 'Mic' },
   { id: 'agencies', label: 'Agencies', icon: 'Building2' },
-  { id: 'pk-battles', label: 'PK Battles', icon: 'Sword' },
-  { id: 'vip-levels', label: 'VIP/Levels', icon: 'Crown' },
-  { id: 'gifts-banners', label: 'Gifts & Banners', icon: 'Gift' },
-  { id: 'ranking', label: 'Ranking', icon: 'Trophy' },
-  { id: 'songs-library', label: 'Songs Library', icon: 'Music' },
-  { id: 'block-user', label: 'Block User', icon: 'UserX' },
-  { id: 'warnings', label: 'All Warnings', icon: 'AlertTriangle' },
-  { id: 'recordings', label: 'Recordings', icon: 'Video' },
-  { id: 'reports-ban', label: 'Reports/Ban Requests', icon: 'Flag' },
+  { id: 'host-verification', label: 'Host Verification', icon: 'Shield' },
+  { id: 'users-details', label: 'Host Details', icon: 'UserCheck' },
+  { id: 'live-monitoring', label: 'Live Monitoring', icon: 'Eye' },
+  { id: 'vs-monitoring', label: 'VS Monitoring', icon: 'Sword' }, // New entry
+  { id: 'party-monitoring', label: 'Party Monitoring', icon: 'Mic' }, // New entry
+  { id: 'coin-recharge', label: 'Coin Recharge', icon: 'Coins' },
+  { id: 'diamonds-wallet', label: 'Diamonds Cashout', icon: 'Gem' },
+  { id: 'ranking', label: 'Rankings', icon: 'Trophy' },
   { id: 'analytics', label: 'Analytics', icon: 'BarChart' },
-  { id: 'admin-role', label: 'Admin Role', icon: 'UserCog' },
+  { id: 'user-details', label: 'User Details', icon: 'User' }, // Slight rename for clarity
+  { id: 'vip-levels', label: 'VIP / Levels', icon: 'Crown' },
+  { id: 'gifts-banners', label: 'Gifts / Banners', icon: 'Gift' },
+  { id: 'recordings', label: 'Recordings', icon: 'Video' },
+  { id: 'block-user', label: 'Block Users', icon: 'UserX' },
+  { id: 'reports-ban', label: 'Reports / Ban Request', icon: 'Flag' },
+  { id: 'ai-warnings', label: 'AI Warnings', icon: 'AlertTriangle' }, // Renamed from "All Warnings"
+  { id: 'songs-library', label: 'Songs Library', icon: 'Music' },
   { id: 'developer-settings', label: 'Developer Settings', icon: 'Settings' }
 ];

@@ -12,11 +12,11 @@ const iconMap = {
   AlertTriangle, Video, Flag, BarChart, UserCog, Settings
 };
 
-const Sidebar = ({ isOpen, toggleSidebar }) => {
-  const [activeItem, setActiveItem] = useState('dashboard');
-
+const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation }) => {
   const handleItemClick = (itemId) => {
-    setActiveItem(itemId);
+    if (onNavigation) {
+      onNavigation(itemId);
+    }
   };
 
   return (
@@ -36,9 +36,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed left-0 top-0 h-full w-80 bg-[#121212] transform transition-transform duration-300 z-50
+          fixed left-0 top-0 h-full w-72 sm:w-80 bg-[#121212] transform transition-transform duration-300 z-50
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          lg:relative lg:w-80 lg:block
+          lg:relative lg:w-80 lg:block shadow-2xl lg:shadow-none
         `}
         role="navigation"
         aria-label="Main navigation"
@@ -67,7 +67,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           <ul className="space-y-2" role="menubar">
             {navigationItems.map((item) => {
               const IconComponent = iconMap[item.icon];
-              const isActive = activeItem === item.id;
+              const isActive = activeRoute === item.id;
               
               return (
                 <li key={item.id} role="none">

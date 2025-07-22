@@ -71,3 +71,77 @@ body {
   box-shadow: 0 8px 25px rgba(247, 37, 133, 0.4);
   transition: all 0.3s ease;
 }
+
+/* Fix scroll and layout issues */
+.scroll-container {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--neon-pink) var(--primary-bg);
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background: var(--primary-bg);
+  border-radius: 4px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background: var(--neon-pink);
+  border-radius: 4px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #ff4db8;
+}
+
+/* Prevent layout shift */
+.layout-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Ensure main content doesn't exceed viewport */
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Table-specific scroll styling */
+.table-scroll-container {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--neon-pink) var(--primary-bg);
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+  background: var(--primary-bg);
+  border-radius: 3px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--neon-pink);
+  border-radius: 3px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #ff4db8;
+}
+
+/* Compact table row styling */
+.compact-row {
+  min-height: 60px;
+}
+
+/* Force text truncation */
+.force-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

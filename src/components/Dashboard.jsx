@@ -57,7 +57,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <main className="flex-1 p-6 overflow-y-auto" role="main">
+    <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Dashboard Overview</h1>
@@ -70,7 +70,7 @@ const Dashboard = () => {
         aria-labelledby="metrics-heading"
       >
         <h2 id="metrics-heading" className="sr-only">Platform Metrics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {metricsCards.map((card, index) => (
             <MetricsCard
               key={`metric-${index}`}

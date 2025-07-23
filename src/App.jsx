@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import HostVerification from './components/HostVerification';
 import Agencies from './components/Agencies';
 import AgencyDetail from './components/AgencyDetail';
+import BlockUsers from './components/BlockUsers';
 import Header from './components/Header';
 
 function App() {
@@ -46,6 +47,8 @@ function App() {
           );
         }
         return <Agencies onNavigateToDetail={handleNavigateToAgencyDetail} />;
+      case 'block-user':
+        return <BlockUsers />;
       case 'dashboard':
       default:
         return <Dashboard />;

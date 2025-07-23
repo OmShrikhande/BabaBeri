@@ -5,12 +5,17 @@ import HostVerification from './components/HostVerification';
 import Agencies from './components/Agencies';
 import AgencyDetail from './components/AgencyDetail';
 import BlockUsers from './components/BlockUsers';
+import SubAdmins from './components/SubAdmins';
+import SubAdminDetail from './components/SubAdminDetail';
+import MasterAgencyDetail from './components/MasterAgencyDetail';
 import Header from './components/Header';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState('dashboard');
   const [selectedAgencyId, setSelectedAgencyId] = useState(null);
+  const [selectedSubAdminId, setSelectedSubAdminId] = useState(null);
+  const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -19,9 +24,13 @@ function App() {
   const handleNavigation = (route) => {
     setActiveRoute(route);
     setSidebarOpen(false); // Close sidebar on mobile after navigation
-    // Reset agency selection when navigating away from agencies
+    // Reset selections when navigating away
     if (route !== 'agencies') {
       setSelectedAgencyId(null);
+    }
+    if (route !== 'sub-admins') {
+      setSelectedSubAdminId(null);
+      setSelectedMasterAgencyId(null);
     }
   };
 
@@ -31,6 +40,26 @@ function App() {
 
   const handleBackToAgencies = () => {
     setSelectedAgencyId(null);
+  };
+
+  // Sub-admin navigation handlers
+  const handleNavigateToSubAdminDetail = (subAdminId) => {
+    setSelectedSubAdminId(subAdminId);
+    setSelectedMasterAgencyId(null); // Reset master agency when selecting sub admin
+  };
+
+  const handleNavigateToMasterAgency = (subAdminId, masterAgencyId) => {
+    setSelectedSubAdminId(subAdminId);
+    setSelectedMasterAgencyId(masterAgencyId);
+  };
+
+  const handleBackToSubAdmins = () => {
+    setSelectedSubAdminId(null);
+    setSelectedMasterAgencyId(null);
+  };
+
+  const handleBackToSubAdminDetail = () => {
+    setSelectedMasterAgencyId(null);
   };
 
   const renderMainContent = () => {
@@ -47,6 +76,26 @@ function App() {
           );
         }
         return <Agencies onNavigateToDetail={handleNavigateToAgencyDetail} />;
+      case 'sub-admins':
+        if (selectedMasterAgencyId && selectedSubAdminId) {
+          return (
+            <MasterAgencyDetail
+              subAdminId={selectedSubAdminId}
+              masterAgencyId={selectedMasterAgencyId}
+              onBack={handleBackToSubAdminDetail}
+            />
+          );
+        }
+        if (selectedSubAdminId) {
+          return (
+            <SubAdminDetail
+              subAdminId={selectedSubAdminId}
+              onBack={handleBackToSubAdmins}
+              onNavigateToMasterAgency={handleNavigateToMasterAgency}
+            />
+          );
+        }
+        return <SubAdmins onNavigateToDetail={handleNavigateToSubAdminDetail} />;
       case 'block-user':
         return <BlockUsers />;
       case 'dashboard':

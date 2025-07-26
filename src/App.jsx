@@ -8,6 +8,8 @@ import BlockUsers from './components/BlockUsers';
 import SubAdmins from './components/SubAdmins';
 import SubAdminDetail from './components/SubAdminDetail';
 import MasterAgencyDetail from './components/MasterAgencyDetail';
+import LiveMonitoring from './components/LiveMonitoring';
+import Ranking from './components/Ranking';
 import Header from './components/Header';
 
 function App() {
@@ -96,6 +98,10 @@ function App() {
           );
         }
         return <SubAdmins onNavigateToDetail={handleNavigateToSubAdminDetail} />;
+      case 'live-monitoring':
+        return <LiveMonitoring />;
+      case 'ranking':
+        return <Ranking />;
       case 'block-user':
         return <BlockUsers />;
       case 'dashboard':

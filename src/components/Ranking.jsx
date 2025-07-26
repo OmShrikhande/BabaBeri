@@ -142,15 +142,21 @@ const Ranking = () => {
               onChange={setSearchTerm}
               placeholder="Search by name, username, or user ID..."
               className="flex-1"
+              id="ranking-search"
             />
             
             {/* Duration Dropdown */}
             <div className="flex items-center gap-2 min-w-[200px]">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-gray-400" aria-hidden="true" />
+              <label htmlFor="duration-select" className="sr-only">
+                Select ranking duration
+              </label>
               <select
+                id="duration-select"
                 value={selectedDuration}
                 onChange={(e) => setSelectedDuration(e.target.value)}
                 className="flex-1 bg-[#121212] border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-[#F72585] focus:outline-none focus:ring-2 focus:ring-[#F72585]/20 transition-all duration-200"
+                aria-label="Select ranking duration"
               >
                 {rankingDurations.map(duration => (
                   <option key={duration.value} value={duration.value}>
@@ -162,7 +168,7 @@ const Ranking = () => {
           </div>
 
           {/* Toggle Buttons and Stats Row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <ToggleButtonGroup
               options={rankingTypes}
               activeOption={activeType}
@@ -171,7 +177,7 @@ const Ranking = () => {
             />
             
             {/* Stats */}
-            <div className="flex items-center gap-6 text-sm text-gray-400">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 text-sm text-gray-400 w-full lg:w-auto">
               <div className="flex items-center gap-2">
                 <span>Total {activeType === 'hosts' ? 'Hosts' : 'Supporters'}:</span>
                 <span className="text-white font-semibold">{getTotalCount()}</span>

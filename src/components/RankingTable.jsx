@@ -166,7 +166,12 @@ const RankingTable = ({ data, type, searchTerm }) => {
         </table>
       </div>
       
-      <div className="flex-1 overflow-y-auto table-scroll-container" style={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <div 
+        className="flex-1 overflow-y-auto table-scroll-container" 
+        style={{ maxHeight: 'calc(100vh - 300px)' }}
+        role="region"
+        aria-label={`${type === 'hosts' ? 'Hosts' : 'Supporters'} ranking table`}
+      >
         <table className="w-full min-w-[800px]">
           <tbody>
             {filteredAndSortedData.map((item, index) => (
@@ -190,24 +195,31 @@ const RankingTable = ({ data, type, searchTerm }) => {
                 {/* Full Name */}
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={item.avatar}
-                      alt={item.fullName}
-                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-700 group-hover:border-[#F72585] transition-colors duration-200"
-                      onError={(e) => {
-                        e.target.src = `https://ui-avatars.com/api/?name=${item.fullName}&background=F72585&color=fff&size=40`;
-                      }}
-                    />
-                    <div>
-                      <p className="text-white font-medium">{item.fullName}</p>
+                    <div className="relative">
+                      <img
+                        src={item.avatar}
+                        alt={`${item.fullName}'s avatar`}
+                        className="w-10 h-10 rounded-full object-cover border-2 border-gray-700 group-hover:border-[#F72585] transition-colors duration-200"
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.fullName)}&background=F72585&color=fff&size=40`;
+                        }}
+                      />
+                      {item.rank <= 3 && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 flex items-center justify-center">
+                          <span className="text-xs font-bold text-black">{item.rank}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-medium truncate">{item.fullName}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className={`
-                          text-xs px-2 py-1 rounded-full border
+                          text-xs px-2 py-1 rounded-full border truncate
                           ${getLevelBadgeColor(item.level)}
                         `}>
                           {item.level}
                         </span>
-                        <span className="text-xs text-gray-500">{item.country}</span>
+                        <span className="text-xs text-gray-500 flex-shrink-0">{item.country}</span>
                       </div>
                     </div>
                   </div>

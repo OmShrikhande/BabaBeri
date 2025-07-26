@@ -184,9 +184,10 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack }) => {
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-4 gap-6 px-6 py-4">
+              <div className="grid grid-cols-5 gap-2 px-4 py-4">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Name</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Id</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider"> Hosts</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
               </div>
@@ -197,7 +198,7 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack }) => {
               {filteredAgencies.map((agency, index) => (
                 <div 
                   key={agency.id} 
-                  className="grid grid-cols-4 gap-6 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                  className="grid grid-cols-5 gap-12 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Agency Name */}
@@ -211,6 +212,11 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack }) => {
                   {/* Agency ID */}
                   <div className="flex items-center">
                     <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{agency.agencyId}</span>
+                  </div>
+
+                  {/* total hosts */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{agency.totalHosts}</span>
                   </div>
 
                   {/* My Earning */}

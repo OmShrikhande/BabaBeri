@@ -197,9 +197,10 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-4 gap-6 px-6 py-4">
+              <div className="grid grid-cols-5 gap-8 px-4 py-4">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Master Agency Name</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Id</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Total Agencies</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
               </div>
@@ -210,7 +211,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
               {filteredMasterAgencies.map((masterAgency, index) => (
                 <div 
                   key={masterAgency.id} 
-                  className="grid grid-cols-4 gap-6 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
+                  className="grid grid-cols-5 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
                   onClick={() => handleMasterAgencyClick(masterAgency.id)}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
@@ -225,6 +226,11 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
                   {/* Agency ID */}
                   <div className="flex items-center">
                     <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{masterAgency.agencyId}</span>
+                  </div>
+
+                  {/* Agency ID */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{masterAgency.totalAgency}</span>
                   </div>
 
                   {/* My Earning */}

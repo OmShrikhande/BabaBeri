@@ -26,6 +26,7 @@ export const subAdminsData = [
         id: 1,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       },
@@ -33,6 +34,7 @@ export const subAdminsData = [
         id: 2,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       },
@@ -40,6 +42,7 @@ export const subAdminsData = [
         id: 3,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       },
@@ -47,6 +50,7 @@ export const subAdminsData = [
         id: 4,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       },
@@ -54,6 +58,7 @@ export const subAdminsData = [
         id: 5,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       },
@@ -61,6 +66,7 @@ export const subAdminsData = [
         id: 6,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       },
@@ -68,6 +74,7 @@ export const subAdminsData = [
         id: 7,
         name: 'Master Agency 1',
         agencyId: '#120989',
+        totalAgency: '238',
         myEarning: 1200,
         redeemed: 1200
       }
@@ -138,6 +145,7 @@ export const agenciesData = [
     id: 1,
     name: 'Agency 1',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   },
@@ -145,6 +153,7 @@ export const agenciesData = [
     id: 2,
     name: 'Agency 2',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   },
@@ -152,6 +161,7 @@ export const agenciesData = [
     id: 3,
     name: 'Agency 3',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   },
@@ -159,6 +169,7 @@ export const agenciesData = [
     id: 4,
     name: 'Agency 4',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   },
@@ -166,6 +177,7 @@ export const agenciesData = [
     id: 5,
     name: 'Agency 5',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   },
@@ -173,6 +185,7 @@ export const agenciesData = [
     id: 6,
     name: 'Agency 6',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   },
@@ -180,6 +193,7 @@ export const agenciesData = [
     id: 7,
     name: 'Agency 7',
     agencyId: '#120989',
+    totalHosts:43,
     myEarning: 1200,
     redeemed: 1200
   }

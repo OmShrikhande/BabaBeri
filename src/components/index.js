@@ -25,3 +25,5 @@ export { default as SearchBar } from './SearchBar';
 export { default as ToggleButtonGroup } from './ToggleButtonGroup';
 export { default as RankingTable } from './RankingTable';
 export { default as RankingTableSkeleton } from './RankingTableSkeleton';
+export { default as FinancialMetricsCard } from './FinancialMetricsCard';
+export { default as EnhancedChartCard } from './EnhancedChartCard';

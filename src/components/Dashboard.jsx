@@ -1,8 +1,10 @@
 import React from 'react';
 import MetricsCard from './MetricsCard';
 import ChartCard from './ChartCard';
+import EnhancedChartCard from './EnhancedChartCard';
+import FinancialMetricsCard from './FinancialMetricsCard';
 import SupporterCard from './SupporterCard';
-import { metricsData, supporterCardsData } from '../data/dashboardData';
+import { metricsData, financialMetricsData, supporterCardsData } from '../data/dashboardData';
 
 const Dashboard = () => {
   const metricsCards = [
@@ -56,6 +58,46 @@ const Dashboard = () => {
     }
   ];
 
+  // Financial metrics cards
+  const financialCards = [
+    {
+      title: 'Total Coins Sell',
+      value: financialMetricsData.totalCoinsSell.value,
+      formatted: financialMetricsData.totalCoinsSell.formatted,
+      change: financialMetricsData.totalCoinsSell.change,
+      trend: financialMetricsData.totalCoinsSell.trend,
+      icon: 'Coins',
+      color: 'yellow'
+    },
+    {
+      title: 'Total Profit',
+      value: financialMetricsData.totalProfit.value,
+      formatted: financialMetricsData.totalProfit.formatted,
+      change: financialMetricsData.totalProfit.change,
+      trend: financialMetricsData.totalProfit.trend,
+      icon: 'DollarSign',
+      color: 'green'
+    },
+    {
+      title: 'Total Loss',
+      value: financialMetricsData.totalLoss.value,
+      formatted: financialMetricsData.totalLoss.formatted,
+      change: financialMetricsData.totalLoss.change,
+      trend: financialMetricsData.totalLoss.trend,
+      icon: 'AlertTriangle',
+      color: 'red'
+    },
+    {
+      title: 'Total Diamond Cashout',
+      value: financialMetricsData.totalDiamondCashout.value,
+      formatted: financialMetricsData.totalDiamondCashout.formatted,
+      change: financialMetricsData.totalDiamondCashout.change,
+      trend: financialMetricsData.totalDiamondCashout.trend,
+      icon: 'Gem',
+      color: 'purple'
+    }
+  ];
+
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
       {/* Header */}
@@ -83,32 +125,65 @@ const Dashboard = () => {
         </div>
       </section>
 
+      {/* Financial Metrics Section */}
+      <section 
+        className="mb-8"
+        aria-labelledby="financial-heading"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 id="financial-heading" className="text-2xl font-bold text-white">Financial Overview</h2>
+            <p className="text-gray-400 mt-1">Track your revenue, profits, and financial performance</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {financialCards.map((card, index) => (
+            <FinancialMetricsCard
+              key={`financial-${index}`}
+              title={card.title}
+              value={card.value}
+              formatted={card.formatted}
+              change={card.change}
+              trend={card.trend}
+              icon={card.icon}
+              color={card.color}
+            />
+          ))}
+        </div>
+      </section>
+
       {/* Analytics Section */}
       <section 
-        className="grid grid-cols-1 xl:grid-cols-3 gap-6"
+        className="mb-8"
         aria-labelledby="analytics-heading"
       >
-        <h2 id="analytics-heading" className="sr-only">Analytics Section</h2>
-        
-        {/* Chart Card - Takes 2 columns on XL screens */}
-        <div className="xl:col-span-2">
-          <ChartCard />
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 id="analytics-heading" className="text-2xl font-bold text-white">Analytics & Insights</h2>
+            <p className="text-gray-400 mt-1">Detailed analysis of coins and diamonds performance</p>
+          </div>
         </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Enhanced Chart Card - Takes 2 columns on XL screens */}
+          <div className="xl:col-span-2">
+            <EnhancedChartCard />
+          </div>
 
-        {/* Supporter Cards - Takes 1 column on XL screens */}
-        <div className="space-y-6">
-          <SupporterCard
-            title={supporterCardsData.thisMonthRecharge.title}
-            value={supporterCardsData.thisMonthRecharge.value}
-            icon={supporterCardsData.thisMonthRecharge.icon}
-            color={supporterCardsData.thisMonthRecharge.color}
-          />
-          <SupporterCard
-            title={supporterCardsData.totalRecharge.title}
-            value={supporterCardsData.totalRecharge.value}
-            icon={supporterCardsData.totalRecharge.icon}
-            color={supporterCardsData.totalRecharge.color}
-          />
+          {/* Supporter Cards - Takes 1 column on XL screens */}
+          <div className="space-y-6">
+            <SupporterCard
+              title={supporterCardsData.thisMonthRecharge.title}
+              value={supporterCardsData.thisMonthRecharge.value}
+              icon={supporterCardsData.thisMonthRecharge.icon}
+              color={supporterCardsData.thisMonthRecharge.color}
+            />
+            <SupporterCard
+              title={supporterCardsData.totalRecharge.title}
+              value={supporterCardsData.totalRecharge.value}
+              icon={supporterCardsData.totalRecharge.icon}
+              color={supporterCardsData.totalRecharge.color}
+            />
+          </div>
         </div>
       </section>
 

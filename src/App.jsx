@@ -11,13 +11,36 @@ import MasterAgencyDetail from './components/MasterAgencyDetail';
 import LiveMonitoring from './components/LiveMonitoring';
 import Ranking from './components/Ranking';
 import Header from './components/Header';
+import Login from './components/Login';
 
 function App() {
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // App state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState('dashboard');
   const [selectedAgencyId, setSelectedAgencyId] = useState(null);
   const [selectedSubAdminId, setSelectedSubAdminId] = useState(null);
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
+
+  // Authentication handlers
+  const handleLogin = (loginData) => {
+    setCurrentUser({
+      username: loginData.username,
+      userType: loginData.userType,
+      loginTime: new Date().toISOString()
+    });
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setActiveRoute('dashboard');
+    setSidebarOpen(false);
+  };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -106,24 +129,35 @@ function App() {
         return <BlockUsers />;
       case 'dashboard':
       default:
-        return <Dashboard />;
+        return <Dashboard currentUser={currentUser} onLogout={handleLogout} />;
     }
   };
 
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
-    <div className="flex layout-container bg-[#1A1A1A]">
+    <div className="flex dashboard-layout bg-[#1A1A1A]">
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={toggleSidebar}
         activeRoute={activeRoute}
         onNavigation={handleNavigation}
+        currentUser={currentUser}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         {/* Mobile Header */}
-        <Header toggleSidebar={toggleSidebar} />
+        <Header 
+          toggleSidebar={toggleSidebar} 
+          currentUser={currentUser}
+          onLogout={handleLogout}
+        />
 
         {/* Dynamic Content */}
         {renderMainContent()}

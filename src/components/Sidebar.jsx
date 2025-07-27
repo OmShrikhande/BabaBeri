@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck, 
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX, 
-  AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X 
+  AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X, LogOut, User
 } from 'lucide-react';
 import { navigationItems } from '../data/dashboardData';
 
@@ -12,7 +12,7 @@ const iconMap = {
   AlertTriangle, Video, Flag, BarChart, UserCog, Settings
 };
 
-const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation }) => {
+const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation, currentUser, onLogout }) => {
   const handleItemClick = (itemId) => {
     if (onNavigation) {
       onNavigation(itemId);
@@ -36,7 +36,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
       {/* Sidebar */}
       <aside
         className={`
-          fixed left-0 top-0 h-full w-72 sm:w-80 bg-[#121212] transform transition-transform duration-300 z-50
+          fixed left-0 top-0 h-full w-72 sm:w-80 bg-[#121212] transform transition-transform duration-300 z-50 flex flex-col
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           lg:relative lg:w-80 lg:block shadow-2xl lg:shadow-none
         `}
@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 h-[calc(100%-88px)] overflow-y-auto">
+        <nav className="p-4 flex-1 overflow-y-auto">
           <ul className="space-y-2" role="menubar">
             {navigationItems.map((item) => {
               const IconComponent = iconMap[item.icon];
@@ -100,6 +100,40 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
             })}
           </ul>
         </nav>
+
+        {/* User Info & Logout */}
+        {currentUser && (
+          <div className="p-4 border-t border-gray-800">
+            {/* User Info */}
+            <div className="mb-4 p-3 bg-[#1A1A1A] rounded-lg border border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className={`
+                  w-10 h-10 rounded-lg flex items-center justify-center
+                  ${currentUser.userType === 'super-admin' ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' :
+                    currentUser.userType === 'admin' ? 'bg-gradient-to-r from-[#7209B7] to-[#4361EE]' :
+                    'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
+                `}>
+                  {currentUser.userType === 'super-admin' ? <Crown className="w-5 h-5 text-white" /> :
+                   currentUser.userType === 'admin' ? <Shield className="w-5 h-5 text-white" /> :
+                   <User className="w-5 h-5 text-white" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{currentUser.username}</p>
+                  <p className="text-xs text-gray-400 capitalize">{currentUser.userType.replace('-', ' ')}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300 text-gray-300 hover:bg-red-900/20 hover:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Sign Out</span>
+            </button>
+          </div>
+        )}
       </aside>
     </>
   );

@@ -105,8 +105,48 @@ body {
 
 /* Ensure main content doesn't exceed viewport */
 #root {
+  min-height: 100vh;
+}
+
+/* Login page specific styles */
+.login-container {
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
+}
+
+/* Mobile login layout */
+@media (max-width: 767px) {
+  .login-container {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Desktop/Tablet login layout */
+@media (min-width: 768px) {
+  .login-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+/* Dashboard layout container */
+.dashboard-layout {
   height: 100vh;
   overflow: hidden;
+}
+
+/* Enhanced glow effects for login */
+.login-glow-pink {
+  box-shadow: 0 0 30px rgba(247, 37, 133, 0.4), 0 0 60px rgba(247, 37, 133, 0.2);
+}
+
+.login-glow-purple {
+  box-shadow: 0 0 30px rgba(114, 9, 183, 0.4), 0 0 60px rgba(114, 9, 183, 0.2);
+}
+
+.login-glow-blue {
+  box-shadow: 0 0 30px rgba(67, 97, 238, 0.4), 0 0 60px rgba(67, 97, 238, 0.2);
 }
 
 /* Table-specific scroll styling */

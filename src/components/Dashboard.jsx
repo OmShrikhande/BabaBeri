@@ -1,4 +1,5 @@
 import React from 'react';
+import { LogOut, Crown, Shield, User } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import ChartCard from './ChartCard';
 import EnhancedChartCard from './EnhancedChartCard';
@@ -6,7 +7,7 @@ import FinancialMetricsCard from './FinancialMetricsCard';
 import SupporterCard from './SupporterCard';
 import { metricsData, financialMetricsData, supporterCardsData } from '../data/dashboardData';
 
-const Dashboard = () => {
+const Dashboard = ({ currentUser, onLogout }) => {
   const metricsCards = [
     {
       title: 'Total Sub-Admins',
@@ -102,8 +103,47 @@ const Dashboard = () => {
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard Overview</h1>
-        <p className="text-gray-400">Welcome back! Here's what's happening with your platform.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Dashboard Overview</h1>
+            <p className="text-gray-400">
+              Welcome back{currentUser ? `, ${currentUser.username}` : ''}! Here's what's happening with your platform.
+            </p>
+          </div>
+          
+          {/* User Info & Logout Button */}
+          {currentUser && (
+            <div className="flex items-center space-x-4">
+              {/* User Badge */}
+              <div className="flex items-center space-x-3 bg-[#1A1A1A] px-4 py-2 rounded-lg border border-gray-700">
+                <div className={`
+                  w-8 h-8 rounded-lg flex items-center justify-center
+                  ${currentUser.userType === 'super-admin' ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' :
+                    currentUser.userType === 'admin' ? 'bg-gradient-to-r from-[#7209B7] to-[#4361EE]' :
+                    'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
+                `}>
+                  {currentUser.userType === 'super-admin' ? <Crown className="w-4 h-4 text-white" /> :
+                   currentUser.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
+                   <User className="w-4 h-4 text-white" />}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">{currentUser.username}</p>
+                  <p className="text-xs text-gray-400 capitalize">{currentUser.userType.replace('-', ' ')}</p>
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <button
+                onClick={onLogout}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-900/20 hover:bg-red-900/30 text-red-400 hover:text-red-300 rounded-lg border border-red-800/50 hover:border-red-700 transition-all duration-300 group"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium hidden sm:block">Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Metrics Cards Grid */}

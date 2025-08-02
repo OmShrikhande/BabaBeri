@@ -63,7 +63,7 @@ const Login = ({ onLogin }) => {
   const selectedUserType = userTypes.find(type => type.id === formData.userType);
 
   return (
-    <div className="login-container bg-[#121212] min-h-screen overflow-y-auto">
+    <div className="login-container bg-[#121212] min-h-screen overflow-y-auto enhanced-scrollbar mobile-scroll-fix prevent-horizontal-overflow">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#F72585] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>

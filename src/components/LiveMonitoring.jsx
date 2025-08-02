@@ -75,19 +75,18 @@ const LiveMonitoring = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-y-auto">
-      <div className="min-h-full flex flex-col">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2">Live Monitoring</h1>
-          <p className="text-gray-400">Monitor and manage live streaming users</p>
-        </div>
+    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-hidden flex flex-col h-full">
+      {/* Header */}
+      <div className="mb-6 flex-shrink-0">
+        <h1 className="text-2xl font-bold text-white mb-2">Live Monitoring</h1>
+        <p className="text-gray-400">Monitor and manage live streaming users</p>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-[600px]">
+      {/* Main Content */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0 overflow-hidden live-monitoring-grid">
           {/* Left Panel - Live Users Grid */}
-          <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
+          <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <Users className="w-5 h-5 text-[#F72585]" />
                 Live Users ({filteredUsers.length})
@@ -95,7 +94,7 @@ const LiveMonitoring = () => {
             </div>
 
             {/* Search and Filters */}
-            <div className="space-y-3 mb-4">
+            <div className="space-y-3 mb-4 flex-shrink-0">
               {/* Search Bar */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -160,7 +159,7 @@ const LiveMonitoring = () => {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="mt-4 flex justify-center gap-2">
+              <div className="mt-4 flex justify-center gap-2 flex-shrink-0">
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
@@ -179,8 +178,8 @@ const LiveMonitoring = () => {
           </div>
 
           {/* Center Panel - Current Live User Screen */}
-          <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
+          <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                 <Eye className="w-5 h-5 text-[#F72585]" />
                 Current Live User Screen
@@ -192,7 +191,7 @@ const LiveMonitoring = () => {
             </div>
 
             {/* Live Stream Preview */}
-            <div className="flex-1 bg-black rounded-lg overflow-hidden relative">
+            <div className="flex-1 bg-black rounded-lg overflow-hidden relative min-h-0">
               {selectedUser ? (
                 <div className="h-full flex flex-col">
                   {/* Stream Preview Area */}
@@ -258,11 +257,11 @@ const LiveMonitoring = () => {
           </div>
 
           {/* Right Panel - Action Buttons */}
-          <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col">
-            <h2 className="text-lg font-semibold text-white mb-4">User Actions</h2>
+          <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel">
+            <h2 className="text-lg font-semibold text-white mb-4 flex-shrink-0">User Actions</h2>
             
             {selectedUser ? (
-              <div className="space-y-4">
+              <div className="flex-1 overflow-y-auto space-y-4 scroll-container">
                 {/* Selected User Info */}
                 <div className="bg-[#1A1A1A] rounded-lg p-4 border border-gray-700">
                   <h3 className="text-white font-medium mb-2">Selected User</h3>
@@ -340,7 +339,6 @@ const LiveMonitoring = () => {
             )}
           </div>
         </div>
-      </div>
 
       {/* Warning Modal */}
       {showWarningModal && (

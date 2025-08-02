@@ -65,7 +65,7 @@ const BlockUsers = () => {
   const totalUsers = users.length;
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] text-white overflow-hidden flex flex-col">
+    <div className="flex-1 bg-[#1A1A1A] text-white overflow-y-auto flex flex-col">
       {/* Header */}
       <div className="bg-[#121212] border-b border-gray-800 p-6 flex-shrink-0">
         <div className="flex items-center justify-between flex-wrap gap-4">

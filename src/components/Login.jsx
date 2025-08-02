@@ -63,7 +63,7 @@ const Login = ({ onLogin }) => {
   const selectedUserType = userTypes.find(type => type.id === formData.userType);
 
   return (
-    <div className="login-container bg-[#121212]">
+    <div className="login-container bg-[#121212] min-h-screen overflow-y-auto">
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#F72585] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
@@ -221,7 +221,7 @@ const Login = ({ onLogin }) => {
       </div>
 
       {/* Desktop/Tablet Layout (Horizontal) */}
-      <div className="hidden md:flex items-center justify-center min-h-screen p-6">
+      <div className="hidden md:flex items-start justify-center min-h-screen p-6 py-8">
         <div className="w-full max-w-6xl mx-auto">
           {/* Horizontal Login Card */}
           <div className="bg-[#1A1A1A] rounded-3xl shadow-2xl border border-gray-800 overflow-hidden">

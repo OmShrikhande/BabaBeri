@@ -139,7 +139,7 @@ function App() {
   }
 
   return (
-    <div className="flex dashboard-layout bg-[#1A1A1A]">
+    <div className="flex h-screen bg-[#1A1A1A] overflow-hidden">
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
@@ -151,7 +151,7 @@ function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
         <Header 
           toggleSidebar={toggleSidebar} 

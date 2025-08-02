@@ -83,8 +83,8 @@ const Ranking = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-hidden">
-      <div className="h-full flex flex-col">
+    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-y-auto">
+      <div className="min-h-full flex flex-col">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">

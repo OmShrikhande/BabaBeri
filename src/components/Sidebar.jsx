@@ -65,7 +65,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 flex-1 overflow-y-auto">
+        <nav className="p-4 flex-1 sidebar-scroll">
           <ul className="space-y-2" role="menubar">
             {navigationItems.map((item) => {
               const IconComponent = iconMap[item.icon];

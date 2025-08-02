@@ -125,8 +125,9 @@ body {
 /* Desktop/Tablet login layout */
 @media (min-width: 768px) {
   .login-container {
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    height: auto;
+    overflow-y: auto;
   }
 }
 
@@ -134,6 +135,26 @@ body {
 .dashboard-layout {
   height: 100vh;
   overflow: hidden;
+}
+
+/* Ensure proper scrolling for main content areas */
+.main-content-scroll {
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Live monitoring specific scrolling */
+.live-monitoring-container {
+  height: calc(100vh - 80px); /* Account for header */
+  overflow-y: auto;
+}
+
+/* Sidebar scrolling improvements */
+.sidebar-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--neon-pink) var(--primary-bg);
+  max-height: calc(100vh - 200px); /* Account for header and footer */
 }
 
 /* Enhanced glow effects for login */

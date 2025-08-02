@@ -58,7 +58,7 @@ const HostVerification = () => {
   };
 
   return (
-    <main className="flex-1 flex flex-col bg-gradient-to-b from-[#0d0d0d] to-[#121212] h-full overflow-hidden">
+    <main className="flex-1 flex flex-col bg-gradient-to-b from-[#0d0d0d] to-[#121212] overflow-y-auto">
       {/* Header Section */}
       <div className="flex-shrink-0 p-4 lg:p-6 border-b border-gray-800">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

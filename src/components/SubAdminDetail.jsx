@@ -232,7 +232,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Total Agencies</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
-                {currentUser?.userType === 'super-admin' && (
+                {currentUser?.userType === '' && (
                   <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
                 )}
               </div>
@@ -280,6 +280,22 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
                     <Diamond className="w-4 h-4 text-[#4CC9F0]" />
                     <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{masterAgency.redeemed}</span>
                   </div>
+
+                  {/* Actions */}
+                  {currentUser?.userType === '' && (
+                    <div className="flex items-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMoveEntity(masterAgency);
+                        }}
+                        className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
+                        title="Move to different Sub Admin"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -302,6 +318,21 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
           </div>
         </div>
       </div>
+
+      {/* Entity Movement Modal */}
+      {showMovementModal && selectedMasterAgency && (
+        <EntityMovementModal
+          isOpen={showMovementModal}
+          onClose={() => {
+            setShowMovementModal(false);
+            setSelectedMasterAgency(null);
+          }}
+          entityType="masterAgency"
+          entityData={selectedMasterAgency}
+          availableTargets={getAvailableSubAdmins()}
+          onMove={handleEntityMove}
+        />
+      )}
     </div>
   );
 };

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Diamond, Search, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical } from 'lucide-react';
 import { subAdminsData, agenciesData, royalTiers } from '../data/subAdminsData';
+import EntityMovementModal from './EntityMovementModal';
 
-const AgencyHostDetail = ({ subAdminId, masterAgencyId, agencyId, onBack }) => {
+const AgencyHostDetail = ({ subAdminId, masterAgencyId, agencyId, onBack, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+  const [showMovementModal, setShowMovementModal] = useState(false);
+  const [selectedHost, setSelectedHost] = useState(null);
 
   const subAdmin = subAdminsData.find(sa => sa.id === subAdminId);
   const masterAgency = subAdmin?.masterAgencies?.find(ma => ma.id === masterAgencyId);
@@ -42,6 +45,32 @@ const AgencyHostDetail = ({ subAdminId, masterAgencyId, agencyId, onBack }) => {
     host.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     host.hostId.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleMoveEntity = (host) => {
+    setSelectedHost({
+      ...host,
+      currentParent: agency.name
+    });
+    setShowMovementModal(true);
+  };
+
+  const handleEntityMove = async (entityId, targetId) => {
+    // Here you would implement the actual move logic
+    console.log(`Moving host ${entityId} to agency ${targetId}`);
+    // For now, just close the modal
+    setShowMovementModal(false);
+    setSelectedHost(null);
+  };
+
+  const getAvailableAgencies = () => {
+    return agenciesData
+      .filter(a => a.id !== agencyId) // Exclude current agency
+      .map(agency => ({
+        id: agency.id,
+        name: agency.name,
+        count: agency.totalHosts || 0
+      }));
+  };
 
   const formatNumber = (num) => {
     if (num >= 1000000) {
@@ -204,11 +233,14 @@ const AgencyHostDetail = ({ subAdminId, masterAgencyId, agencyId, onBack }) => {
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-4 gap-4 px-6 py-4">
+              <div className="grid grid-cols-5 gap-4 px-6 py-4">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Host Name</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Host Id</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Host earnings</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
+                {currentUser?.userType === '' && (
+                  <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
+                )}
               </div>
             </div>
 

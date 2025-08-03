@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Diamond, Search, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical } from 'lucide-react';
 import { subAdminsData, agenciesData, royalTiers } from '../data/subAdminsData';
+import EntityMovementModal from './EntityMovementModal';
 
-const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAgencyHost }) => {
+const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAgencyHost, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+  const [showMovementModal, setShowMovementModal] = useState(false);
+  const [selectedAgency, setSelectedAgency] = useState(null);
 
   const subAdmin = subAdminsData.find(sa => sa.id === subAdminId);
   const masterAgency = subAdmin?.masterAgencies?.find(ma => ma.id === masterAgencyId);
@@ -30,6 +33,40 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
     agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     agency.agencyId.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleMoveEntity = (agency) => {
+    setSelectedAgency({
+      ...agency,
+      currentParent: masterAgency.name
+    });
+    setShowMovementModal(true);
+  };
+
+  const handleEntityMove = async (entityId, targetId) => {
+    // Here you would implement the actual move logic
+    console.log(`Moving agency ${entityId} to master agency ${targetId}`);
+    // For now, just close the modal
+    setShowMovementModal(false);
+    setSelectedAgency(null);
+  };
+
+  const getAvailableMasterAgencies = () => {
+    const allMasterAgencies = [];
+    subAdminsData.forEach(subAdmin => {
+      if (subAdmin.masterAgencies) {
+        subAdmin.masterAgencies.forEach(ma => {
+          if (ma.id !== masterAgencyId) { // Exclude current master agency
+            allMasterAgencies.push({
+              id: ma.id,
+              name: ma.name,
+              count: ma.totalAgency || 0
+            });
+          }
+        });
+      }
+    });
+    return allMasterAgencies;
+  };
 
   const formatNumber = (num) => {
     if (num >= 1000000) {
@@ -184,12 +221,15 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-5 gap-2 px-4 py-4">
+              <div className="grid grid-cols-6 gap-2 px-4 py-4">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Name</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Id</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider"> Hosts</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
+                {currentUser?.userType === 'super-admin' && (
+                  <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
+                )}
               </div>
             </div>
 
@@ -198,15 +238,19 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
               {filteredAgencies.map((agency, index) => (
                 <div 
                   key={agency.id} 
-                  className="grid grid-cols-5 gap-12 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
+                  className="grid grid-cols-6 gap-8 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group"
                   style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => onNavigateToAgencyHost && onNavigateToAgencyHost(subAdminId, masterAgencyId, agency.id)}
                 >
                   {/* Agency Name */}
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
                     <div>
-                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">{agency.name}</div>
+                      <div 
+                        className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer"
+                        onClick={() => onNavigateToAgencyHost && onNavigateToAgencyHost(subAdminId, masterAgencyId, agency.id)}
+                      >
+                        {agency.name}
+                      </div>
                     </div>
                   </div>
 
@@ -231,6 +275,22 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
                     <Diamond className="w-4 h-4 text-[#4CC9F0]" />
                     <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{agency.redeemed}</span>
                   </div>
+
+                  {/* Actions */}
+                  {currentUser?.userType === 'super-admin' && (
+                    <div className="flex items-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMoveEntity(agency);
+                        }}
+                        className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
+                        title="Move to different Master Agency"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -253,6 +313,21 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
           </div>
         </div>
       </div>
+
+      {/* Entity Movement Modal */}
+      {showMovementModal && selectedAgency && (
+        <EntityMovementModal
+          isOpen={showMovementModal}
+          onClose={() => {
+            setShowMovementModal(false);
+            setSelectedAgency(null);
+          }}
+          entityType="agency"
+          entityData={selectedAgency}
+          availableTargets={getAvailableMasterAgencies()}
+          onMove={handleEntityMove}
+        />
+      )}
     </div>
   );
 };

@@ -18,6 +18,7 @@ export { default as BlockModal } from './BlockModal';
 export { default as SubAdmins } from './SubAdmins';
 export { default as SubAdminDetail } from './SubAdminDetail';
 export { default as MasterAgencyDetail } from './MasterAgencyDetail';
+export { default as AgencyHostDetail } from './AgencyHostDetail';
 export { default as LiveMonitoring } from './LiveMonitoring';
 export { default as UserCard } from './UserCard';
 export { default as WarningModal } from './WarningModal';

@@ -8,6 +8,7 @@ import BlockUsers from './components/BlockUsers';
 import SubAdmins from './components/SubAdmins';
 import SubAdminDetail from './components/SubAdminDetail';
 import MasterAgencyDetail from './components/MasterAgencyDetail';
+import AgencyHostDetail from './components/AgencyHostDetail';
 import LiveMonitoring from './components/LiveMonitoring';
 import Ranking from './components/Ranking';
 import CoinRecharge from './components/CoinRecharge';
@@ -26,6 +27,7 @@ function App() {
   const [selectedAgencyId, setSelectedAgencyId] = useState(null);
   const [selectedSubAdminId, setSelectedSubAdminId] = useState(null);
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
+  const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
 
   // Authentication handlers
   const handleLogin = (loginData) => {
@@ -58,6 +60,7 @@ function App() {
     if (route !== 'sub-admins') {
       setSelectedSubAdminId(null);
       setSelectedMasterAgencyId(null);
+      setSelectedAgencyHostId(null);
     }
   };
 
@@ -78,15 +81,28 @@ function App() {
   const handleNavigateToMasterAgency = (subAdminId, masterAgencyId) => {
     setSelectedSubAdminId(subAdminId);
     setSelectedMasterAgencyId(masterAgencyId);
+    setSelectedAgencyHostId(null); // Reset agency host when selecting master agency
+  };
+
+  const handleNavigateToAgencyHost = (subAdminId, masterAgencyId, agencyId) => {
+    setSelectedSubAdminId(subAdminId);
+    setSelectedMasterAgencyId(masterAgencyId);
+    setSelectedAgencyHostId(agencyId);
   };
 
   const handleBackToSubAdmins = () => {
     setSelectedSubAdminId(null);
     setSelectedMasterAgencyId(null);
+    setSelectedAgencyHostId(null);
   };
 
   const handleBackToSubAdminDetail = () => {
     setSelectedMasterAgencyId(null);
+    setSelectedAgencyHostId(null);
+  };
+
+  const handleBackToMasterAgency = () => {
+    setSelectedAgencyHostId(null);
   };
 
   const renderMainContent = () => {
@@ -104,12 +120,23 @@ function App() {
         }
         return <Agencies onNavigateToDetail={handleNavigateToAgencyDetail} />;
       case 'sub-admins':
+        if (selectedAgencyHostId && selectedMasterAgencyId && selectedSubAdminId) {
+          return (
+            <AgencyHostDetail
+              subAdminId={selectedSubAdminId}
+              masterAgencyId={selectedMasterAgencyId}
+              agencyId={selectedAgencyHostId}
+              onBack={handleBackToMasterAgency}
+            />
+          );
+        }
         if (selectedMasterAgencyId && selectedSubAdminId) {
           return (
             <MasterAgencyDetail
               subAdminId={selectedSubAdminId}
               masterAgencyId={selectedMasterAgencyId}
               onBack={handleBackToSubAdminDetail}
+              onNavigateToAgencyHost={handleNavigateToAgencyHost}
             />
           );
         }

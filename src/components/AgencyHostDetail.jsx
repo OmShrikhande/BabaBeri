@@ -2,19 +2,31 @@ import React, { useState } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown } from 'lucide-react';
 import { subAdminsData, agenciesData, royalTiers } from '../data/subAdminsData';
 
-const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAgencyHost }) => {
+const AgencyHostDetail = ({ subAdminId, masterAgencyId, agencyId, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
 
   const subAdmin = subAdminsData.find(sa => sa.id === subAdminId);
   const masterAgency = subAdmin?.masterAgencies?.find(ma => ma.id === masterAgencyId);
+  const agency = agenciesData.find(a => a.id === agencyId);
 
-  if (!subAdmin || !masterAgency) {
+  // Demo host data based on the image
+  const hostsData = [
+    { id: 1, name: 'Host 1', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+    { id: 2, name: 'Host 2', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+    { id: 3, name: 'Host 3', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+    { id: 4, name: 'Host 4', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+    { id: 5, name: 'Host 5', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+    { id: 6, name: 'Host 6', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+    { id: 7, name: 'Host 7', hostId: '#120989', earnings: 1200, redeemed: 1200 },
+  ];
+
+  if (!subAdmin || !masterAgency || !agency) {
     return (
-      <div className="flex-1 bg-[#1A1A1A] text-white flex items-center justify-center">
+      <div className="h-screen bg-[#1A1A1A] text-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Master Agency Not Found</h2>
+          <h2 className="text-2xl font-bold mb-4">Agency Not Found</h2>
           <button
             onClick={onBack}
             className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity"
@@ -26,9 +38,9 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
     );
   }
 
-  const filteredAgencies = agenciesData.filter(agency =>
-    agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agency.agencyId.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredHosts = hostsData.filter(host =>
+    host.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    host.hostId.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const formatNumber = (num) => {
@@ -42,7 +54,7 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
   };
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] text-white overflow-y-auto flex flex-col">
+    <div className="h-screen bg-[#1A1A1A] text-white overflow-hidden flex flex-col">
       {/* Header with Breadcrumb */}
       <div className="bg-[#121212] border-b border-gray-800 p-6 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -55,7 +67,7 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
               <ArrowLeft className="w-6 h-6" />
             </button>
             <div className="text-gray-400 text-sm">
-              Sub-admins / <span className="text-white">{subAdmin.name}</span> / <span className="text-white">{masterAgency.name}</span>
+              Sub-admins / <span className="text-white">{subAdmin.name}</span> / <span className="text-white">{masterAgency.name}</span> / <span className="text-white">{agency.name}</span>
             </div>
           </div>
           <h1 className="text-3xl font-bold text-white">Master Agency</h1>
@@ -63,7 +75,7 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto table-scroll-container">
+      <div className="flex-1 overflow-auto">
         <div className="p-6 space-y-6">
           {/* Goals and Royal Tiers Section */}
           <div className="grid grid-cols-12 gap-6">
@@ -72,9 +84,9 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
               {/* Goals Remaining */}
               <div className="bg-[#121212] p-6 rounded-xl border border-gray-800">
                 <div className="mb-4">
-                  <div className="text-gray-400 text-sm mb-1">Sub-admins / {subAdmin.name} / {masterAgency.name}</div>
+                  <div className="text-gray-400 text-sm mb-1">Agency 1</div>
                   <h2 className="text-2xl font-bold text-white">1/2 Goals Remaining</h2>
-                  <div className="text-gray-400 mt-1">${subAdmin.goalsRemaining?.current || 1180} / $10000</div>
+                  <div className="text-gray-400 mt-1">$1180 / $10000</div>
                 </div>
                 
                 {/* Progress Bar */}
@@ -82,7 +94,7 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
                   <div className="w-full bg-gray-700 rounded-full h-2">
                     <div 
                       className="bg-gradient-to-r from-[#F72585] to-[#7209B7] h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${subAdmin.goalsRemaining?.percentage || 11.8}%` }}
+                      style={{ width: '11.8%' }}
                     ></div>
                   </div>
                   <div className="absolute right-0 -top-1">
@@ -91,18 +103,18 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
                 </div>
                 
                 <p className="text-gray-400 text-sm mt-4">
-                  Complete the remaining goal to reach the next, goal. Increase your revenue share by completing these goals.
+                  Complete the remaining goal to reach the next, goal. Increase your revenue share by completing those goals.
                 </p>
               </div>
 
               {/* Earnings Cards */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
                   <div className="flex items-center space-x-2 mb-2">
                     <Diamond className="w-5 h-5 text-[#4CC9F0]" />
                     <span className="text-gray-400 text-sm">Last Month's Earnings</span>
                   </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(subAdmin.earnings?.lastMonth || 12390)}</div>
+                  <div className="text-white text-xl font-bold">12,390</div>
                 </div>
 
                 <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
@@ -110,7 +122,15 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
                     <Diamond className="w-5 h-5 text-[#4CC9F0]" />
                     <span className="text-gray-400 text-sm">This Month's Earnings</span>
                   </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(subAdmin.earnings?.thisMonth || 12500000)}</div>
+                  <div className="text-white text-xl font-bold">12.5M</div>
+                </div>
+
+                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Diamond className="w-5 h-5 text-[#4CC9F0]" />
+                    <span className="text-gray-400 text-sm">Redeem Diamonds</span>
+                  </div>
+                  <div className="text-white text-xl font-bold">12.5M</div>
                 </div>
               </div>
             </div>
@@ -133,18 +153,18 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
             </div>
           </div>
 
-          {/* Agencies List */}
+          {/* Hosts List */}
           <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
             <div className="p-6 border-b border-gray-800">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">List of Agencies</h2>
+                <h2 className="text-xl font-bold text-white">List of Hosts</h2>
                 <div className="flex items-center space-x-4">
                   {/* Search Bar */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      placeholder="userid ( agency )"
+                      placeholder="userid ( host )"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 pr-4 py-2 bg-[#2A2A2A] border border-gray-700 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors w-64"
@@ -184,68 +204,61 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-5 gap-2 px-4 py-4">
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Name</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Id</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider"> Hosts</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
+              <div className="grid grid-cols-4 gap-4 px-6 py-4">
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Host Name</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Host Id</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Host earnings</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
               </div>
             </div>
 
             {/* Table Body */}
             <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
-              {filteredAgencies.map((agency, index) => (
+              {filteredHosts.map((host, index) => (
                 <div 
-                  key={agency.id} 
-                  className="grid grid-cols-5 gap-12 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
+                  key={host.id} 
+                  className="grid grid-cols-4 gap-4 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group"
                   style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={() => onNavigateToAgencyHost && onNavigateToAgencyHost(subAdminId, masterAgencyId, agency.id)}
                 >
-                  {/* Agency Name */}
+                  {/* Host Name */}
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
                     <div>
-                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">{agency.name}</div>
+                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">{host.name}</div>
                     </div>
                   </div>
 
-                  {/* Agency ID */}
+                  {/* Host ID */}
                   <div className="flex items-center">
-                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{agency.agencyId}</span>
+                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{host.hostId}</span>
                   </div>
 
-                  {/* total hosts */}
-                  <div className="flex items-center">
-                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{agency.totalHosts}</span>
-                  </div>
-
-                  {/* My Earning */}
+                  {/* Host Earnings */}
                   <div className="flex items-center space-x-1">
                     <Diamond className="w-4 h-4 text-[#4CC9F0]" />
-                    <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{agency.myEarning}</span>
+                    <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{host.earnings}</span>
                   </div>
 
                   {/* Redeemed */}
                   <div className="flex items-center space-x-1">
                     <Diamond className="w-4 h-4 text-[#4CC9F0]" />
-                    <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{agency.redeemed}</span>
+                    <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{host.redeemed}</span>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Empty State */}
-            {filteredAgencies.length === 0 && (
+            {filteredHosts.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center mb-6 border-2 border-gray-600">
                   <Search className="w-10 h-10 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">No agencies found</h3>
+                <h3 className="text-xl font-bold text-white mb-3">No hosts found</h3>
                 <p className="text-gray-400 max-w-md">
                   {searchTerm 
-                    ? "No agencies match your search criteria." 
-                    : "This master agency has no agencies assigned."
+                    ? "No hosts match your search criteria." 
+                    : "This agency has no hosts assigned."
                   }
                 </p>
               </div>
@@ -257,4 +270,4 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
   );
 };
 
-export default MasterAgencyDetail;
+export default AgencyHostDetail;

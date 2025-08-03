@@ -22,6 +22,8 @@ export { default as LiveMonitoring } from './LiveMonitoring';
 export { default as UserCard } from './UserCard';
 export { default as WarningModal } from './WarningModal';
 export { default as Ranking } from './Ranking';
+export { default as CoinRecharge } from './CoinRecharge';
+export { default as Toast } from './Toast';
 export { default as SearchBar } from './SearchBar';
 export { default as ToggleButtonGroup } from './ToggleButtonGroup';
 export { default as RankingTable } from './RankingTable';

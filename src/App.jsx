@@ -10,6 +10,7 @@ import SubAdminDetail from './components/SubAdminDetail';
 import MasterAgencyDetail from './components/MasterAgencyDetail';
 import LiveMonitoring from './components/LiveMonitoring';
 import Ranking from './components/Ranking';
+import CoinRecharge from './components/CoinRecharge';
 import Header from './components/Header';
 import Login from './components/Login';
 
@@ -125,6 +126,8 @@ function App() {
         return <LiveMonitoring />;
       case 'ranking':
         return <Ranking />;
+      case 'coin-recharge':
+        return <CoinRecharge />;
       case 'block-user':
         return <BlockUsers />;
       case 'dashboard':

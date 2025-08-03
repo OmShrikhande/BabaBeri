@@ -434,3 +434,96 @@ html {
 .coin-scroll::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg, #ff4db8, #8a2be2);
 }
+
+/* Diamond-specific animations */
+@keyframes diamondSparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+.diamond-sparkle {
+  animation: diamondSparkle 2s ease-in-out infinite;
+}
+
+/* Request card animations */
+.request-card-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.request-card-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 0.3s ease-out;
+}
+
+/* Status badge animations */
+.status-approved {
+  animation: statusPulse 1s ease-in-out;
+}
+
+.status-rejected {
+  animation: statusShake 0.5s ease-in-out;
+}
+
+@keyframes statusPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes statusShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* Dropdown animations */
+.dropdown-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.2s ease-out;
+}
+
+/* User card hover effect */
+.user-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(247, 37, 133, 0.15);
+}
+
+/* Exchange rate bar animation */
+@keyframes exchangeGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(247, 37, 133, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(247, 37, 133, 0.5);
+  }
+}
+
+.exchange-glow {
+  animation: exchangeGlow 3s ease-in-out infinite;
+}

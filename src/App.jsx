@@ -11,6 +11,7 @@ import MasterAgencyDetail from './components/MasterAgencyDetail';
 import LiveMonitoring from './components/LiveMonitoring';
 import Ranking from './components/Ranking';
 import CoinRecharge from './components/CoinRecharge';
+import DiamondsCashout from './components/DiamondsCashout';
 import Header from './components/Header';
 import Login from './components/Login';
 
@@ -128,6 +129,8 @@ function App() {
         return <Ranking />;
       case 'coin-recharge':
         return <CoinRecharge />;
+      case 'diamonds-wallet':
+        return <DiamondsCashout />;
       case 'block-user':
         return <BlockUsers />;
       case 'dashboard':

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Diamond, Search, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical } from 'lucide-react';
 import { subAdminsData, royalTiers } from '../data/subAdminsData';
+import EntityMovementModal from './EntityMovementModal';
 
-const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
+const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+  const [showMovementModal, setShowMovementModal] = useState(false);
+  const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
 
   const subAdmin = subAdminsData.find(sa => sa.id === subAdminId);
 
@@ -34,6 +37,32 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
     if (onNavigateToMasterAgency) {
       onNavigateToMasterAgency(subAdminId, masterAgencyId);
     }
+  };
+
+  const handleMoveEntity = (masterAgency) => {
+    setSelectedMasterAgency({
+      ...masterAgency,
+      currentParent: subAdmin.name
+    });
+    setShowMovementModal(true);
+  };
+
+  const handleEntityMove = async (entityId, targetId) => {
+    // Here you would implement the actual move logic
+    console.log(`Moving master agency ${entityId} to sub-admin ${targetId}`);
+    // For now, just close the modal
+    setShowMovementModal(false);
+    setSelectedMasterAgency(null);
+  };
+
+  const getAvailableSubAdmins = () => {
+    return subAdminsData
+      .filter(sa => sa.id !== subAdminId) // Exclude current sub-admin
+      .map(subAdmin => ({
+        id: subAdmin.id,
+        name: subAdmin.name,
+        count: subAdmin.masterAgenciesCount || 0
+      }));
   };
 
   const formatNumber = (num) => {
@@ -197,12 +226,15 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-5 gap-8 px-4 py-4">
+              <div className="grid grid-cols-6 gap-6 px-4 py-4">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Master Agency Name</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Id</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Total Agencies</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
+                {currentUser?.userType === 'super-admin' && (
+                  <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
+                )}
               </div>
             </div>
 
@@ -211,15 +243,19 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency }) => {
               {filteredMasterAgencies.map((masterAgency, index) => (
                 <div 
                   key={masterAgency.id} 
-                  className="grid grid-cols-5 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
-                  onClick={() => handleMasterAgencyClick(masterAgency.id)}
+                  className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Master Agency Name */}
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
                     <div>
-                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">{masterAgency.name}</div>
+                      <div 
+                        className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer"
+                        onClick={() => handleMasterAgencyClick(masterAgency.id)}
+                      >
+                        {masterAgency.name}
+                      </div>
                     </div>
                   </div>
 

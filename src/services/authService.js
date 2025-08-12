@@ -164,7 +164,29 @@ class AuthService {
       return decoded.userType || decoded.role || decoded.type || 'admin';
     }
 
-    return 'admin'; // Default fallback
+      return 'admin'; // Default fallback
+  }
+
+  // Create Sub-Admin
+  async createSubAdmin(adminData) {
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify(adminData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `Failed to create admin: ${response.status} ${response.statusText}` }));
+        throw new Error(errorData.message);
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create admin error:', error);
+      return { success: false, error: error.message || 'Failed to create admin.' };
+    }
   }
 }
 

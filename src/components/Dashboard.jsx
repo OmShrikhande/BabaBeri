@@ -1,11 +1,11 @@
 import React from 'react';
 import { LogOut, Crown, Shield, User } from 'lucide-react';
 import MetricsCard from './MetricsCard';
-import ChartCard from './ChartCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';
 import SupporterCard from './SupporterCard';
 import { metricsData, financialMetricsData, supporterCardsData } from '../data/dashboardData';
+import SubAdminForm from './SubAdminForm';
 
 const Dashboard = ({ currentUser, onLogout }) => {
   const metricsCards = [
@@ -226,6 +226,18 @@ const Dashboard = ({ currentUser, onLogout }) => {
           </div>
         </div>
       </section>
+
+      {currentUser && currentUser.userType === 'super-admin' && (
+        <section 
+          className="mb-8"
+          aria-labelledby="create-sub-admin-heading"
+        >
+          <div className="bg-[#1A1A1A] rounded-xl p-6 border border-gray-800">
+            <h2 id="create-sub-admin-heading" className="text-2xl font-bold text-white mb-4">Create Sub-Admin</h2>
+            <SubAdminForm />
+          </div>
+        </section>
+      )}
 
       {/* Additional Info Section */}
       <section className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">

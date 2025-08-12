@@ -1,50 +1,15 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, LayoutDashboard, Shield, Crown, User, AlertCircle, TestTube } from 'lucide-react';
+import { Eye, EyeOff, LayoutDashboard, AlertCircle } from 'lucide-react';
 import authService from '../services/authService';
-import RoleTestComponent from './RoleTestComponent';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    userType: 'admin'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [showRoleTest, setShowRoleTest] = useState(false);
-
-  const userTypes = [
-    {
-      id: 'super-admin',
-      label: 'Super Admin',
-      icon: Crown,
-      color: 'from-[#F72585] to-[#7209B7]',
-      description: 'Full system access'
-    },
-    {
-      id: 'admin',
-      label: 'Admin',
-      icon: Shield,
-      color: 'from-[#7209B7] to-[#4361EE]',
-      description: 'Administrative access'
-    },
-    {
-      id: 'sub-admin',
-      label: 'Sub Admin',
-      icon: User,
-      color: 'from-[#4361EE] to-[#4CC9F0]',
-      description: 'Sub admin access'
-    },
-    {
-      id: 'master-agency',
-      label: 'Master Agency',
-      icon: User,
-      color: 'from-[#4CC9F0] to-[#06FFA5]',
-      description: 'Master agency access'
-    }
-  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -54,31 +19,12 @@ const Login = ({ onLogin }) => {
     }));
   };
 
-  const handleUserTypeSelect = (userType) => {
-    setFormData(prev => ({
-      ...prev,
-      userType
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
-      if (isDemoMode) {
-        // Demo mode - simulate login
-        setTimeout(() => {
-          setIsLoading(false);
-          onLogin({
-            ...formData,
-            isDemo: true
-          });
-        }, 1500);
-        return;
-      }
-
       // Real API authentication
       const result = await authService.login({
         username: formData.username,
@@ -87,8 +33,8 @@ const Login = ({ onLogin }) => {
       });
 
       if (result.success) {
-        // Get user type from token or default based on selection
-        const userType = authService.getUserType() || formData.userType;
+        // Get user type from token
+        const userType = authService.getUserType();
         
         onLogin({
           username: formData.username,
@@ -107,32 +53,6 @@ const Login = ({ onLogin }) => {
       setIsLoading(false);
     }
   };
-
-  const handleDemoLogin = () => {
-    setIsDemoMode(true);
-    setFormData({
-      username: 'admin',
-      password: 'admin123',
-      userType: 'admin'
-    });
-  };
-
-  const handleRealLogin = () => {
-    setIsDemoMode(false);
-    setError('');
-    setFormData({
-      username: '',
-      password: '',
-      userType: 'super-admin'
-    });
-  };
-
-  const selectedUserType = userTypes.find(type => type.id === formData.userType);
-
-  // Show role test component if requested
-  if (showRoleTest) {
-    return <RoleTestComponent onLogin={onLogin} />;
-  }
 
   return (
     <div className="login-container bg-[#121212] min-h-screen overflow-y-auto enhanced-scrollbar mobile-scroll-fix prevent-horizontal-overflow">
@@ -158,31 +78,6 @@ const Login = ({ onLogin }) => {
               <h1 className="text-xl font-bold text-white mb-1">PRO X STREAM</h1>
               <p className="text-white/80 text-xs">Admin Dashboard Login</p>
               
-              {/* Mode Toggle */}
-              <div className="flex mt-3 bg-white/10 rounded-lg p-1">
-                <button
-                  type="button"
-                  onClick={handleRealLogin}
-                  className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-all ${
-                    !isDemoMode 
-                      ? 'bg-white text-[#F72585]' 
-                      : 'text-white/80 hover:text-white'
-                  }`}
-                >
-                  Real Login
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-all ${
-                    isDemoMode 
-                      ? 'bg-white text-[#F72585]' 
-                      : 'text-white/80 hover:text-white'
-                  }`}
-                >
-                  Demo Mode
-                </button>
-              </div>
             </div>
 
             {/* Mobile Login Form */}
@@ -196,54 +91,11 @@ const Login = ({ onLogin }) => {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* User Type Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Select User Type
-                  </label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {userTypes.map((type) => {
-                      const IconComponent = type.icon;
-                      const isSelected = formData.userType === type.id;
-                      
-                      return (
-                        <button
-                          key={type.id}
-                          type="button"
-                          onClick={() => handleUserTypeSelect(type.id)}
-                          className={`
-                            relative p-3 rounded-lg border-2 transition-all duration-300 text-left
-                            ${isSelected 
-                              ? 'border-[#F72585] bg-[#F72585]/10 glow-pink' 
-                              : 'border-gray-700 hover:border-gray-600 bg-[#121212]'
-                            }
-                          `}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <div className={`
-                              w-8 h-8 rounded-lg flex items-center justify-center
-                              bg-gradient-to-r ${type.color}
-                            `}>
-                              <IconComponent className="w-4 h-4 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-semibold text-white">{type.label}</h3>
-                              <p className="text-xs text-gray-400">{type.description}</p>
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <div className="absolute top-1 right-1 w-2 h-2 bg-[#F72585] rounded-full"></div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
+                
                 {/* Username Field */}
                 <div>
                   <label htmlFor="mobile-username" className="block text-sm font-medium text-gray-300 mb-2">
-                    Username
+                    Username or Email
                   </label>
                   <input
                     type="text"
@@ -252,7 +104,7 @@ const Login = ({ onLogin }) => {
                     value={formData.username}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 bg-[#121212] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors text-sm"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username or email"
                     required
                   />
                 </div>
@@ -291,7 +143,7 @@ const Login = ({ onLogin }) => {
                     w-full py-2 px-3 rounded-lg font-semibold text-white transition-all duration-300 text-sm
                     ${isLoading 
                       ? 'bg-gray-600 cursor-not-allowed' 
-                      : `bg-gradient-to-r ${selectedUserType.color} hover:shadow-lg hover:shadow-[#F72585]/25 hover:scale-[1.02] active:scale-[0.98]`
+                      : `bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:shadow-lg hover:shadow-[#F72585]/25 hover:scale-[1.02] active:scale-[0.98]`
                     }
                   `}
                 >
@@ -301,30 +153,17 @@ const Login = ({ onLogin }) => {
                       <span>Signing In...</span>
                     </div>
                   ) : (
-                    `Sign In as ${selectedUserType.label}`
+                    `Sign In`
                   )}
                 </button>
               </form>
 
               {/* Credentials Info */}
               <div className="mt-4 p-3 bg-[#121212] rounded-lg border border-gray-800">
-                {isDemoMode ? (
-                  <>
-                    <h4 className="text-xs font-semibold text-gray-300 mb-2">Demo Credentials:</h4>
-                    <div className="text-xs text-gray-400 space-y-1">
-                      <p>Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
-                      <p className="text-gray-500">Any credentials will work for demo purposes</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <h4 className="text-xs font-semibold text-gray-300 mb-2">Super Admin Login:</h4>
-                    <div className="text-xs text-gray-400 space-y-1">
-                      <p>Use your Super Admin credentials</p>
-                      <p className="text-gray-500">Real API authentication enabled</p>
-                    </div>
-                  </>
-                )}
+                <h4 className="text-xs font-semibold text-gray-300 mb-2">Login with your credentials</h4>
+                <div className="text-xs text-gray-400 space-y-1">
+                  <p>Role-based access will be automatically assigned.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -383,32 +222,6 @@ const Login = ({ onLogin }) => {
                   <div className="mb-8">
                     <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
                     <p className="text-gray-400">Sign in to access your dashboard</p>
-                    
-                    {/* Mode Toggle */}
-                    <div className="flex mt-4 bg-[#121212] rounded-xl p-1 border border-gray-700">
-                      <button
-                        type="button"
-                        onClick={handleRealLogin}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                          !isDemoMode 
-                            ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white' 
-                            : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        Real Login
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDemoLogin}
-                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                          isDemoMode 
-                            ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white' 
-                            : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        Demo Mode
-                      </button>
-                    </div>
                   </div>
 
                   {/* Error Display */}
@@ -420,54 +233,11 @@ const Login = ({ onLogin }) => {
                   )}
 
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* User Type Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-3">
-                        Select User Type
-                      </label>
-                      <div className="grid grid-cols-1 gap-3">
-                        {userTypes.map((type) => {
-                          const IconComponent = type.icon;
-                          const isSelected = formData.userType === type.id;
-                          
-                          return (
-                            <button
-                              key={type.id}
-                              type="button"
-                              onClick={() => handleUserTypeSelect(type.id)}
-                              className={`
-                                relative p-4 rounded-xl border-2 transition-all duration-300 text-left
-                                ${isSelected 
-                                  ? 'border-[#F72585] bg-[#F72585]/10 glow-pink' 
-                                  : 'border-gray-700 hover:border-gray-600 bg-[#121212]'
-                                }
-                              `}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className={`
-                                  w-12 h-12 rounded-xl flex items-center justify-center
-                                  bg-gradient-to-r ${type.color}
-                                `}>
-                                  <IconComponent className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                  <h3 className="text-base font-semibold text-white">{type.label}</h3>
-                                  <p className="text-sm text-gray-400">{type.description}</p>
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <div className="absolute top-3 right-3 w-3 h-3 bg-[#F72585] rounded-full"></div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
+                    
                     {/* Username Field */}
                     <div>
                       <label htmlFor="desktop-username" className="block text-sm font-medium text-gray-300 mb-2">
-                        Username
+                        Username or Email
                       </label>
                       <input
                         type="text"
@@ -476,7 +246,7 @@ const Login = ({ onLogin }) => {
                         value={formData.username}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 bg-[#121212] border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585] focus:ring-2 focus:ring-[#F72585]/20 transition-colors"
-                        placeholder="Enter your username"
+                        placeholder="Enter your username or email"
                         required
                       />
                     </div>
@@ -515,7 +285,7 @@ const Login = ({ onLogin }) => {
                         w-full py-3 px-4 rounded-xl font-semibold text-white transition-all duration-300
                         ${isLoading 
                           ? 'bg-gray-600 cursor-not-allowed' 
-                          : `bg-gradient-to-r ${selectedUserType.color} hover:shadow-lg hover:shadow-[#F72585]/25 hover:scale-[1.02] active:scale-[0.98]`
+                          : `bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:shadow-lg hover:shadow-[#F72585]/25 hover:scale-[1.02] active:scale-[0.98]`
                         }
                       `}
                     >
@@ -525,30 +295,17 @@ const Login = ({ onLogin }) => {
                           <span>Signing In...</span>
                         </div>
                       ) : (
-                        `Sign In as ${selectedUserType.label}`
+                        `Sign In`
                       )}
                     </button>
                   </form>
 
                   {/* Credentials Info */}
                   <div className="mt-6 p-4 bg-[#121212] rounded-xl border border-gray-800">
-                    {isDemoMode ? (
-                      <>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Demo Credentials:</h4>
-                        <div className="text-sm text-gray-400 space-y-1">
-                          <p>Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
-                          <p className="text-gray-500">Any credentials will work for demo purposes</p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Super Admin Login:</h4>
-                        <div className="text-sm text-gray-400 space-y-1">
-                          <p>Use your Super Admin credentials</p>
-                          <p className="text-gray-500">Real API authentication enabled</p>
-                        </div>
-                      </>
-                    )}
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Login with your credentials</h4>
+                    <div className="text-sm text-gray-400 space-y-1">
+                      <p>Role-based access will be automatically assigned.</p>
+                    </div>
                   </div>
 
                   {/* Desktop Footer */}

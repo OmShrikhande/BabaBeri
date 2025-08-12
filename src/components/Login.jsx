@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, LayoutDashboard, Shield, Crown, User } from 'lucide-react';
+import { Eye, EyeOff, LayoutDashboard, Shield, Crown, User, AlertCircle } from 'lucide-react';
+import authService from '../services/authService';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,8 @@ const Login = ({ onLogin }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const userTypes = [
     {
@@ -52,12 +55,67 @@ const Login = ({ onLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulate login process
-    setTimeout(() => {
+    try {
+      if (isDemoMode) {
+        // Demo mode - simulate login
+        setTimeout(() => {
+          setIsLoading(false);
+          onLogin({
+            ...formData,
+            isDemo: true
+          });
+        }, 1500);
+        return;
+      }
+
+      // Real API authentication
+      const result = await authService.login({
+        username: formData.username,
+        email: formData.username, // Support both username and email
+        password: formData.password
+      });
+
+      if (result.success) {
+        // Get user type from token or default based on selection
+        const userType = authService.getUserType() || formData.userType;
+        
+        onLogin({
+          username: formData.username,
+          userType: userType,
+          token: result.token,
+          isDemo: false,
+          apiData: result.data
+        });
+      } else {
+        setError(result.error || 'Login failed. Please check your credentials.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
       setIsLoading(false);
-      onLogin(formData);
-    }, 1500);
+    }
+  };
+
+  const handleDemoLogin = () => {
+    setIsDemoMode(true);
+    setFormData({
+      username: 'admin',
+      password: 'admin123',
+      userType: 'admin'
+    });
+  };
+
+  const handleRealLogin = () => {
+    setIsDemoMode(false);
+    setError('');
+    setFormData({
+      username: '',
+      password: '',
+      userType: 'super-admin'
+    });
   };
 
   const selectedUserType = userTypes.find(type => type.id === formData.userType);
@@ -85,10 +143,44 @@ const Login = ({ onLogin }) => {
               </div>
               <h1 className="text-xl font-bold text-white mb-1">PRO X STREAM</h1>
               <p className="text-white/80 text-xs">Admin Dashboard Login</p>
+              
+              {/* Mode Toggle */}
+              <div className="flex mt-3 bg-white/10 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={handleRealLogin}
+                  className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-all ${
+                    !isDemoMode 
+                      ? 'bg-white text-[#F72585]' 
+                      : 'text-white/80 hover:text-white'
+                  }`}
+                >
+                  Real Login
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  className={`flex-1 py-1 px-2 rounded text-xs font-medium transition-all ${
+                    isDemoMode 
+                      ? 'bg-white text-[#F72585]' 
+                      : 'text-white/80 hover:text-white'
+                  }`}
+                >
+                  Demo Mode
+                </button>
+              </div>
             </div>
 
             {/* Mobile Login Form */}
             <div className="p-4">
+              {/* Error Display */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <p className="text-red-400 text-xs">{error}</p>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* User Type Selection */}
                 <div>
@@ -200,13 +292,25 @@ const Login = ({ onLogin }) => {
                 </button>
               </form>
 
-              {/* Demo Credentials */}
+              {/* Credentials Info */}
               <div className="mt-4 p-3 bg-[#121212] rounded-lg border border-gray-800">
-                <h4 className="text-xs font-semibold text-gray-300 mb-2">Demo Credentials:</h4>
-                <div className="text-xs text-gray-400 space-y-1">
-                  <p>Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
-                  <p className="text-gray-500">Any credentials will work for demo purposes</p>
-                </div>
+                {isDemoMode ? (
+                  <>
+                    <h4 className="text-xs font-semibold text-gray-300 mb-2">Demo Credentials:</h4>
+                    <div className="text-xs text-gray-400 space-y-1">
+                      <p>Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
+                      <p className="text-gray-500">Any credentials will work for demo purposes</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="text-xs font-semibold text-gray-300 mb-2">Super Admin Login:</h4>
+                    <div className="text-xs text-gray-400 space-y-1">
+                      <p>Use your Super Admin credentials</p>
+                      <p className="text-gray-500">Real API authentication enabled</p>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -265,7 +369,41 @@ const Login = ({ onLogin }) => {
                   <div className="mb-8">
                     <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
                     <p className="text-gray-400">Sign in to access your dashboard</p>
+                    
+                    {/* Mode Toggle */}
+                    <div className="flex mt-4 bg-[#121212] rounded-xl p-1 border border-gray-700">
+                      <button
+                        type="button"
+                        onClick={handleRealLogin}
+                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                          !isDemoMode 
+                            ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white' 
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        Real Login
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDemoLogin}
+                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                          isDemoMode 
+                            ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white' 
+                            : 'text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        Demo Mode
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Error Display */}
+                  {error && (
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center space-x-3">
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                      <p className="text-red-400 text-sm">{error}</p>
+                    </div>
+                  )}
 
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* User Type Selection */}
@@ -378,13 +516,25 @@ const Login = ({ onLogin }) => {
                     </button>
                   </form>
 
-                  {/* Demo Credentials */}
+                  {/* Credentials Info */}
                   <div className="mt-6 p-4 bg-[#121212] rounded-xl border border-gray-800">
-                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Demo Credentials:</h4>
-                    <div className="text-sm text-gray-400 space-y-1">
-                      <p>Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
-                      <p className="text-gray-500">Any credentials will work for demo purposes</p>
-                    </div>
+                    {isDemoMode ? (
+                      <>
+                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Demo Credentials:</h4>
+                        <div className="text-sm text-gray-400 space-y-1">
+                          <p>Username: <span className="text-white">admin</span> | Password: <span className="text-white">admin123</span></p>
+                          <p className="text-gray-500">Any credentials will work for demo purposes</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h4 className="text-sm font-semibold text-gray-300 mb-2">Super Admin Login:</h4>
+                        <div className="text-sm text-gray-400 space-y-1">
+                          <p>Use your Super Admin credentials</p>
+                          <p className="text-gray-500">Real API authentication enabled</p>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Desktop Footer */}

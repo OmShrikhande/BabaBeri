@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import HostVerification from './components/HostVerification';
@@ -15,6 +15,8 @@ import CoinRecharge from './components/CoinRecharge';
 import DiamondsCashout from './components/DiamondsCashout';
 import Header from './components/Header';
 import Login from './components/Login';
+import AuthTest from './components/AuthTest';
+import authService from './services/authService';
 
 function App() {
   // Authentication state
@@ -29,21 +31,67 @@ function App() {
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
   const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
 
+  // Check for existing authentication on app load
+  useEffect(() => {
+    const token = authService.getToken();
+    const userInfo = authService.getUserInfo();
+    
+    if (token && !authService.isTokenExpired(token)) {
+      // User is already authenticated
+      setCurrentUser({
+        username: userInfo?.username || userInfo?.email || 'User',
+        userType: authService.getUserType(),
+        loginTime: userInfo?.loginTime || new Date().toISOString(),
+        token: token,
+        isDemo: false
+      });
+      setIsAuthenticated(true);
+    } else if (token) {
+      // Token exists but is expired
+      authService.logout();
+    }
+  }, []);
+
   // Authentication handlers
   const handleLogin = (loginData) => {
-    setCurrentUser({
+    const userData = {
       username: loginData.username,
       userType: loginData.userType,
-      loginTime: new Date().toISOString()
-    });
+      loginTime: new Date().toISOString(),
+      token: loginData.token,
+      isDemo: loginData.isDemo || false,
+      apiData: loginData.apiData
+    };
+
+    // Store additional user info for non-demo logins
+    if (!loginData.isDemo && loginData.apiData) {
+      localStorage.setItem('userInfo', JSON.stringify({
+        username: loginData.username,
+        email: loginData.username,
+        loginTime: userData.loginTime,
+        ...loginData.apiData
+      }));
+    }
+
+    setCurrentUser(userData);
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
+    // Clear authentication data
+    authService.logout();
+    
+    // Reset app state
     setIsAuthenticated(false);
     setCurrentUser(null);
     setActiveRoute('dashboard');
     setSidebarOpen(false);
+    
+    // Reset navigation state
+    setSelectedAgencyId(null);
+    setSelectedSubAdminId(null);
+    setSelectedMasterAgencyId(null);
+    setSelectedAgencyHostId(null);
   };
 
   const toggleSidebar = () => {
@@ -160,6 +208,8 @@ function App() {
         return <DiamondsCashout />;
       case 'block-user':
         return <BlockUsers />;
+      case 'auth-test':
+        return <AuthTest />;
       case 'dashboard':
       default:
         return <Dashboard currentUser={currentUser} onLogout={handleLogout} />;

@@ -16,7 +16,9 @@ import DiamondsCashout from './components/DiamondsCashout';
 import Header from './components/Header';
 import Login from './components/Login';
 import AuthTest from './components/AuthTest';
+import MasterAgency from './components/MasterAgency';
 import authService from './services/authService';
+import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
 
 function App() {
   // Authentication state
@@ -99,6 +101,12 @@ function App() {
   };
 
   const handleNavigation = (route) => {
+    // Check if user can access this route
+    if (!canAccessRoute(route, currentUser?.userType)) {
+      console.warn(`Access denied to route: ${route} for user type: ${currentUser?.userType}`);
+      return;
+    }
+
     setActiveRoute(route);
     setSidebarOpen(false); // Close sidebar on mobile after navigation
     // Reset selections when navigating away
@@ -154,6 +162,16 @@ function App() {
   };
 
   const renderMainContent = () => {
+    // Check if user can access the current route
+    if (!canAccessRoute(activeRoute, currentUser?.userType)) {
+      // Redirect to default route for user type
+      const defaultRoute = getDefaultRouteForUser(currentUser?.userType);
+      if (activeRoute !== defaultRoute) {
+        setActiveRoute(defaultRoute);
+        return null; // Will re-render with correct route
+      }
+    }
+
     switch (activeRoute) {
       case 'host-verification':
         return <HostVerification />;
@@ -198,6 +216,8 @@ function App() {
           );
         }
         return <SubAdmins onNavigateToDetail={handleNavigateToSubAdminDetail} />;
+      case 'master-agency':
+        return <MasterAgency onNavigateToDetail={handleNavigateToMasterAgency} currentUser={currentUser} />;
       case 'live-monitoring':
         return <LiveMonitoring />;
       case 'ranking':

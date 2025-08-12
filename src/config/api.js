@@ -34,7 +34,8 @@ export const DEFAULT_HEADERS = {
 export const USER_TYPES = {
   SUPER_ADMIN: 'super-admin',
   ADMIN: 'admin',
-  MASTER: 'master'
+  SUB_ADMIN: 'sub-admin',
+  MASTER_AGENCY: 'master-agency'
 };
 
 export default API_CONFIG;

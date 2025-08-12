@@ -5,6 +5,7 @@ import {
   AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X, LogOut, User
 } from 'lucide-react';
 import { navigationItems } from '../data/dashboardData';
+import { getFilteredNavigationItems, getUserRoleDisplayName } from '../utils/roleBasedAccess';
 
 const iconMap = {
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck,
@@ -13,6 +14,9 @@ const iconMap = {
 };
 
 const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation, currentUser, onLogout }) => {
+  // Get filtered navigation items based on user role
+  const filteredNavigationItems = getFilteredNavigationItems(navigationItems, currentUser?.userType);
+
   const handleItemClick = (itemId) => {
     if (onNavigation) {
       onNavigation(itemId);
@@ -67,7 +71,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
         {/* Navigation */}
         <nav className="p-4 flex-1 sidebar-scroll enhanced-scrollbar">
           <ul className="space-y-2" role="menubar">
-            {navigationItems.map((item) => {
+            {filteredNavigationItems.map((item) => {
               const IconComponent = iconMap[item.icon];
               const isActive = activeRoute === item.id;
               
@@ -119,7 +123,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">{currentUser.username}</p>
-                  <p className="text-xs text-gray-400 capitalize">{currentUser.userType.replace('-', ' ')}</p>
+                  <p className="text-xs text-gray-400">{getUserRoleDisplayName(currentUser.userType)}</p>
                 </div>
               </div>
             </div>

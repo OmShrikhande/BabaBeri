@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, LayoutDashboard, Shield, Crown, User, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, LayoutDashboard, Shield, Crown, User, AlertCircle, TestTube } from 'lucide-react';
 import authService from '../services/authService';
+import RoleTestComponent from './RoleTestComponent';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const Login = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [showRoleTest, setShowRoleTest] = useState(false);
 
   const userTypes = [
     {
@@ -29,11 +31,18 @@ const Login = ({ onLogin }) => {
       description: 'Administrative access'
     },
     {
-      id: 'master',
-      label: 'Master',
+      id: 'sub-admin',
+      label: 'Sub Admin',
       icon: User,
       color: 'from-[#4361EE] to-[#4CC9F0]',
-      description: 'Master user access'
+      description: 'Sub admin access'
+    },
+    {
+      id: 'master-agency',
+      label: 'Master Agency',
+      icon: User,
+      color: 'from-[#4CC9F0] to-[#06FFA5]',
+      description: 'Master agency access'
     }
   ];
 
@@ -119,6 +128,11 @@ const Login = ({ onLogin }) => {
   };
 
   const selectedUserType = userTypes.find(type => type.id === formData.userType);
+
+  // Show role test component if requested
+  if (showRoleTest) {
+    return <RoleTestComponent onLogin={onLogin} />;
+  }
 
   return (
     <div className="login-container bg-[#121212] min-h-screen overflow-y-auto enhanced-scrollbar mobile-scroll-fix prevent-horizontal-overflow">

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Trash2, Eye, Building2, Filter } from 'lucide-react';
+import { Search, Trash2, Eye, Building2, Filter, MoreVertical } from 'lucide-react';
 import { agenciesData } from '../data/agencyData';
 import { CardSkeleton, TableSkeleton } from './LoadingSkeleton';
+import EntityMovementModal from './EntityMovementModal';
 
-const Agencies = ({ onNavigateToDetail }) => {
+const Agencies = ({ onNavigateToDetail, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [agencies, setAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterTier, setFilterTier] = useState('all');
+  const [showMovementModal, setShowMovementModal] = useState(false);
+  const [selectedAgency, setSelectedAgency] = useState(null);
 
   // Simulate loading agencies data
   useEffect(() => {
@@ -39,6 +42,25 @@ const Agencies = ({ onNavigateToDetail }) => {
     // In a real app, this would make an API call
     console.log(`Deleting agency: ${agencyName} (${agencyId})`);
     // You can implement actual delete logic here
+  };
+
+  const handleMoveEntity = (agency) => {
+    // Add current parent information for the modal
+    const agencyWithParent = {
+      ...agency,
+      currentParent: 'Current Master Agency', // This would come from actual data
+      currentSubAdminId: 1 // This would come from actual data
+    };
+    setSelectedAgency(agencyWithParent);
+    setShowMovementModal(true);
+  };
+
+  const handleEntityMove = async (moveData) => {
+    // Here you would implement the actual move logic
+    console.log('Moving agency:', moveData);
+    // For now, just close the modal
+    setShowMovementModal(false);
+    setSelectedAgency(null);
   };
 
   return (
@@ -219,6 +241,18 @@ const Agencies = ({ onNavigateToDetail }) => {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+                          {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin' || currentUser?.userType === 'sub-admin' || !currentUser?.userType) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMoveEntity(agency);
+                              }}
+                              className="p-2 text-[#F72585] hover:text-[#F72585]/80 hover:bg-[#F72585]/10 rounded-lg transition-all"
+                              title="Move Agency"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -243,6 +277,22 @@ const Agencies = ({ onNavigateToDetail }) => {
               </div>
             )}
           </div>
+        )}
+
+        {/* Entity Movement Modal */}
+        {showMovementModal && selectedAgency && (
+          <EntityMovementModal
+            isOpen={showMovementModal}
+            onClose={() => {
+              setShowMovementModal(false);
+              setSelectedAgency(null);
+            }}
+            entityType="agency"
+            entityData={selectedAgency}
+            availableTargets={[]}
+            onMove={handleEntityMove}
+            currentUserType={currentUser?.userType || 'admin'}
+          />
         )}
       </div>
     </main>

@@ -265,7 +265,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
 
                   {/* Actions */}
                   <div className="flex items-center">
-                    {currentUser?.userType === '' && (
+                    {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin' || !currentUser?.userType) && (
                       <button
                         onClick={() => handleMoveEntity(masterAgency)}
                         className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
@@ -310,6 +310,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
           entityData={selectedMasterAgency}
           availableTargets={getAvailableSubAdmins()}
           onMove={handleEntityMove}
+          currentUserType={currentUser?.userType || 'admin'}
         />
       )}
     </div>

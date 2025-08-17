@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ArrowRight, Search, ChevronDown } from 'lucide-react';
+import { subAdminsData } from '../data/subAdminsData';
+import { agenciesData } from '../data/agencyData';
 
 const EntityMovementModal = ({ 
   isOpen, 
@@ -7,26 +9,157 @@ const EntityMovementModal = ({
   entityType, 
   entityData, 
   availableTargets, 
-  onMove 
+  onMove,
+  currentUserType = 'admin' // Add current user type for role-based permissions
 }) => {
+  // Multi-level selection states for complex movements
+  const [selectedSubAdmin, setSelectedSubAdmin] = useState('');
+  const [selectedMasterAgency, setSelectedMasterAgency] = useState('');
+  const [selectedAgency, setSelectedAgency] = useState('');
   const [selectedTarget, setSelectedTarget] = useState('');
+  
+  // UI states
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Available options for each level
+  const [availableSubAdmins, setAvailableSubAdmins] = useState([]);
+  const [availableMasterAgencies, setAvailableMasterAgencies] = useState([]);
+  const [availableAgencies, setAvailableAgencies] = useState([]);
 
   if (!isOpen) return null;
 
-  const filteredTargets = availableTargets.filter(target =>
-    target.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    target.id.toString().toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Initialize available options based on entity type and user role
+  useEffect(() => {
+    if (isOpen) {
+      initializeAvailableOptions();
+    }
+  }, [isOpen, entityType, currentUserType]);
+
+  // Reset selections when entity type changes
+  useEffect(() => {
+    resetSelections();
+  }, [entityType]);
+
+  const resetSelections = () => {
+    setSelectedSubAdmin('');
+    setSelectedMasterAgency('');
+    setSelectedAgency('');
+    setSelectedTarget('');
+    setSearchTerm('');
+  };
+
+  const initializeAvailableOptions = () => {
+    // Get all sub admins
+    setAvailableSubAdmins(subAdminsData.map(subAdmin => ({
+      id: subAdmin.id,
+      name: subAdmin.name,
+      count: subAdmin.masterAgenciesCount || 0
+    })));
+
+    // Initialize other options based on entity type
+    if (entityType === 'masterAgency') {
+      // Master Agency can move to any Sub Admin - simple selection
+      setAvailableMasterAgencies([]);
+      setAvailableAgencies([]);
+    }
+  };
+
+  // Update available master agencies when sub admin is selected
+  useEffect(() => {
+    if (selectedSubAdmin && (entityType === 'host' || entityType === 'agency')) {
+      const subAdmin = subAdminsData.find(sa => sa.id === parseInt(selectedSubAdmin));
+      if (subAdmin && subAdmin.masterAgencies) {
+        setAvailableMasterAgencies(subAdmin.masterAgencies.map(ma => ({
+          id: ma.id,
+          name: ma.name,
+          agencyId: ma.agencyId,
+          count: ma.totalAgency || 0
+        })));
+      } else {
+        setAvailableMasterAgencies([]);
+      }
+      setSelectedMasterAgency('');
+      setSelectedAgency('');
+    }
+  }, [selectedSubAdmin, entityType]);
+
+  // Update available agencies when master agency is selected (for host movement)
+  useEffect(() => {
+    if (selectedMasterAgency && entityType === 'host') {
+      // Get agencies under the selected master agency
+      // For now, using mock data - in real app, this would come from API
+      const mockAgencies = agenciesData.map(agency => ({
+        id: agency.id,
+        name: agency.name,
+        totalHosts: agency.hosts?.length || 0
+      }));
+      setAvailableAgencies(mockAgencies);
+      setSelectedAgency('');
+    }
+  }, [selectedMasterAgency, entityType]);
+
+  const getMovementType = () => {
+    switch (entityType) {
+      case 'masterAgency':
+        return 'simple'; // Master Agency -> Sub Admin
+      case 'agency':
+        if (currentUserType === 'sub-admin') {
+          return 'restricted'; // Sub Admin can only move to master agencies under them
+        }
+        return 'two-level'; // Agency -> Sub Admin -> Master Agency
+      case 'host':
+        return 'three-level'; // Host -> Sub Admin -> Master Agency -> Agency
+      default:
+        return 'simple';
+    }
+  };
+
+  const canMoveEntity = () => {
+    const movementType = getMovementType();
+    
+    switch (movementType) {
+      case 'simple':
+        return selectedTarget !== '';
+      case 'two-level':
+        return selectedSubAdmin !== '' && selectedMasterAgency !== '';
+      case 'three-level':
+        return selectedSubAdmin !== '' && selectedMasterAgency !== '' && selectedAgency !== '';
+      case 'restricted':
+        return selectedMasterAgency !== '';
+      default:
+        return false;
+    }
+  };
 
   const handleMove = async () => {
-    if (!selectedTarget) return;
+    if (!canMoveEntity()) return;
     
     setIsLoading(true);
     try {
-      await onMove(entityData.id, selectedTarget);
+      const movementType = getMovementType();
+      let moveData = { entityId: entityData.id };
+
+      switch (movementType) {
+        case 'simple':
+          moveData.targetId = selectedTarget;
+          break;
+        case 'two-level':
+          moveData.subAdminId = selectedSubAdmin;
+          moveData.masterAgencyId = selectedMasterAgency;
+          break;
+        case 'three-level':
+          moveData.subAdminId = selectedSubAdmin;
+          moveData.masterAgencyId = selectedMasterAgency;
+          moveData.agencyId = selectedAgency;
+          break;
+        case 'restricted':
+          moveData.masterAgencyId = selectedMasterAgency;
+          break;
+      }
+
+      await onMove(moveData);
       onClose();
     } catch (error) {
       console.error('Error moving entity:', error);
@@ -49,29 +182,200 @@ const EntityMovementModal = ({
   };
 
   const getTargetTypeLabel = () => {
-    switch (entityType) {
-      case 'masterAgency':
-        return 'Sub Admin';
-      case 'agency':
+    const movementType = getMovementType();
+    
+    switch (movementType) {
+      case 'simple':
+        return entityType === 'masterAgency' ? 'Sub Admin' : 'Target';
+      case 'two-level':
         return 'Master Agency';
-      case 'host':
+      case 'three-level':
         return 'Agency';
+      case 'restricted':
+        return 'Master Agency';
       default:
         return 'Target';
     }
   };
 
-  const selectedTargetData = availableTargets.find(t => t.id === selectedTarget);
+  const getRestrictedMasterAgencies = () => {
+    // For sub-admin, only show master agencies under their control
+    if (currentUserType === 'sub-admin' && entityData.currentSubAdminId) {
+      const subAdmin = subAdminsData.find(sa => sa.id === entityData.currentSubAdminId);
+      return subAdmin?.masterAgencies || [];
+    }
+    return [];
+  };
+
+  const filteredTargets = availableTargets?.filter(target =>
+    target.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    target.id.toString().toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const renderSelectionDropdown = (
+    label,
+    value,
+    options,
+    onChange,
+    placeholder,
+    disabled = false
+  ) => (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-300">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.name} {option.count !== undefined && `(${option.count})`}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  const renderMovementPreview = () => {
+    const movementType = getMovementType();
+    const steps = [];
+
+    // Add entity being moved
+    steps.push({
+      name: entityData.name,
+      type: getEntityTypeLabel(),
+      isSource: true
+    });
+
+    // Add target steps based on movement type
+    switch (movementType) {
+      case 'simple':
+        if (selectedTarget) {
+          const targetData = availableTargets?.find(t => t.id === selectedTarget) || 
+                           availableSubAdmins.find(sa => sa.id === parseInt(selectedTarget));
+          if (targetData) {
+            steps.push({
+              name: targetData.name,
+              type: getTargetTypeLabel(),
+              isTarget: true
+            });
+          }
+        }
+        break;
+      case 'two-level':
+        if (selectedSubAdmin) {
+          const subAdminData = availableSubAdmins.find(sa => sa.id === parseInt(selectedSubAdmin));
+          if (subAdminData) {
+            steps.push({
+              name: subAdminData.name,
+              type: 'Sub Admin',
+              isIntermediate: true
+            });
+          }
+        }
+        if (selectedMasterAgency) {
+          const masterAgencyData = availableMasterAgencies.find(ma => ma.id === parseInt(selectedMasterAgency));
+          if (masterAgencyData) {
+            steps.push({
+              name: masterAgencyData.name,
+              type: 'Master Agency',
+              isTarget: true
+            });
+          }
+        }
+        break;
+      case 'three-level':
+        if (selectedSubAdmin) {
+          const subAdminData = availableSubAdmins.find(sa => sa.id === parseInt(selectedSubAdmin));
+          if (subAdminData) {
+            steps.push({
+              name: subAdminData.name,
+              type: 'Sub Admin',
+              isIntermediate: true
+            });
+          }
+        }
+        if (selectedMasterAgency) {
+          const masterAgencyData = availableMasterAgencies.find(ma => ma.id === parseInt(selectedMasterAgency));
+          if (masterAgencyData) {
+            steps.push({
+              name: masterAgencyData.name,
+              type: 'Master Agency',
+              isIntermediate: true
+            });
+          }
+        }
+        if (selectedAgency) {
+          const agencyData = availableAgencies.find(a => a.id === selectedAgency);
+          if (agencyData) {
+            steps.push({
+              name: agencyData.name,
+              type: 'Agency',
+              isTarget: true
+            });
+          }
+        }
+        break;
+      case 'restricted':
+        if (selectedMasterAgency) {
+          const masterAgencyData = getRestrictedMasterAgencies().find(ma => ma.id === parseInt(selectedMasterAgency));
+          if (masterAgencyData) {
+            steps.push({
+              name: masterAgencyData.name,
+              type: 'Master Agency',
+              isTarget: true
+            });
+          }
+        }
+        break;
+    }
+
+    if (steps.length < 2) return null;
+
+    return (
+      <div className="bg-[#1A1A1A] p-4 rounded-lg border border-gray-800">
+        <h3 className="text-white font-semibold mb-3">Movement Preview</h3>
+        <div className="flex items-center space-x-2 overflow-x-auto">
+          {steps.map((step, index) => (
+            <React.Fragment key={index}>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  step.isSource 
+                    ? 'bg-gradient-to-br from-gray-600 to-gray-700'
+                    : step.isTarget
+                    ? 'bg-gradient-to-br from-[#F72585] to-[#7209B7]'
+                    : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                }`}>
+                  <span className="text-white font-bold text-xs">
+                    {step.name.charAt(0)}
+                  </span>
+                </div>
+                <div className="text-center">
+                  <div className="text-white text-sm font-medium">{step.name}</div>
+                  <div className="text-gray-400 text-xs">{step.type}</div>
+                </div>
+              </div>
+              {index < steps.length - 1 && (
+                <ArrowRight className="w-4 h-4 text-[#F72585] flex-shrink-0" />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#121212] rounded-xl border border-gray-800 w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="bg-[#121212] rounded-xl border border-gray-800 w-full max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-800">
           <div>
             <h2 className="text-xl font-bold text-white">Move {getEntityTypeLabel()}</h2>
             <p className="text-gray-400 text-sm mt-1">
-              Move "{entityData.name}" to a different {getTargetTypeLabel().toLowerCase()}
+              Move "{entityData.name}" to a different location
             </p>
           </div>
           <button
@@ -83,7 +387,7 @@ const EntityMovementModal = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 max-h-[calc(90vh-200px)] overflow-y-auto">
           {/* Current Assignment */}
           <div className="bg-[#1A1A1A] p-4 rounded-lg border border-gray-800">
             <h3 className="text-white font-semibold mb-2">Current Assignment</h3>
@@ -102,97 +406,82 @@ const EntityMovementModal = ({
             </div>
           </div>
 
-          {/* Target Selection */}
+          {/* Selection Interface */}
           <div className="space-y-4">
-            <h3 className="text-white font-semibold">Select New {getTargetTypeLabel()}</h3>
+            <h3 className="text-white font-semibold">Select Destination</h3>
             
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder={`Search ${getTargetTypeLabel().toLowerCase()}s...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
-              />
-            </div>
-
-            {/* Target Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg px-4 py-3 text-left text-white flex items-center justify-between hover:border-gray-600 focus:outline-none focus:border-[#F72585] transition-colors"
-              >
-                <span>
-                  {selectedTargetData ? selectedTargetData.name : `Select ${getTargetTypeLabel()}`}
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#2A2A2A] border border-gray-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
-                  {filteredTargets.length === 0 ? (
-                    <div className="px-4 py-3 text-gray-400 text-center">
-                      No {getTargetTypeLabel().toLowerCase()}s found
-                    </div>
-                  ) : (
-                    filteredTargets.map((target) => (
-                      <button
-                        key={target.id}
-                        onClick={() => {
-                          setSelectedTarget(target.id);
-                          setIsDropdownOpen(false);
-                        }}
-                        className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 transition-colors flex items-center space-x-3"
-                      >
-                        <div className="w-8 h-8 bg-gradient-to-br from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-bold text-xs">
-                            {target.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{target.name}</div>
-                          <div className="text-gray-400 text-sm">
-                            ID: {target.id}
-                            {target.count && ` • ${target.count} ${entityType === 'masterAgency' ? 'master agencies' : entityType === 'agency' ? 'agencies' : 'hosts'}`}
-                          </div>
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
+            {/* Movement Type Instructions */}
+            <div className="bg-blue-900/20 border border-blue-800/50 text-blue-400 p-3 rounded-lg text-sm">
+              {getMovementType() === 'simple' && (
+                <span>Select the Sub Admin to move this Master Agency to.</span>
+              )}
+              {getMovementType() === 'two-level' && (
+                <span>First select a Sub Admin, then select the Master Agency under it.</span>
+              )}
+              {getMovementType() === 'three-level' && (
+                <span>First select a Sub Admin, then a Master Agency, then the specific Agency.</span>
+              )}
+              {getMovementType() === 'restricted' && (
+                <span>You can only move this agency to Master Agencies under your control.</span>
               )}
             </div>
+
+            {/* Multi-level Selection */}
+            {getMovementType() === 'simple' && (
+              renderSelectionDropdown(
+                'Sub Admin',
+                selectedTarget,
+                availableSubAdmins,
+                setSelectedTarget,
+                'Select Sub Admin'
+              )
+            )}
+
+            {(getMovementType() === 'two-level' || getMovementType() === 'three-level') && (
+              <>
+                {renderSelectionDropdown(
+                  'Sub Admin',
+                  selectedSubAdmin,
+                  availableSubAdmins,
+                  setSelectedSubAdmin,
+                  'Select Sub Admin'
+                )}
+
+                {renderSelectionDropdown(
+                  'Master Agency',
+                  selectedMasterAgency,
+                  availableMasterAgencies,
+                  setSelectedMasterAgency,
+                  'Select Master Agency',
+                  !selectedSubAdmin
+                )}
+              </>
+            )}
+
+            {getMovementType() === 'three-level' && (
+              renderSelectionDropdown(
+                'Agency',
+                selectedAgency,
+                availableAgencies,
+                setSelectedAgency,
+                'Select Agency',
+                !selectedMasterAgency
+              )
+            )}
+
+            {getMovementType() === 'restricted' && (
+              renderSelectionDropdown(
+                'Master Agency',
+                selectedMasterAgency,
+                getRestrictedMasterAgencies(),
+                setSelectedMasterAgency,
+                'Select Master Agency'
+              )
+            )}
           </div>
 
           {/* Movement Preview */}
-          {selectedTargetData && (
-            <div className="bg-[#1A1A1A] p-4 rounded-lg border border-gray-800">
-              <h3 className="text-white font-semibold mb-3">Movement Preview</h3>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-700 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">
-                      {entityData.name.charAt(0)}
-                    </span>
-                  </div>
-                  <span className="text-white text-sm">{entityData.name}</span>
-                </div>
-                
-                <ArrowRight className="w-5 h-5 text-[#F72585]" />
-                
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">
-                      {selectedTargetData.name.charAt(0)}
-                    </span>
-                  </div>
-                  <span className="text-white text-sm">{selectedTargetData.name}</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {renderMovementPreview()}
         </div>
 
         {/* Footer */}
@@ -206,7 +495,7 @@ const EntityMovementModal = ({
           </button>
           <button
             onClick={handleMove}
-            disabled={!selectedTarget || isLoading}
+            disabled={!canMoveEntity() || isLoading}
             className="px-6 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
             {isLoading ? (

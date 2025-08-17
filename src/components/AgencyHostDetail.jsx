@@ -49,14 +49,17 @@ const AgencyHostDetail = ({ subAdminId, masterAgencyId, agencyId, onBack, curren
   const handleMoveEntity = (host) => {
     setSelectedHost({
       ...host,
-      currentParent: agency.name
+      currentParent: agency.name,
+      currentSubAdminId: subAdminId,
+      currentMasterAgencyId: masterAgencyId,
+      currentAgencyId: agencyId
     });
     setShowMovementModal(true);
   };
 
-  const handleEntityMove = async (entityId, targetId) => {
+  const handleEntityMove = async (moveData) => {
     // Here you would implement the actual move logic
-    console.log(`Moving host ${entityId} to agency ${targetId}`);
+    console.log('Moving host:', moveData);
     // For now, just close the modal
     setShowMovementModal(false);
     setSelectedHost(null);

@@ -199,7 +199,7 @@ const SubAdmins = ({ onNavigateToDetail }) => {
             <div className="mt-6 bg-[#2A2A2A] border border-gray-700 rounded-lg p-4">
               <h4 className="text-sm font-medium text-gray-300 mb-2">API Integration</h4>
               <ul className="text-xs text-gray-400 space-y-1">
-                <li>• Sub-admins are created via API: <code className="text-[#F72585]">POST /create-admin</code></li>
+                <li>• Sub-admins are created via API: <code className="text-[#F72585]">POST auth/create-admin</code></li>
                 <li>• Requires JWT authentication token</li>
                 <li>• Only Super Admins can create Sub-Admins</li>
                 <li>• Created sub-admins will have limited dashboard access</li>

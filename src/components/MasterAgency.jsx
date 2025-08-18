@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, ChevronDown, MoreVertical, ArrowUpDown } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
+import MasterAgencyForm from './MasterAgencyForm';
 
 const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,6 +112,8 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
     return num?.toLocaleString() || '0';
   };
 
+  const [showCreate, setShowCreate] = useState(false);
+
   return (
     <div className="flex-1 bg-[#1A1A1A] text-white overflow-y-auto flex flex-col">
       {/* Header */}
@@ -120,15 +123,33 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
             <h1 className="text-3xl font-bold text-white">Master Agencies</h1>
             <p className="text-gray-400 mt-1">Manage all master agencies across sub-admins</p>
           </div>
-          <div className="text-gray-400 text-sm">
-            Total: {masterAgencies.length} Master Agencies
+          <div className="flex items-center gap-4">
+            <div className="text-gray-400 text-sm">Total: {masterAgencies.length} Master Agencies</div>
+            {(currentUser?.userType === 'super-admin' || currentUser?.userType === 'admin') && (
+              <button
+                onClick={() => setShowCreate((prev) => !prev)}
+                className="flex items-center gap-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity"
+              >
+                <Plus className="w-4 h-4" /> {showCreate ? 'Close' : 'New Master Agency'}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto table-scroll-container">
-        <div className="p-6">
+        <div className="p-6 space-y-6">
+          {/* Create Master Agency */}
+          {showCreate && (
+            <MasterAgencyForm
+              onCreated={(created) => {
+                // Optionally, you can refetch or optimistically update UI here
+                setShowCreate(false);
+              }}
+            />
+          )}
+
           {/* Master Agencies List */}
           <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
             <div className="p-6 border-b border-gray-800">

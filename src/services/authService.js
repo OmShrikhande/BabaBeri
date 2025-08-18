@@ -188,6 +188,31 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to create admin.' };
     }
   }
+
+  // Create Master Agency
+  async createMasterAgency(agencyData) {
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_MASTER_AGENCY}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({
+          ...agencyData,
+          role: 'master-agency' // include if backend expects explicit role
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `Failed to create master agency: ${response.status} ${response.statusText}` }));
+        throw new Error(errorData.message);
+      }
+
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create master agency error:', error);
+      return { success: false, error: error.message || 'Failed to create master agency.' };
+    }
+  }
 }
 
 // Create and export a singleton instance

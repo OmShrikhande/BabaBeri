@@ -6,7 +6,8 @@ export const API_CONFIG = {
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
     USER_PROFILE: '/auth/profile',
-    CREATE_ADMIN: '/auth/create-admin'
+    CREATE_ADMIN: '/auth/create-admin',
+    CREATE_MASTER_AGENCY: '/auth/create-masteragency'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

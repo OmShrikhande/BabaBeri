@@ -209,62 +209,118 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                 ))}
               </div>
 
-              {/* Data Table Section */}
-              <div className="bg-[#161618] rounded-2xl border border-[#1A1A1E] overflow-hidden shadow-lg">
-                <div className="p-6 border-b border-[#2B2B30] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <h3 className="text-lg font-medium text-white">Agencies</h3>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Search agencies..." 
-                      className="bg-[#FFFFFF] text-black pl-10 pr-4 py-2 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B14CFF] w-full sm:w-64 placeholder-gray-500"
-                    />
+              {/* Agencies List */}
+              <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
+                <div className="p-6 border-b border-gray-800">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-white">List of Agencies</h2>
+                    <div className="flex items-center space-x-4">
+                      {/* Search Bar */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Search agencies..."
+                          className="pl-10 pr-4 py-2 bg-[#2A2A2A] border border-gray-700 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors w-64"
+                        />
+                      </div>
+
+                      {/* Period Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+                          className="bg-[#2A2A2A] border border-gray-700 rounded-lg px-4 py-2 text-white flex items-center space-x-2 hover:border-gray-600 focus:outline-none focus:border-[#F72585] transition-colors"
+                        >
+                          <span>{selectedPeriod}</span>
+                          <ChevronDown className={`w-4 h-4 transition-transform ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        
+                        {isPeriodDropdownOpen && (
+                          <div className="absolute top-full right-0 mt-1 bg-[#2A2A2A] border border-gray-700 rounded-lg shadow-lg z-10 min-w-32">
+                            {['Monthly', 'Weekly', 'Daily'].map((period) => (
+                              <button
+                                key={period}
+                                onClick={() => {
+                                  setSelectedPeriod(period);
+                                  setIsPeriodDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg transition-colors"
+                              >
+                                {period}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[#1A1A1E] text-xs uppercase tracking-wider text-gray-400 font-medium">
-                        <th className="p-4 w-16 text-center text-gray-500">Sr. No.</th>
-                        <th className="p-4">Agency Name</th>
-                        <th className="p-4">ID</th>
-                        <th className="p-4">Status</th>
-                        <th className="p-4">Total Hosts</th>
-                        <th className="p-4">Earnings</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm">
-                      {[1, 2, 3, 4, 5].map((_, i) => (
-                        <tr key={i} className={`border-b border-[#2B2B30] last:border-0 hover:bg-[#1F1F22] transition-colors ${i % 2 === 0 ? 'bg-[#151518]' : 'bg-[#1A1A1E]'}`}>
-                          <td className="p-4 text-center text-gray-500 font-mono">
-                            {i + 1}
-                          </td>
-                          <td className="p-4 text-white font-medium">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-xs font-bold">
-                                A{i+1}
-                              </div>
-                              <span>Agency {i + 1}</span>
-                            </div>
-                          </td>
-                          <td className="p-4 text-gray-400 font-mono">AG-{78290 + i}</td>
-                          <td className="p-4">
-                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-900/20 text-green-400 border border-green-900/30">
-                              Active
-                            </span>
-                          </td>
-                          <td className="p-4 text-gray-300">{12 + i * 3} Hosts</td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2 text-white font-bold">
-                              <Diamond className="w-3.5 h-3.5 text-[#4CC9F0] fill-[#4CC9F0]" />
-                              {1500 + i * 250}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+
+                {/* Table Header */}
+                <div className="bg-[#0A0A0A] border-b border-gray-800">
+                  <div className="grid grid-cols-6 gap-6 px-4 py-4">
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Name</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency Id</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Total Hosts</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">My earning</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeemed</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
+                  </div>
+                </div>
+
+                {/* Table Body */}
+                <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
+                  {[1, 2, 3, 4, 5].map((_, index) => (
+                    <div 
+                      key={index} 
+                      className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {/* Agency Name */}
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors flex items-center justify-center text-xs font-bold text-white">
+                           A{index + 1}
+                        </div>
+                        <div>
+                          <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer">
+                            Agency {index + 1}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Agency ID */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">AG-{78290 + index}</span>
+                      </div>
+
+                      {/* Total Hosts */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{12 + index * 3}</span>
+                      </div>
+
+                      {/* My Earning */}
+                      <div className="flex items-center space-x-1">
+                        <Diamond className="w-4 h-4 text-[#4CC9F0]" />
+                        <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{formatNumber(1500 + index * 250)}</span>
+                      </div>
+
+                      {/* Redeemed */}
+                      <div className="flex items-center space-x-1">
+                        <Diamond className="w-4 h-4 text-[#4CC9F0]" />
+                        <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">0</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center">
+                        <button
+                          className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
+                          title="View Details"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

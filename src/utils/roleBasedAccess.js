@@ -1,6 +1,25 @@
 // Role-based access control utility
 import { USER_TYPES } from '../config/api.js';
 
+// Normalize various role strings from API/token to our canonical USER_TYPES
+export const normalizeUserType = (value) => {
+  if (!value) return null;
+  const v = String(value).trim().toLowerCase().replace(/\s+/g, '-').replace(/_/g, '-');
+  if ([
+    'super-admin', 'superadmin', 'super-administrator', 'sa'
+  ].includes(v)) return USER_TYPES.SUPER_ADMIN;
+  if ([
+    'admin', 'administrator'
+  ].includes(v)) return USER_TYPES.ADMIN;
+  if ([
+    'sub-admin', 'subadmin', 'sub-administrator'
+  ].includes(v)) return USER_TYPES.SUB_ADMIN;
+  if ([
+    'master-agency', 'master', 'masteragency'
+  ].includes(v)) return USER_TYPES.MASTER_AGENCY;
+  return v; // fallback to normalized raw string
+};
+
 // Define role permissions
 export const ROLE_PERMISSIONS = {
   [USER_TYPES.SUPER_ADMIN]: {
@@ -42,9 +61,10 @@ export const ROLE_PERMISSIONS = {
 
 // Get filtered navigation items based on user role
 export const getFilteredNavigationItems = (navigationItems, userType) => {
-  if (!userType) return [];
+  const normalized = normalizeUserType(userType);
+  if (!normalized) return [];
 
-  const permissions = ROLE_PERMISSIONS[userType];
+  const permissions = ROLE_PERMISSIONS[normalized];
   
   if (!permissions) {
     console.warn(`Unknown user type: ${userType}`);
@@ -64,9 +84,10 @@ export const getFilteredNavigationItems = (navigationItems, userType) => {
 
 // Check if user can access a specific route
 export const canAccessRoute = (route, userType) => {
-  if (!userType) return false;
+  const normalized = normalizeUserType(userType);
+  if (!normalized) return false;
 
-  const permissions = ROLE_PERMISSIONS[userType];
+  const permissions = ROLE_PERMISSIONS[normalized];
   
   if (!permissions) {
     console.warn(`Unknown user type: ${userType}`);
@@ -84,6 +105,7 @@ export const canAccessRoute = (route, userType) => {
 
 // Get user role display name
 export const getUserRoleDisplayName = (userType) => {
+  const normalized = normalizeUserType(userType);
   const roleNames = {
     [USER_TYPES.SUPER_ADMIN]: 'Super Admin',
     [USER_TYPES.ADMIN]: 'Admin',
@@ -91,17 +113,19 @@ export const getUserRoleDisplayName = (userType) => {
     'master-agency': 'Master Agency'
   };
 
-  return roleNames[userType] || userType;
+  return roleNames[normalized] || userType;
 };
 
 // Check if user is admin level (super-admin or admin)
 export const isAdminLevel = (userType) => {
-  return userType === USER_TYPES.SUPER_ADMIN || userType === USER_TYPES.ADMIN;
+  const normalized = normalizeUserType(userType);
+  return normalized === USER_TYPES.SUPER_ADMIN || normalized === USER_TYPES.ADMIN;
 };
 
 // Get default route for user type
 export const getDefaultRouteForUser = (userType) => {
-  const permissions = ROLE_PERMISSIONS[userType];
+  const normalized = normalizeUserType(userType);
+  const permissions = ROLE_PERMISSIONS[normalized];
   
   if (!permissions) return 'dashboard';
   

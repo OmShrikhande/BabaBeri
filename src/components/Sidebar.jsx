@@ -15,7 +15,7 @@ const iconMap = {
 
 const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation, currentUser, onLogout }) => {
   // Get filtered navigation items based on user role
-  const filteredNavigationItems = getFilteredNavigationItems(navigationItems, currentUser?.userType);
+  const filteredNavigationItems = getFilteredNavigationItems(navigationItems, currentUser?.userType); // filtering uses normalized type internally
 
   const handleItemClick = (itemId) => {
     if (onNavigation) {

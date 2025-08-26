@@ -1,5 +1,6 @@
 // Authentication service for API integration
 import { API_CONFIG, TOKEN_CONFIG, DEFAULT_HEADERS } from '../config/api.js';
+import { normalizeUserType } from '../utils/roleBasedAccess.js';
 
 class AuthService {
   constructor() {
@@ -54,9 +55,10 @@ class AuthService {
           const profile = await this.fetchUserProfile();
           if (profile) {
             // Normalize role keys: role | userType | type
-            const role = profile.role || profile.userType || profile.type;
+            const rawRole = profile.role || profile.userType || profile.type;
             const userInfo = { ...profile };
-            if (role && !userInfo.userType) userInfo.userType = role;
+            const normalizedRole = normalizeUserType(rawRole);
+            if (normalizedRole) userInfo.userType = normalizedRole;
             localStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(userInfo));
           }
         } catch (e) {
@@ -71,7 +73,7 @@ class AuthService {
         success: true,
         data: data,
         token: this.token,
-        userType: this.getUserType()
+        userType: normalizeUserType(this.getUserType())
       };
     } catch (error) {
       console.error('Login error:', error);
@@ -189,13 +191,16 @@ class AuthService {
     if (userInfo) {
       // Normalize most common keys from backend profile
       const role = userInfo.userType || userInfo.role || userInfo.type || userInfo.accountType || userInfo.position;
-      if (role) return role;
+      const normalized = normalizeUserType(role);
+      if (normalized) return normalized;
     }
 
     const decoded = this.decodeToken();
     if (decoded) {
       // Try different possible fields for user type
-      return decoded.userType || decoded.role || decoded.type || decoded.accountType || decoded.position || 'admin';
+      const role = decoded.userType || decoded.role || decoded.type || decoded.accountType || decoded.position;
+      const normalized = normalizeUserType(role);
+      return normalized || 'admin';
     }
 
     return 'admin'; // Default fallback

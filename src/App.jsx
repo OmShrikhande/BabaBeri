@@ -42,7 +42,7 @@ function App() {
       // User is already authenticated
       setCurrentUser({
         username: userInfo?.username || userInfo?.email || 'User',
-        userType: authService.getUserType(),
+        userType: authService.getUserType(), // already normalized in service
         loginTime: userInfo?.loginTime || new Date().toISOString(),
         token: token,
         isDemo: false
@@ -58,7 +58,7 @@ function App() {
   const handleLogin = (loginData) => {
     const userData = {
       username: loginData.username,
-      userType: loginData.userType,
+      userType: authService.getUserType(), // ensure normalized type from service
       loginTime: new Date().toISOString(),
       token: loginData.token,
       isDemo: loginData.isDemo || false,

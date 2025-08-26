@@ -33,8 +33,8 @@ const Login = ({ onLogin }) => {
       });
 
       if (result.success) {
-        // Prefer userType returned by service (from profile), fallback to local detection
-        const userType = result.userType || authService.getUserType();
+        // Always use normalized userType from service
+        const userType = authService.getUserType();
         
         onLogin({
           username: formData.username,

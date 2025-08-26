@@ -65,14 +65,17 @@ function App() {
       apiData: loginData.apiData
     };
 
-    // Store additional user info for non-demo logins
+    // Store additional user info for non-demo logins (avoid overwriting server profile if it exists)
     if (!loginData.isDemo && loginData.apiData) {
-      localStorage.setItem('userInfo', JSON.stringify({
-        username: loginData.username,
-        email: loginData.username,
-        loginTime: userData.loginTime,
+      const existingProfile = authService.getUserInfo() || {};
+      const merged = {
+        ...existingProfile,
+        username: existingProfile.username || loginData.username,
+        email: existingProfile.email || loginData.username,
+        loginTime: existingProfile.loginTime || userData.loginTime,
         ...loginData.apiData
-      }));
+      };
+      localStorage.setItem('userInfo', JSON.stringify(merged));
     }
 
     setCurrentUser(userData);

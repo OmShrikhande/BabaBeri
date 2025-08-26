@@ -16,7 +16,8 @@ export const API_CONFIG = {
 // Super Admin credentials (from API documentation)
 export const SUPER_ADMIN_CREDENTIALS = {
   email: 'superadmin@admin.com',
-  password: 'superadmin'
+  password: 'superadmin',
+  role: 'super-admin'
 };
 
 // JWT Token configuration

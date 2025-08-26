@@ -9,9 +9,12 @@ export const ROLE_PERMISSIONS = {
     allowedRoutes: 'all'
   },
   [USER_TYPES.ADMIN]: {
-    // Admin can access everything
-    canAccess: () => true,
-    allowedRoutes: 'all'
+    // Admin can only access Sub Admin section; no dashboard
+    canAccess: (route) => {
+      const allowedRoutes = ['sub-admins'];
+      return allowedRoutes.includes(route);
+    },
+    allowedRoutes: ['sub-admins']
   },
   'sub-admin': {
     // Sub-admin can only access sub-admin related routes
@@ -28,18 +31,12 @@ export const ROLE_PERMISSIONS = {
     ]
   },
   'master-agency': {
-    // Master agency can only access master agency related routes
+    // Master agency can only access master agency; no dashboard
     canAccess: (route) => {
-      const allowedRoutes = [
-        'dashboard',
-        'master-agency'
-      ];
+      const allowedRoutes = ['master-agency'];
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: [
-      'dashboard',
-      'master-agency'
-    ]
+    allowedRoutes: ['master-agency']
   }
 };
 

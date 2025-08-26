@@ -48,6 +48,21 @@ class AuthService {
       if (token && typeof token === 'string' && token.split('.').length === 3) { // Basic JWT validation
         this.token = token;
         localStorage.setItem(TOKEN_CONFIG.STORAGE_KEY, token);
+
+        // Try to fetch user profile to persist accurate role info
+        try {
+          const profile = await this.fetchUserProfile();
+          if (profile) {
+            // Normalize role keys: role | userType | type
+            const role = profile.role || profile.userType || profile.type;
+            const userInfo = { ...profile };
+            if (role && !userInfo.userType) userInfo.userType = role;
+            localStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(userInfo));
+          }
+        } catch (e) {
+          // Non-fatal: continue with login even if profile fetch fails
+          console.warn('Could not fetch user profile after login:', e?.message || e);
+        }
       } else {
          throw new Error('Login successful, but no valid token was received from the server.');
       }
@@ -55,7 +70,8 @@ class AuthService {
       return {
         success: true,
         data: data,
-        token: this.token
+        token: this.token,
+        userType: this.getUserType()
       };
     } catch (error) {
       console.error('Login error:', error);
@@ -122,6 +138,22 @@ class AuthService {
     }
   }
 
+  // Fetch current user's profile after login
+  async fetchUserProfile() {
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_PROFILE}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: `Failed to fetch profile: ${response.status} ${response.statusText}` }));
+        throw new Error(errorData.message);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Fetch profile error:', error);
+      throw error;
+    }
+  }
+
   // Decode JWT token (basic implementation)
   decodeToken(token = null) {
     const tokenToUse = token || this.getToken();
@@ -154,17 +186,19 @@ class AuthService {
   // Get user type from token or stored info
   getUserType() {
     const userInfo = this.getUserInfo();
-    if (userInfo && userInfo.userType) {
-      return userInfo.userType;
+    if (userInfo) {
+      // Normalize most common keys from backend profile
+      const role = userInfo.userType || userInfo.role || userInfo.type || userInfo.accountType || userInfo.position;
+      if (role) return role;
     }
 
     const decoded = this.decodeToken();
     if (decoded) {
       // Try different possible fields for user type
-      return decoded.userType || decoded.role || decoded.type || 'admin';
+      return decoded.userType || decoded.role || decoded.type || decoded.accountType || decoded.position || 'admin';
     }
 
-      return 'admin'; // Default fallback
+    return 'admin'; // Default fallback
   }
 
   // Create Sub-Admin

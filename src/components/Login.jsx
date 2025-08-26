@@ -33,12 +33,12 @@ const Login = ({ onLogin }) => {
       });
 
       if (result.success) {
-        // Get user type from token
-        const userType = authService.getUserType();
+        // Prefer userType returned by service (from profile), fallback to local detection
+        const userType = result.userType || authService.getUserType();
         
         onLogin({
           username: formData.username,
-          userType: userType,
+          userType,
           token: result.token,
           isDemo: false,
           apiData: result.data

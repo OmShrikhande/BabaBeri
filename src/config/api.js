@@ -7,7 +7,8 @@ export const API_CONFIG = {
     REFRESH: '/auth/refresh',
     USER_PROFILE: '/auth/profile',
     CREATE_ADMIN: '/auth/create-admin',
-    CREATE_MASTER_AGENCY: '/auth/create-masteragency'
+    CREATE_MASTER_AGENCY: '/auth/create-masteragency',
+    COUNT_BY_ROLE: '/auth/api/countbyrole'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

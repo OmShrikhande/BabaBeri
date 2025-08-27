@@ -3,6 +3,7 @@ import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus } from 'lucide-rea
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
+import { normalizeUserType } from '../utils/roleBasedAccess';
 
 const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +13,8 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
+
+  const currentRole = normalizeUserType(currentUser?.userType);
 
   // Get all master agencies from all sub-admins
   const getAllMasterAgencies = () => {
@@ -125,7 +128,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-gray-400 text-sm">Total: {masterAgencies.length} Master Agencies</div>
-            {(currentUser?.userType === 'super-admin' || currentUser?.userType === 'admin') && (
+            {(currentRole === 'super-admin' || currentRole === 'admin') && (
               <button
                 onClick={() => setShowCreate((prev) => !prev)}
                 className="flex items-center gap-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity"
@@ -286,7 +289,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
 
                   {/* Actions */}
                   <div className="flex items-center">
-                    {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin' || !currentUser?.userType) && (
+                    {(currentRole === 'super-admin' || currentRole === 'admin') && (
                       <button
                         onClick={() => handleMoveEntity(masterAgency)}
                         className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"

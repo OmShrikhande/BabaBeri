@@ -1,5 +1,5 @@
 // Authentication service for API integration
-import { API_CONFIG, TOKEN_CONFIG, DEFAULT_HEADERS } from '../config/api.js';
+import { API_CONFIG, TOKEN_CONFIG, DEFAULT_HEADERS, USER_TYPES } from '../config/api.js';
 import { normalizeUserType } from '../utils/roleBasedAccess.js';
 
 class AuthService {
@@ -206,6 +206,32 @@ class AuthService {
     return 'admin'; // Default fallback
   }
 
+  // Count by role
+  async countByRole(role) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    // Backend expects uppercase role values: SUPERADMIN, ADMIN, MASTER_AGENCY, AGENCY, HOST
+    const roleParam = String(role).toUpperCase();
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.COUNT_BY_ROLE}?role=${encodeURIComponent(roleParam)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      if (!response.ok) {
+        let raw = ''; try { raw = await response.text(); } catch {}
+        let message = `Failed to fetch count for role ${roleParam}: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        throw new Error(raw ? `${message} | Details: ${raw}` : message);
+      }
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Count by role error:', error);
+      return { success: false, error: error.message || `Failed to fetch count for role ${roleParam}.` };
+    }
+  }
+
   // Create Sub-Admin
   async createSubAdmin(adminData) {
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;
@@ -230,19 +256,62 @@ class AuthService {
 
   // Create Master Agency
   async createMasterAgency(agencyData) {
+    // Pre-check authentication and role
+    const token = this.getToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated. Please login.' };
+    }
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const callerRole = normalizeUserType(this.getUserType());
+    // Enforce permission on client side (backend will still validate)
+    const canCreate = callerRole === USER_TYPES.SUPER_ADMIN || callerRole === USER_TYPES.ADMIN;
+    if (!canCreate) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin or Admin can create master agencies.' };
+    }
+
+    // Validate required fields and build payload
+    const base = {
+      name: agencyData?.name?.trim(),
+      email: agencyData?.email?.trim(),
+      password: agencyData?.password,
+    };
+
+    if (!base.name || !base.email || !base.password) {
+      return { success: false, error: 'Name, email, and password are required.' };
+    }
+
+    // Allow additional fields from the form to pass through (e.g., phone, address)
+    const { name, email, password, ...rest } = agencyData || {};
+    const payload = {
+      ...rest, // pass backend-specific fields if any
+      name: base.name,
+      email: base.email,
+      password: base.password
+      // Do NOT include role unless backend explicitly requires it
+    };
+
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_MASTER_AGENCY}`;
+
     try {
       const response = await this.makeAuthenticatedRequest(url, {
         method: 'POST',
-        body: JSON.stringify({
-          ...agencyData,
-          role: 'master-agency' // include if backend expects explicit role
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: `Failed to create master agency: ${response.status} ${response.statusText}` }));
-        throw new Error(errorData.message);
+        let raw = '';
+        try { raw = await response.text(); } catch (_) {}
+        let message = `Failed to create master agency: ${response.status} ${response.statusText}`;
+        try {
+          const parsed = raw ? JSON.parse(raw) : null;
+          if (parsed?.message) message = parsed.message;
+        } catch (_) {}
+        // Don't assume the reason for 403; surface server details instead
+        throw new Error(raw ? `${message} | Details: ${raw}` : message);
       }
 
       const data = await response.json();

@@ -1,59 +1,93 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { LogOut, Crown, Shield, User } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';
 import SupporterCard from './SupporterCard';
-import { metricsData, financialMetricsData, supporterCardsData } from '../data/dashboardData';
+import { metricsData as staticMetrics, financialMetricsData, supporterCardsData } from '../data/dashboardData';
 import SubAdminForm from './SubAdminForm';
 
+import authService from '../services/authService';
+
 const Dashboard = ({ currentUser, onLogout }) => {
+  const [dynamicCounts, setDynamicCounts] = useState({
+    SUPERADMIN: null,
+    ADMIN: null,
+    MASTER_AGENCY: null,
+    AGENCY: null,
+    HOST: null,
+  });
+  const [loadingCounts, setLoadingCounts] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchCounts = async () => {
+      setLoadingCounts(true);
+      try {
+        const roles = ['SUPERADMIN', 'ADMIN', 'MASTER_AGENCY', 'AGENCY', 'HOST'];
+        const results = await Promise.all(roles.map((r) => authService.countByRole(r)));
+        const next = {};
+        roles.forEach((r, i) => {
+          next[r] = results[i]?.success ? (results[i].data?.count ?? results[i].data ?? 0) : 0;
+        });
+        if (!ignore) setDynamicCounts(next);
+      } catch (e) {
+        if (!ignore) setDynamicCounts({ SUPERADMIN: 0, ADMIN: 0, MASTER_AGENCY: 0, AGENCY: 0, HOST: 0 });
+      } finally {
+        if (!ignore) setLoadingCounts(false);
+      }
+    };
+
+    fetchCounts();
+    return () => { ignore = true; };
+  }, []);
+
   const metricsCards = [
     {
       title: 'Total Sub-Admins',
-      value: metricsData.totalSubAdmins,
+      value: dynamicCounts.ADMIN ?? staticMetrics.totalSubAdmins,
       icon: 'Users',
       color: 'pink'
     },
     {
       title: 'Total Master Agencies',
-      value: metricsData.totalMasterAgencies,
+      value: dynamicCounts.MASTER_AGENCY ?? staticMetrics.totalMasterAgencies,
       icon: 'Building',
       color: 'purple'
     },
     {
       title: 'Agencies',
-      value: metricsData.agencies,
+      value: dynamicCounts.AGENCY ?? staticMetrics.agencies,
       icon: 'Building',
       color: 'blue'
     },
     {
       title: 'Hosts',
-      value: metricsData.hosts,
+      value: dynamicCounts.HOST ?? staticMetrics.hosts,
       icon: 'UserCheck',
       color: 'cyan'
     },
     {
       title: 'Overall Coins',
-      value: metricsData.overallCoins,
+      value: staticMetrics.overallCoins,
       icon: 'Coins',
       color: 'pink'
     },
     {
       title: 'Live Users',
-      value: metricsData.liveUsers,
+      value: staticMetrics.liveUsers,
       icon: 'Activity',
       color: 'purple'
     },
     {
       title: 'Voice Rooms',
-      value: metricsData.voiceRooms,
+      value: staticMetrics.voiceRooms,
       icon: 'Mic',
       color: 'blue'
     },
     {
       title: 'Total Diamonds',
-      value: metricsData.totalDiamonds,
+      value: staticMetrics.totalDiamonds,
       icon: 'Gem',
       color: 'cyan'
     }

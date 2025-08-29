@@ -239,7 +239,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
+            <div className="divide-y divide-gray-800 max-h-120 overflow-y-auto">
               {filteredMasterAgencies.map((masterAgency, index) => (
                 <div 
                   key={masterAgency.id} 

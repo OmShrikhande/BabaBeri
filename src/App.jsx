@@ -40,14 +40,22 @@ function App() {
     
     if (token && !authService.isTokenExpired(token)) {
       // User is already authenticated
-      setCurrentUser({
+      const type = authService.getUserType();
+      const user = {
         username: userInfo?.username || userInfo?.email || 'User',
-        userType: authService.getUserType(), // already normalized in service
+        userType: type, // already normalized in service
         loginTime: userInfo?.loginTime || new Date().toISOString(),
         token: token,
         isDemo: false
-      });
+      };
+      setCurrentUser(user);
       setIsAuthenticated(true);
+
+      // If admin, land directly on SubAdminDetail with a default sub-admin
+      if (type === 'admin') {
+        setActiveRoute('admin-subadmin-detail');
+        setSelectedSubAdminId(1); // default sub-admin id; adjust if needed
+      }
     } else if (token) {
       // Token exists but is expired
       authService.logout();
@@ -56,9 +64,10 @@ function App() {
 
   // Authentication handlers
   const handleLogin = (loginData) => {
+    const userType = authService.getUserType();
     const userData = {
       username: loginData.username,
-      userType: authService.getUserType(), // ensure normalized type from service
+      userType: userType, // ensure normalized type from service
       loginTime: new Date().toISOString(),
       token: loginData.token,
       isDemo: loginData.isDemo || false,
@@ -80,6 +89,12 @@ function App() {
 
     setCurrentUser(userData);
     setIsAuthenticated(true);
+
+    // If admin, navigate to SubAdminDetail directly and set a default sub-admin id
+    if (userType === 'admin') {
+      setActiveRoute('admin-subadmin-detail');
+      setSelectedSubAdminId(1); // default sub-admin id; adjust if needed
+    }
   };
 
   const handleLogout = () => {
@@ -215,10 +230,21 @@ function App() {
               subAdminId={selectedSubAdminId}
               onBack={handleBackToSubAdmins}
               onNavigateToMasterAgency={handleNavigateToMasterAgency}
+              currentUser={currentUser}
             />
           );
         }
         return <SubAdmins onNavigateToDetail={handleNavigateToSubAdminDetail} />;
+      case 'admin-subadmin-detail':
+        // direct landing page for admins; no sidebar tab
+        return (
+          <SubAdminDetail
+            subAdminId={selectedSubAdminId || 1}
+            onBack={() => {}}
+            onNavigateToMasterAgency={handleNavigateToMasterAgency}
+            currentUser={currentUser}
+          />
+        );
       case 'master-agency':
         return <MasterAgency onNavigateToDetail={handleNavigateToMasterAgency} currentUser={currentUser} />;
       case 'live-monitoring':

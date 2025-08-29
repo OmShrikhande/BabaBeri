@@ -28,12 +28,12 @@ export const ROLE_PERMISSIONS = {
     allowedRoutes: 'all'
   },
   [USER_TYPES.ADMIN]: {
-    // Admin can only access Sub Admin section; no dashboard
+    // Admin lands on SubAdminDetail directly; no sidebar tab for it
     canAccess: (route) => {
-      const allowedRoutes = ['master-agency'];
+      const allowedRoutes = ['admin-subadmin-detail']; // synthetic route, not in sidebar
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: ['master-agency']
+    allowedRoutes: ['admin-subadmin-detail']
   },
   'sub-admin': {
     // Sub-admin can only access sub-admin related routes

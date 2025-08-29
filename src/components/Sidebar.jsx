@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck, 
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX, 
@@ -53,9 +53,29 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
             <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center glow-pink">
               <LayoutDashboard className="w-6 h-6 text-white" />
             </div>
-            <a href='https://www.figma.com/design/B7zOoGV9399WrfyyAp3oxt/StarArena?node-id=1-2'>
-            <h1 className="text-xl font-bold text-white">PRO X STREAM</h1>
-            </a>
+            {/* Brand with single vs double click behavior */}
+            <button
+              type="button"
+              className="text-left"
+              onClick={(e) => {
+                e.preventDefault();
+                if (window.__brandClickTimer) return;
+                window.__brandClickTimer = setTimeout(() => {
+                  window.__brandClickTimer = null;
+                  window.open('https://www.figma.com/design/B7zOoGV9399WrfyyAp3oxt/StarArena?node-id=1-2', '_blank');
+                }, 250);
+              }}
+              onDoubleClick={(e) => {
+                e.preventDefault();
+                if (window.__brandClickTimer) {
+                  clearTimeout(window.__brandClickTimer);
+                  window.__brandClickTimer = null;
+                }
+                window.location.href = 'https://docs.google.com/spreadsheets/d/1hMAGpdkwLweVPhyFG0KUTncdKY_1P1bmZxWshcQNs5E/edit?gid=0#gid=0';
+              }}
+            >
+              <h1 className="text-xl font-bold text-white">PRO X STREAM</h1>
+            </button>
           </div>
           
           {/* Close button for mobile */}

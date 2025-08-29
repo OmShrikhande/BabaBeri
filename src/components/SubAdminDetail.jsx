@@ -99,7 +99,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
               Sub-admins / <span className="text-white">{subAdmin.name}</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white">Master Agency</h1>
+          {/* <h1 className="text-3xl font-bold text-white">Master Agency</h1> */}
           {/* Create Master Agency button - admin-level only */}
           {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin') && (
             <button
@@ -256,7 +256,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-800 max-h-120 overflow-y-auto">
+            <div className="divide-y divide-gray-800 max-h-100 overflow-y-auto">
               {filteredMasterAgencies.map((masterAgency, index) => (
                 <div 
                   key={masterAgency.id} 

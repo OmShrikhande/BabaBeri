@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X } from 'lucide-react';
 import { subAdminsData, royalTiers } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
+import MasterAgencyForm from './MasterAgencyForm';
 
 const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,8 +10,14 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [localMasterAgencies, setLocalMasterAgencies] = useState(null);
 
-  const subAdmin = subAdminsData.find(sa => sa.id === subAdminId);
+  const subAdmin = useMemo(() => subAdminsData.find(sa => sa.id === subAdminId), [subAdminId]);
+
+  const effectiveMasterAgencies = useMemo(() => {
+    return localMasterAgencies ?? subAdmin?.masterAgencies ?? [];
+  }, [localMasterAgencies, subAdmin]);
 
   if (!subAdmin) {
     return (
@@ -28,10 +35,10 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
     );
   }
 
-  const filteredMasterAgencies = subAdmin.masterAgencies?.filter(agency =>
+  const filteredMasterAgencies = effectiveMasterAgencies.filter(agency =>
     agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agency.agencyId.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+    (agency.agencyId || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleMasterAgencyClick = (masterAgencyId) => {
     if (onNavigateToMasterAgency) {
@@ -93,6 +100,16 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
             </div>
           </div>
           <h1 className="text-3xl font-bold text-white">Master Agency</h1>
+          {/* Create Master Agency button - admin-level only */}
+          {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin') && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+            >
+              <PlusCircle className="w-5 h-5" />
+              New Master Agency
+            </button>
+          )}
         </div>
       </div>
 
@@ -332,6 +349,48 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
           availableTargets={getAvailableSubAdmins()}
           onMove={handleEntityMove}
         />
+      )}
+
+      {/* Create Master Agency Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-[#0F0F0F] w-full max-w-lg rounded-2xl border border-gray-800 shadow-xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 text-[#F72585]" />
+                Create Master Agency
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <MasterAgencyForm
+                onCreated={(created) => {
+                  // Optimistically add to local list; ensure required fields exist
+                  const newItem = {
+                    id: created?.id || Math.floor(Math.random() * 1000000),
+                    name: created?.name || created?.email || 'New Master Agency',
+                    agencyId: created?.agencyId || `#${String(created?.id || Date.now()).slice(-6)}`,
+                    totalAgency: created?.totalAgency || '0',
+                    myEarning: created?.myEarning || 0,
+                    redeemed: created?.redeemed || 0,
+                  };
+                  setLocalMasterAgencies(prev => {
+                    const base = prev ?? (subAdmin?.masterAgencies || []);
+                    return [newItem, ...base];
+                  });
+                  setShowCreateModal(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -13,7 +13,36 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [localMasterAgencies, setLocalMasterAgencies] = useState(null);
 
+  // Calendar selection value (YYYY-MM for Monthly, YYYY-MM-DD for Daily)
+  const [selectedValue, setSelectedValue] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // default to current month
+  });
+
   const subAdmin = useMemo(() => subAdminsData.find(sa => sa.id === subAdminId), [subAdminId]);
+
+  // Derive earnings based on selected period and value
+  const selectedEarnings = useMemo(() => {
+    if (!subAdmin) return { earnings: 0, redeemDiamonds: 0 };
+    const history = subAdmin.earningsHistory || {};
+
+    if (selectedPeriod === 'Monthly') {
+      const monthly = history.monthly || {};
+      const rec = monthly[selectedValue];
+      return {
+        earnings: rec?.earnings ?? (subAdmin.earnings?.thisMonth ?? 0),
+        redeemDiamonds: rec?.redeemDiamonds ?? (subAdmin.earnings?.redeemDiamonds ?? 0),
+      };
+    }
+
+    // Daily
+    const daily = history.daily || {};
+    const rec = daily[selectedValue];
+    return {
+      earnings: rec?.earnings ?? 0,
+      redeemDiamonds: rec?.redeemDiamonds ?? 0,
+    };
+  }, [subAdmin, selectedPeriod, selectedValue]);
 
   const effectiveMasterAgencies = useMemo(() => {
     return localMasterAgencies ?? subAdmin?.masterAgencies ?? [];
@@ -148,28 +177,50 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
 
               {/* Earnings Cards */}
               <div className="grid grid-cols-3 gap-4">
+                {/* Calendar/Picker Card */}
+                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Diamond className="w-5 h-5 text-[#4CC9F0]" />
+                      <span className="text-gray-400 text-sm">
+                        {selectedPeriod === 'Monthly' ? "Select Month" : "Select Day"}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Use native inputs to avoid adding deps */}
+                  {selectedPeriod === 'Monthly' ? (
+                    <input
+                      type="month"
+                      value={selectedValue}
+                      onChange={(e) => setSelectedValue(e.target.value)}
+                      className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg text-white px-3 py-2 focus:outline-none focus:border-[#F72585]"
+                    />
+                  ) : (
+                    <input
+                      type="date"
+                      value={selectedValue.length === 7 ? `${selectedValue}-01` : selectedValue}
+                      onChange={(e) => setSelectedValue(e.target.value)}
+                      className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg text-white px-3 py-2 focus:outline-none focus:border-[#F72585]"
+                    />
+                  )}
+                </div>
+
+                {/* Earnings for selected period */}
                 <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
                   <div className="flex items-center space-x-2 mb-2">
                     <Diamond className="w-5 h-5 text-[#4CC9F0]" />
-                    <span className="text-gray-400 text-sm">Last Month's Earnings</span>
+                    <span className="text-gray-400 text-sm">This {selectedPeriod === 'Monthly' ? 'Month' : 'Day'}'s Earnings</span>
                   </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(subAdmin.earnings?.lastMonth || 12390)}</div>
+                  <div className="text-white text-xl font-bold">{formatNumber(selectedEarnings.earnings)}</div>
                 </div>
 
-                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Diamond className="w-5 h-5 text-[#4CC9F0]" />
-                    <span className="text-gray-400 text-sm">This Month's Earnings</span>
-                  </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(subAdmin.earnings?.thisMonth || 12500000)}</div>
-                </div>
-
+                {/* Redeem Diamonds for selected period */}
                 <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
                   <div className="flex items-center space-x-2 mb-2">
                     <Diamond className="w-5 h-5 text-[#4CC9F0]" />
                     <span className="text-gray-400 text-sm">Redeem Diamonds</span>
                   </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(subAdmin.earnings?.redeemDiamonds || 12500000)}</div>
+                  <div className="text-white text-xl font-bold">{formatNumber(selectedEarnings.redeemDiamonds)}</div>
                 </div>
               </div>
             </div>
@@ -222,12 +273,21 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
                     
                     {isPeriodDropdownOpen && (
                       <div className="absolute top-full right-0 mt-1 bg-[#2A2A2A] border border-gray-700 rounded-lg shadow-lg z-10 min-w-32">
-                        {['Monthly', 'Weekly', 'Daily'].map((period) => (
+                        {['Monthly', 'Daily'].map((period) => (
                           <button
                             key={period}
                             onClick={() => {
+                              // Adjust selectedValue format when switching period
                               setSelectedPeriod(period);
                               setIsPeriodDropdownOpen(false);
+                              setSelectedValue((prev) => {
+                                if (period === 'Monthly') {
+                                  // Convert YYYY-MM-DD -> YYYY-MM
+                                  return prev.length === 10 ? prev.slice(0, 7) : prev;
+                                }
+                                // Daily: Convert YYYY-MM -> YYYY-MM-01 (default to 1st day)
+                                return prev.length === 7 ? `${prev}-01` : prev;
+                              });
                             }}
                             className="w-full px-4 py-2 text-left text-white hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg transition-colors"
                           >

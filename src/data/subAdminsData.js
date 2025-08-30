@@ -21,6 +21,17 @@ export const subAdminsData = [
       thisMonth: 12500000, // 12.5M
       redeemDiamonds: 12500000 // 12.5M
     },
+    earningsHistory: {
+      // Keyed by YYYY-MM for monthly, YYYY-MM-DD for daily
+      monthly: {
+        '2025-07': { earnings: 10000, redeemDiamonds: 8000 },
+        '2025-08': { earnings: 12500000, redeemDiamonds: 9000000 }
+      },
+      daily: {
+        '2025-08-29': { earnings: 420000, redeemDiamonds: 300000 },
+        '2025-08-30': { earnings: 510000, redeemDiamonds: 350000 }
+      }
+    },
     masterAgencies: [
       {
         id: 1,

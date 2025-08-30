@@ -154,19 +154,32 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
 
             {/* Right Side - Royal Tiers */}
             <div className="col-span-4 space-y-4">
-              {royalTiers.map((tier) => (
-                <div key={tier.id} className="bg-[#121212] p-4 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${tier.bgColor} rounded-lg flex items-center justify-center text-2xl`}>
-                      {tier.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold">{tier.name}</h3>
-                      <p className="text-gray-400 text-sm">{tier.revenueShare}</p>
+              {royalTiers.map((tier, idx) => {
+                // Determine active tier (example: first one is active)
+                const isActive = idx === 0;
+                return (
+                  <div
+                    key={tier.id}
+                    className={
+                      `bg-[#121212] p-4 rounded-xl border transition-colors ` +
+                      (isActive
+                        ? 'border-[#F72585] ring-2 ring-[#F72585]'
+                        : 'border-gray-700 grayscale pointer-events-none')
+                    }
+                    style={isActive ? {} : { filter: 'grayscale(1)' }}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${tier.bgColor} rounded-lg flex items-center justify-center text-2xl`}>
+                        {tier.icon}
+                      </div>
+                      <div>
+                        <h3 className="text-white font-bold">{tier.name}</h3>
+                        <p className="text-gray-400 text-sm">{tier.revenueShare}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

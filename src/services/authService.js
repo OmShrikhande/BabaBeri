@@ -321,6 +321,51 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to create master agency.' };
     }
   }
+
+  // Manual coin recharge by Super Admin
+  async rechargeManualBySuperAdmin(payload) {
+    // Auth checks
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    // Role check: only Super Admin allowed
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can perform manual recharge.' };
+    }
+
+    // Basic payload validation
+    const required = ['usercode', 'rechargeby', 'coins', 'amount', 'paymentmethod', 'transactionid', 'status'];
+    const missing = required.filter(k => payload?.[k] === undefined || payload?.[k] === null || String(payload[k]).trim() === '');
+    if (missing.length) {
+      return { success: false, error: `Missing required fields: ${missing.join(', ')}` };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RECHARGE_MANUAL}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Recharge failed: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+
+      // Try to parse success JSON, fallback to raw text
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch {}
+      return { success: true, data: data || { message: 'Recharge successful' } };
+    } catch (error) {
+      console.error('Manual recharge error:', error);
+      return { success: false, error: error.message || 'Manual recharge failed.' };
+    }
+  }
 }
 
 // Create and export a singleton instance

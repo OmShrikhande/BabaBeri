@@ -8,7 +8,9 @@ export const API_CONFIG = {
     USER_PROFILE: '/auth/profile',
     CREATE_ADMIN: '/auth/create-admin',
     CREATE_MASTER_AGENCY: '/auth/create-masteragency',
-    COUNT_BY_ROLE: '/auth/api/countbyrole'
+    COUNT_BY_ROLE: '/auth/api/countbyrole',
+    // Manual coin recharge by Super Admin
+    RECHARGE_MANUAL: '/auth/api/recharge'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

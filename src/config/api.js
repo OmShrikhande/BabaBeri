@@ -12,7 +12,9 @@ export const API_CONFIG = {
     // Manual coin recharge by Super Admin
     RECHARGE_MANUAL: '/auth/api/recharge',
     // Recharge plans - create
-    RECHARGE_PLAN_CREATE: '/auth/api/saveplan'
+    RECHARGE_PLAN_CREATE: '/auth/api/saveplan',
+    // User profile by id (JWT protected)
+    GET_USER_BY_ID: '/auth/user/getByid'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

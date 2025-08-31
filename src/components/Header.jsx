@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, Bell, Search, User, LogOut, Crown, Shield } from 'lucide-react';
 
-const Header = ({ toggleSidebar, currentUser, onLogout }) => {
+const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
 
@@ -82,6 +82,16 @@ const Header = ({ toggleSidebar, currentUser, onLogout }) => {
                   <p className="text-sm font-semibold text-white">{currentUser?.username}</p>
                   <p className="text-xs text-gray-400 capitalize">{currentUser?.userType.replace('-', ' ')}</p>
                 </div>
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    onProfileClick && onProfileClick();
+                  }}
+                  className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-300 hover:bg-gray-800 transition-colors"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">Profile</span>
+                </button>
                 <button
                   onClick={() => {
                     setShowUserMenu(false);

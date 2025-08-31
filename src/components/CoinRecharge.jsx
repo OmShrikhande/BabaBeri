@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Coins, User, History, Send, Minus, Search } from 'lucide-react';
 import { ToastContainer, useToast } from './Toast';
+import authService from '../services/authService';
 
 const CoinRecharge = () => {
   // Toast hook
@@ -56,8 +57,10 @@ const CoinRecharge = () => {
   });
 
   const [planForm, setPlanForm] = useState({
-    coins: '',
-    price: '',
+    planename: '',
+    planprice: '',
+    status: 'Active',
+    discription: ''
   });
 
   // Offline recharge states
@@ -107,18 +110,37 @@ const CoinRecharge = () => {
     showToast('Offer added successfully');
   };
 
-  // Handle plan form submission
-  const handlePlanSubmit = (e) => {
+  // Handle plan form submission (API)
+  const handlePlanSubmit = async (e) => {
     e.preventDefault();
-    const newPlan = {
-      id: Date.now(),
-      coins: parseInt(planForm.coins),
-      price: parseFloat(planForm.price),
+
+    // Build payload to match API contract
+    const payload = {
+      planename: String(planForm.planename || '').trim(),
+      planprice: Number(planForm.planprice),
+      status: String(planForm.status || '').trim(),
+      discription: String(planForm.discription || '').trim(),
     };
-    setRechargePlans([...rechargePlans, newPlan]);
-    setPlanForm({ coins: '', price: '' });
-    setShowPlanModal(false);
-    showToast('Recharge plan added successfully');
+
+    // Call API
+    const res = await authService.createRechargePlan(payload);
+    if (res.success) {
+      showToast('Recharge plan created successfully');
+      // Optionally update local UI list (append minimal info)
+      try {
+        const created = res.data;
+        const uiItem = {
+          id: created?.id || Date.now(),
+          coins: created?.coins || 0, // backend doesn’t return coins; keep UI consistent
+          price: created?.planprice || payload.planprice,
+        };
+        setRechargePlans([...rechargePlans, uiItem]);
+      } catch {}
+      setPlanForm({ planename: '', planprice: '', status: 'Active', discription: '' });
+      setShowPlanModal(false);
+    } else {
+      showToast(res.error || 'Failed to create recharge plan', 'error');
+    }
   };
 
   // Handle user ID search
@@ -418,33 +440,55 @@ const CoinRecharge = () => {
             <h3 className="text-lg font-semibold text-white mb-6">Add Plan</h3>
             <form onSubmit={handlePlanSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Coins Amount</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Plan Name</label>
                 <input
-                  type="number"
-                  value={planForm.coins}
-                  onChange={(e) => setPlanForm({ ...planForm, coins: e.target.value })}
+                  type="text"
+                  value={planForm.planename}
+                  onChange={(e) => setPlanForm({ ...planForm, planename: e.target.value })}
                   required
                   className="w-full px-4 py-3 bg-[#121212] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#7209B7] transition-colors"
-                  placeholder="Enter coins amount"
+                  placeholder="Enter plan name"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Price Amount</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Plan Price</label>
                 <input
                   type="number"
                   step="0.01"
-                  value={planForm.price}
-                  onChange={(e) => setPlanForm({ ...planForm, price: e.target.value })}
+                  value={planForm.planprice}
+                  onChange={(e) => setPlanForm({ ...planForm, planprice: e.target.value })}
                   required
                   className="w-full px-4 py-3 bg-[#121212] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#7209B7] transition-colors"
-                  placeholder="Enter price amount"
+                  placeholder="Enter plan price"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                <select
+                  value={planForm.status}
+                  onChange={(e) => setPlanForm({ ...planForm, status: e.target.value })}
+                  className="w-full px-4 py-3 bg-[#121212] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-[#7209B7] transition-colors"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <textarea
+                  value={planForm.discription}
+                  onChange={(e) => setPlanForm({ ...planForm, discription: e.target.value })}
+                  rows={3}
+                  required
+                  className="w-full px-4 py-3 bg-[#121212] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#7209B7] transition-colors"
+                  placeholder="Enter description"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-3 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg hover:glow-pink transition-all duration-300 font-medium mt-6"
+                className="w-full py-3 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg hover:glow-pink transition-all duration-300 font-medium mt-2"
               >
-                Create Offer
+                Create Plan
               </button>
             </form>
           </div>

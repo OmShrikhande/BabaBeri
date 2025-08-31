@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { LogOut, Crown, Shield, User } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { LogOut, Crown, Shield, User, ChevronDown } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';
@@ -9,7 +9,7 @@ import SubAdminForm from './SubAdminForm';
 
 import authService from '../services/authService';
 
-const Dashboard = ({ currentUser, onLogout }) => {
+const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [dynamicCounts, setDynamicCounts] = useState({
     SUPERADMIN: null,
     ADMIN: null,
@@ -18,6 +18,19 @@ const Dashboard = ({ currentUser, onLogout }) => {
     HOST: null,
   });
   const [loadingCounts, setLoadingCounts] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // close on outside click
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -148,33 +161,48 @@ const Dashboard = ({ currentUser, onLogout }) => {
           {/* User Info & Logout Button */}
           {currentUser && (
             <div className="flex items-center space-x-4">
-              {/* User Badge */}
-              <div className="flex items-center space-x-3 bg-[#1A1A1A] px-4 py-2 rounded-lg border border-gray-700">
-                <div className={`
-                  w-8 h-8 rounded-lg flex items-center justify-center
-                  ${currentUser.userType === 'super-admin' ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' :
-                    currentUser.userType === 'admin' ? 'bg-gradient-to-r from-[#7209B7] to-[#4361EE]' :
-                    'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
-                `}>
-                  {currentUser.userType === 'super-admin' ? <Crown className="w-4 h-4 text-white" /> :
-                   currentUser.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
-                   <User className="w-4 h-4 text-white" />}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{currentUser.username}</p>
-                  <p className="text-xs text-gray-400 capitalize">{currentUser.userType.replace('-', ' ')}</p>
-                </div>
-              </div>
+              {/* User Badge with dropdown */}
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setShowUserMenu(v => !v)}
+                  className="flex items-center space-x-3 bg-[#1A1A1A] px-4 py-2 rounded-lg border border-gray-700 hover:border-gray-600"
+                >
+                  <div className={`
+                    w-8 h-8 rounded-lg flex items-center justify-center
+                    ${currentUser.userType === 'super-admin' ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' :
+                      currentUser.userType === 'admin' ? 'bg-gradient-to-r from-[#7209B7] to-[#4361EE]' :
+                      'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
+                  `}>
+                    {currentUser.userType === 'super-admin' ? <Crown className="w-4 h-4 text-white" /> :
+                     currentUser.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
+                     <User className="w-4 h-4 text-white" />}
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-white">{currentUser.username}</p>
+                    <p className="text-xs text-gray-400 capitalize">{currentUser.userType.replace('-', ' ')}</p>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
 
-              {/* Logout Button */}
-              <button
-                onClick={onLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-900/20 hover:bg-red-900/30 text-red-400 hover:text-red-300 rounded-lg border border-red-800/50 hover:border-red-700 transition-all duration-300 group"
-                title="Sign Out"
-              >
-                <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium hidden sm:block">Sign Out</span>
-              </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#1A1A1A] border border-gray-700 rounded-lg shadow-xl z-50">
+                    <button
+                      onClick={() => { setShowUserMenu(false); onNavigate && onNavigate('profile'); }}
+                      className="w-full text-left px-3 py-2 text-gray-300 hover:bg-gray-800 flex items-center space-x-2"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">Profile</span>
+                    </button>
+                    <button
+                      onClick={() => { setShowUserMenu(false); onLogout && onLogout(); }}
+                      className="w-full text-left px-3 py-2 text-gray-300 hover:bg-red-900/20 hover:text-red-400 flex items-center space-x-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm">Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

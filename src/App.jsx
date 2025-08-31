@@ -14,6 +14,7 @@ import Ranking from './components/Ranking';
 import CoinRecharge from './components/CoinRecharge';
 import DiamondsCashout from './components/DiamondsCashout';
 import Header from './components/Header';
+import Profile from './components/Profile';
 import Login from './components/Login';
 import AuthTest from './components/AuthTest';
 import MasterAgency from './components/MasterAgency';
@@ -28,6 +29,7 @@ function App() {
   // App state
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeRoute, setActiveRoute] = useState('dashboard');
+  const [previousRoute, setPreviousRoute] = useState(null);
   const [selectedAgencyId, setSelectedAgencyId] = useState(null);
   const [selectedSubAdminId, setSelectedSubAdminId] = useState(null);
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
@@ -125,6 +127,7 @@ function App() {
       return;
     }
 
+    setPreviousRoute(activeRoute);
     setActiveRoute(route);
     setSidebarOpen(false); // Close sidebar on mobile after navigation
     // Reset selections when navigating away
@@ -259,9 +262,11 @@ function App() {
         return <BlockUsers />;
       case 'auth-test':
         return <AuthTest />;
+      case 'profile':
+        return <Profile currentUser={currentUser} onBack={() => handleNavigation(previousRoute || 'dashboard')} />;
       case 'dashboard':
       default:
-        return <Dashboard currentUser={currentUser} onLogout={handleLogout} />;
+        return <Dashboard currentUser={currentUser} onLogout={handleLogout} onNavigate={handleNavigation} />;
     }
   };
 
@@ -289,6 +294,7 @@ function App() {
           toggleSidebar={toggleSidebar} 
           currentUser={currentUser}
           onLogout={handleLogout}
+          onProfileClick={() => handleNavigation('profile')}
         />
 
         {/* Dynamic Content */}

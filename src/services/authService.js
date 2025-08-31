@@ -366,6 +366,50 @@ class AuthService {
       return { success: false, error: error.message || 'Manual recharge failed.' };
     }
   }
+
+  // Create Recharge Plan (JWT protected)
+  async createRechargePlan(plan) {
+    // Auth checks
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    // Role check: Assuming only Super Admin can create plans; adjust if Admins can as well
+    const callerRole = normalizeUserType(this.getUserType());
+    const canCreate = callerRole === USER_TYPES.SUPER_ADMIN; // change to || USER_TYPES.ADMIN if needed
+    if (!canCreate) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can create recharge plans.' };
+    }
+
+    // Validate payload fields based on API contract
+    const required = ['planename', 'planprice', 'status', 'discription'];
+    const missing = required.filter(k => plan?.[k] === undefined || plan?.[k] === null || String(plan[k]).trim() === '');
+    if (missing.length) {
+      return { success: false, error: `Missing required fields: ${missing.join(', ')}` };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RECHARGE_PLAN_CREATE}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify(plan),
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to create plan: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch {}
+      return { success: true, data: data || { message: 'Plan created successfully' } };
+    } catch (error) {
+      console.error('Create recharge plan error:', error);
+      return { success: false, error: error.message || 'Failed to create recharge plan.' };
+    }
+  }
 }
 
 // Create and export a singleton instance

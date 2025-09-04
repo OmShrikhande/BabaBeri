@@ -6,6 +6,7 @@ import FinancialMetricsCard from './FinancialMetricsCard';
 import SupporterCard from './SupporterCard';
 import { metricsData as staticMetrics, financialMetricsData, supporterCardsData } from '../data/dashboardData';
 import SubAdminForm from './SubAdminForm';
+import DpVerificationModal from './DpVerificationModal';
 
 import authService from '../services/authService';
 
@@ -420,83 +421,20 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
 
       {/* DP Verification Modal */}
       {showDpModal && selectedUser && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
-          style={{ animation: 'fadeIn 0.3s' }}
-          aria-modal="true"
-          role="dialog"
-        >
-          <div
-            className="bg-[#181818] rounded-2xl shadow-2xl border border-gray-800 w-full max-w-lg p-8 relative transform transition-all duration-300 scale-95 opacity-0 animate-modal-pop"
-            style={{ animation: 'modalPop 0.35s forwards' }}
-          >
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl"
-              onClick={() => setShowDpModal(false)}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <div className="flex flex-col items-center">
-              <img
-                src={selectedUser.dp}
-                alt={selectedUser.username}
-                className="w-32 h-32 rounded-full border-4 border-[#7209B7] object-cover mb-4 shadow-lg transition-all duration-300"
-              />
-              <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">DP Verification</h2>
-              <div className="mb-4 w-full flex flex-col items-center">
-                <p className="text-gray-400 text-lg mb-1">
-                  <span className="font-semibold text-white">{selectedUser.username}</span> has requested DP confirmation.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 mt-2">
-                  <div className="bg-[#22223b] rounded-lg px-4 py-2 flex items-center space-x-2">
-                    <span className="text-gray-400 text-sm">User ID:</span>
-                    <span className="text-white font-semibold text-sm">{selectedUser.id}</span>
-                  </div>
-                  <div className="bg-[#22223b] rounded-lg px-4 py-2 flex items-center space-x-2">
-                    <span className="text-gray-400 text-sm">Region:</span>
-                    <span className="text-white font-semibold text-sm">{selectedUser.region}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex space-x-4 mt-6">
-                <button
-                  className="bg-gradient-to-r from-[#4361EE] to-[#4CC9F0] text-white px-6 py-2 rounded-xl font-semibold text-lg shadow hover:scale-105 hover:opacity-90 transition-all duration-200"
-                  onClick={() => {
-                    // handle approve logic here
-                    setShowDpModal(false);
-                  }}
-                >
-                  Approve
-                </button>
-                <button
-                  className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-6 py-2 rounded-xl font-semibold text-lg shadow hover:scale-105 hover:opacity-90 transition-all duration-200"
-                  onClick={() => {
-                    // handle reject logic here
-                    setShowDpModal(false);
-                  }}
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Animations */}
-          <style>
-            {`
-              @keyframes fadeIn {
-                from { opacity: 0 }
-                to { opacity: 1 }
-              }
-              @keyframes modalPop {
-                from { opacity: 0; transform: scale(0.95);}
-                to { opacity: 1; transform: scale(1);}
-              }
-              .animate-fade-in { animation: fadeIn 0.3s; }
-              .animate-modal-pop { animation: modalPop 0.35s forwards; }
-            `}
-          </style>
-        </div>
+        <DpVerificationModal
+          isOpen={showDpModal}
+          onClose={() => setShowDpModal(false)}
+          requests={notificationUsers}
+          initialSelectedId={selectedUser?.id}
+          onApprove={(id) => {
+            // TODO: call backend approve; currently just close
+            setShowDpModal(false);
+          }}
+          onReject={(id) => {
+            // TODO: call backend reject; currently just close
+            setShowDpModal(false);
+          }}
+        />
       )}
     </main>
   );

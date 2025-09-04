@@ -426,9 +426,19 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
           onClose={() => setShowDpModal(false)}
           requests={notificationUsers}
           initialSelectedId={selectedUser?.id}
-          onApprove={(id) => {
-            // TODO: call backend approve; currently just close
-            setShowDpModal(false);
+          onApprove={async (id) => {
+            try {
+              const user = notificationUsers.find(u => u.id === id);
+              const usercode = user?.usercode || user?.username || `PH${id}`; // fallback if your data has no explicit code
+              const res = await authService.approveProfile(usercode);
+              if (!res.success) {
+                console.error(res.error || 'Approve failed');
+              }
+            } catch (e) {
+              console.error('Approve error:', e?.message || e);
+            } finally {
+              setShowDpModal(false);
+            }
           }}
           onReject={(id) => {
             // TODO: call backend reject; currently just close

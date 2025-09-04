@@ -107,6 +107,57 @@ class AuthService {
     return userInfo ? JSON.parse(userInfo) : null;
   }
 
+  // Get users by role
+  async getUsersByRole(role) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const roleParam = String(role).toUpperCase();
+    const url = `${API_CONFIG.BASE_URL}/auth/api/alluserByRole?role=${encodeURIComponent(roleParam)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch users for role ${roleParam}: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data: data };
+    } catch (error) {
+      console.error('Get users by role error:', error);
+      return { success: false, error: error.message || `Failed to fetch users for role ${roleParam}.` };
+    }
+  }
+
+  // Get master agencies by admin code
+  async getMasterAgenciesByAdminCode(code) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_MASTER_AGENCY}?code=${encodeURIComponent(code)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch master agencies for code ${code}: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data: data };
+    } catch (error) {
+      console.error('Get master agencies error:', error);
+      return { success: false, error: error.message || 'Failed to fetch master agencies.' };
+    }
+  }
+
   // Make authenticated API requests
   async makeAuthenticatedRequest(url, options = {}) {
     const token = this.getToken();
@@ -367,6 +418,33 @@ class AuthService {
     }
   }
 
+  // Approve profile picture (JWT protected)
+  async approveProfile(usercode) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    if (!usercode || String(usercode).trim() === '') {
+      return { success: false, error: 'usercode is required' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_PROFILE}?usercode=${encodeURIComponent(usercode)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Approve profile failed: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch {}
+      return { success: true, data: data || { message: 'Profile approved' } };
+    } catch (error) {
+      console.error('Approve profile error:', error);
+      return { success: false, error: error.message || 'Approve profile failed.' };
+    }
+  }
+
   // Get user by id (JWT protected)
   async getUserById(id) {
     const token = this.getToken();
@@ -434,6 +512,62 @@ class AuthService {
       console.error('Create recharge plan error:', error);
       return { success: false, error: error.message || 'Failed to create recharge plan.' };
     }
+  }
+
+  // Fetch master agencies by admin code (JWT protected)
+  async getAllMasterAgenciesByAdminCode(code) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    // Super Admin-only endpoint per your note
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can fetch all master agencies by admin code.' };
+    }
+
+    if (!code || String(code).trim() === '') {
+      return { success: false, error: 'Admin code is required.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_MASTER_AGENCY}?code=${encodeURIComponent(code)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch master agencies: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch {}
+      return { success: true, data };
+    } catch (error) {
+      console.error('getAllMasterAgenciesByAdminCode error:', error);
+      return { success: false, error: error.message || 'Failed to fetch master agencies.' };
+    }
+  }
+
+  // Fetch master agencies for logged-in admin (if backend supports deriving from JWT)
+  async getMasterAgenciesForLoggedInAdmin() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Admin can fetch their own master agencies.' };
+    }
+
+    // If your backend supports reading admin identity from JWT without code param,
+    // you may expose a different endpoint. For now, we require admin code in profile.
+    const profile = this.getUserInfo() || await this.fetchUserProfile().catch(() => null);
+    const adminCode = profile?.code || profile?.adminCode || profile?.usercode || profile?.id; // heuristic fallbacks
+    if (!adminCode) {
+      return { success: false, error: 'Admin code not found in profile. Please provide the code explicitly.' };
+    }
+
+    return this.getAllMasterAgenciesByAdminCode(adminCode);
   }
 }
 

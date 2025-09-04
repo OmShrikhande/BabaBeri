@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
 import { normalizeUserType } from '../utils/roleBasedAccess';
+import authService from '../services/authService';
 
 const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,10 +15,61 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
 
+  const [apiMasterAgencies, setApiMasterAgencies] = useState(null); // null = not loaded, [] = loaded empty
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const currentRole = normalizeUserType(currentUser?.userType);
 
-  // Get all master agencies from all sub-admins
-  const getAllMasterAgencies = () => {
+  // Try to fetch from backend (super-admin can pass code; admin uses own code)
+  useEffect(() => {
+    let ignore = false;
+    const load = async () => {
+      setLoading(true); setError(null);
+      try {
+        let res;
+        if (currentRole === 'super-admin') {
+          // TODO: make code dynamic via UI; using ADM17 as per request for now
+          res = await authService.getAllMasterAgenciesByAdminCode('ADM17');
+        } else if (currentRole === 'admin') {
+          res = await authService.getMasterAgenciesForLoggedInAdmin();
+        }
+        if (!ignore && res && res.success) {
+          // Map backend data to UI shape, best-effort with safe fallbacks
+          const mapped = Array.isArray(res.data)
+            ? res.data.map((item, idx) => ({
+                id: item.id || item._id || idx + 1,
+                name: item.name || item.masterAgencyName || item.username || 'Master Agency',
+                agencyId: item.agencyId || item.code || item.usercode || '#N/A',
+                totalAgency: item.totalAgency || item.agencyCount || 0,
+                myEarning: item.myEarning || item.earning || 0,
+                redeemed: item.redeemed || 0,
+                subAdminName: item.subAdminName || item.adminName || '—',
+                subAdminId: item.subAdminId || item.adminId || 0,
+                currentParent: item.subAdminName || item.adminName || '—'
+              }))
+            : [];
+          setApiMasterAgencies(mapped);
+        } else if (!ignore && res && !res.success) {
+          setError(res.error || 'Failed to load master agencies');
+          setApiMasterAgencies([]);
+        }
+      } catch (e) {
+        if (!ignore) { setError(e?.message || 'Failed to load master agencies'); setApiMasterAgencies([]); }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    };
+
+    if (currentRole === 'super-admin' || currentRole === 'admin') {
+      load();
+    }
+
+    return () => { ignore = true; };
+  }, [currentRole]);
+
+  // Build from static fallback
+  const getAllMasterAgenciesFallback = () => {
     const allMasterAgencies = [];
     subAdminsData.forEach(subAdmin => {
       if (subAdmin.masterAgencies) {
@@ -34,12 +86,13 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
     return allMasterAgencies;
   };
 
-  const masterAgencies = getAllMasterAgencies();
+  // Prefer API data when present
+  const masterAgencies = (apiMasterAgencies ?? getAllMasterAgenciesFallback());
 
   const filteredMasterAgencies = masterAgencies.filter(agency =>
-    agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agency.agencyId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agency.subAdminName.toLowerCase().includes(searchTerm.toLowerCase())
+    (agency.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(agency.agencyId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(agency.subAdminName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sort master agencies
@@ -48,12 +101,12 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
     
     switch (sortBy) {
       case 'name':
-        aValue = a.name.toLowerCase();
-        bValue = b.name.toLowerCase();
+        aValue = String(a.name || '').toLowerCase();
+        bValue = String(b.name || '').toLowerCase();
         break;
       case 'subAdmin':
-        aValue = a.subAdminName.toLowerCase();
-        bValue = b.subAdminName.toLowerCase();
+        aValue = String(a.subAdminName || '').toLowerCase();
+        bValue = String(b.subAdminName || '').toLowerCase();
         break;
       case 'totalAgency':
         aValue = parseInt(a.totalAgency) || 0;
@@ -64,8 +117,8 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
         bValue = b.myEarning || 0;
         break;
       default:
-        aValue = a.name.toLowerCase();
-        bValue = b.name.toLowerCase();
+        aValue = String(a.name || '').toLowerCase();
+        bValue = String(b.name || '').toLowerCase();
     }
 
     if (sortOrder === 'asc') {
@@ -127,7 +180,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
             <p className="text-gray-400 mt-1">Manage all master agencies across sub-admins</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-gray-400 text-sm">Total: {masterAgencies.length} Master Agencies</div>
+            <div className="text-gray-400 text-sm">{loading ? 'Loading…' : `Total: ${masterAgencies.length} Master Agencies`}{error ? ` • ${error}` : ''}</div>
             {(currentRole === 'super-admin' || currentRole === 'admin') && (
               <button
                 onClick={() => setShowCreate((prev) => !prev)}
@@ -311,7 +364,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                 </div>
                 <h3 className="text-xl font-bold text-white mb-3">No master agencies found</h3>
                 <p className="text-gray-400 max-w-md">
-                  {searchTerm 
+                  {searchTerm
                     ? "No master agencies match your search criteria." 
                     : "No master agencies are currently available."
                   }

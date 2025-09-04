@@ -31,7 +31,8 @@ function App() {
   const [activeRoute, setActiveRoute] = useState('dashboard');
   const [previousRoute, setPreviousRoute] = useState(null);
   const [selectedAgencyId, setSelectedAgencyId] = useState(null);
-  const [selectedSubAdminId, setSelectedSubAdminId] = useState(null);
+  const [selectedSubAdminId, setSelectedSubAdminId] = useState(null); // legacy ID usage
+  const [selectedSubAdmin, setSelectedSubAdmin] = useState(null); // { id, code, name }
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
   const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
 
@@ -56,7 +57,8 @@ function App() {
       // If admin, land directly on SubAdminDetail with a default sub-admin
       if (type === 'admin') {
         setActiveRoute('admin-subadmin-detail');
-        setSelectedSubAdminId(1); // default sub-admin id; adjust if needed
+        setSelectedSubAdminId(1); // legacy
+        setSelectedSubAdmin({ id: 1 }); // default sub-admin; adjust if needed
       }
     } else if (token) {
       // Token exists but is expired
@@ -95,7 +97,8 @@ function App() {
     // If admin, navigate to SubAdminDetail directly and set a default sub-admin id
     if (userType === 'admin') {
       setActiveRoute('admin-subadmin-detail');
-      setSelectedSubAdminId(1); // default sub-admin id; adjust if needed
+      setSelectedSubAdminId(1); // legacy
+      setSelectedSubAdmin({ id: 1 }); // default sub-admin; adjust if needed
     }
   };
 
@@ -136,6 +139,7 @@ function App() {
     }
     if (route !== 'sub-admins') {
       setSelectedSubAdminId(null);
+      setSelectedSubAdmin(null);
       setSelectedMasterAgencyId(null);
       setSelectedAgencyHostId(null);
     }
@@ -150,8 +154,10 @@ function App() {
   };
 
   // Sub-admin navigation handlers
-  const handleNavigateToSubAdminDetail = (subAdminId) => {
-    setSelectedSubAdminId(subAdminId);
+  const handleNavigateToSubAdminDetail = (subAdmin) => {
+    // subAdmin: { id, code, name }
+    setSelectedSubAdminId(subAdmin?.id);
+    setSelectedSubAdmin(subAdmin);
     setSelectedMasterAgencyId(null); // Reset master agency when selecting sub admin
   };
 
@@ -227,10 +233,12 @@ function App() {
             />
           );
         }
-        if (selectedSubAdminId) {
+        if (selectedSubAdmin) {
           return (
             <SubAdminDetail
-              subAdminId={selectedSubAdminId}
+              subAdminId={selectedSubAdmin?.id}
+              adminCode={selectedSubAdmin?.code}
+              subAdminName={selectedSubAdmin?.name}
               onBack={handleBackToSubAdmins}
               onNavigateToMasterAgency={handleNavigateToMasterAgency}
               currentUser={currentUser}

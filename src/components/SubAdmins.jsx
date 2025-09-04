@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, ChevronRight, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
 import authService from '../services/authService';
@@ -13,6 +13,42 @@ const SubAdmins = ({ onNavigateToDetail }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // List loading and data from API
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState('');
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchAdmins = async () => {
+      setListLoading(true);
+      setListError('');
+      try {
+        const res = await authService.getUsersByRole('ADMIN');
+        if (!ignore) {
+          if (res.success) {
+            const items = Array.isArray(res.data) ? res.data : (res.data?.result || res.data?.data || []);
+            const mapped = (items || []).map((u, idx) => ({
+              id: u?.id || u?._id || u?.userId || idx + 1,
+              name: u?.name || u?.username || u?.fullname || u?.email || `Admin ${idx + 1}`,
+              adminId: u?.code || u?.usercode || u?.adminCode || u?.adminId || u?.userid || '',
+              masterAgenciesCount: u?.masterAgenciesCount || u?.masteragencycount || u?.count || 0,
+              api: u,
+            }));
+            setSubAdmins(mapped);
+          } else {
+            setListError(res.error || 'Failed to load admins.');
+          }
+        }
+      } catch (e) {
+        if (!ignore) setListError(e?.message || 'Failed to load admins.');
+      } finally {
+        if (!ignore) setListLoading(false);
+      }
+    };
+    fetchAdmins();
+    return () => { ignore = true; };
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -88,9 +124,9 @@ const SubAdmins = ({ onNavigateToDetail }) => {
     }
   };
 
-  const handleViewSubAdmin = (subAdminId) => {
+  const handleViewSubAdmin = (subAdmin) => {
     if (onNavigateToDetail) {
-      onNavigateToDetail(subAdminId);
+      onNavigateToDetail({ id: subAdmin?.id, code: subAdmin?.adminId, name: subAdmin?.name });
     }
   };
 
@@ -225,7 +261,13 @@ const SubAdmins = ({ onNavigateToDetail }) => {
 
             {/* Table Body */}
             <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
-              {subAdmins.map((subAdmin, index) => (
+              {listLoading && (
+                <div className="px-6 py-8 text-gray-400 text-center">Loading admins...</div>
+              )}
+              {!listLoading && listError && (
+                <div className="px-6 py-8 text-red-400 text-center">{listError}</div>
+              )}
+              {!listLoading && !listError && subAdmins.map((subAdmin, index) => (
                 <div 
                   key={subAdmin.id} 
                   className="grid grid-cols-4 gap-6 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group"
@@ -252,7 +294,7 @@ const SubAdmins = ({ onNavigateToDetail }) => {
                   {/* Action Button */}
                   <div className="flex items-center">
                     <button
-                      onClick={() => handleViewSubAdmin(subAdmin.id)}
+                      onClick={() => handleViewSubAdmin(subAdmin)}
                       className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center hover:opacity-90 hover:shadow-lg transform hover:scale-110 transition-all duration-200 glow-pink"
                       aria-label="View sub-admin details"
                       title="View details"

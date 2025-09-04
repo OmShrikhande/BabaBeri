@@ -13,8 +13,12 @@ export const API_CONFIG = {
     RECHARGE_MANUAL: '/auth/api/recharge',
     // Recharge plans - create
     RECHARGE_PLAN_CREATE: '/auth/api/saveplan',
+    // Approve profile picture (JWT protected)
+    APPROVE_PROFILE: '/auth/api/approveprofile',
     // User profile by id (JWT protected)
-    GET_USER_BY_ID: '/auth/user/getByid'
+    GET_USER_BY_ID: '/auth/user/getByid',
+    // Fetch master agencies by admin code (JWT protected)
+    GET_ALL_MASTER_AGENCY: '/auth/getallMasterAgency'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

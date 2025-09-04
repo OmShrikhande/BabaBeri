@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X } from 'lucide-react';
 import { subAdminsData, royalTiers } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
+import authService from '../services/authService';
 
-const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser }) => {
+const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser, adminCode, subAdminName }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
@@ -19,7 +20,14 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // default to current month
   });
 
-  const subAdmin = useMemo(() => subAdminsData.find(sa => sa.id === subAdminId), [subAdminId]);
+  const isApiMode = !!adminCode;
+
+  const subAdmin = useMemo(() => {
+    if (isApiMode) {
+      return { id: subAdminId, name: subAdminName || 'Admin', masterAgencies: [] };
+    }
+    return subAdminsData.find(sa => sa.id === subAdminId);
+  }, [isApiMode, subAdminId, subAdminName]);
 
   // Derive earnings based on selected period and value
   const selectedEarnings = useMemo(() => {
@@ -48,7 +56,34 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
     return localMasterAgencies ?? subAdmin?.masterAgencies ?? [];
   }, [localMasterAgencies, subAdmin]);
 
-  if (!subAdmin) {
+  // Fetch master agencies when adminCode provided (API mode)
+  useEffect(() => {
+    let ignore = false;
+    const run = async () => {
+      if (!adminCode) return;
+      try {
+        const res = await authService.getMasterAgenciesByAdminCode(adminCode);
+        const items = Array.isArray(res?.data) ? res.data : (res?.data?.result || res?.data?.data || []);
+        if (!ignore) {
+          const mapped = (items || []).map((a, idx) => ({
+            id: a?.id || a?._id || a?.agencyId || a?.userid || idx + 1,
+            name: a?.name || a?.username || a?.fullname || a?.agencyname || `Master Agency ${idx + 1}`,
+            agencyId: a?.code || a?.usercode || a?.agencyCode || a?.agencyid || a?.userid || '',
+            totalAgency: a?.totalAgency || a?.total || a?.count || 0,
+            myEarning: a?.myEarning || a?.earning || 0,
+            redeemed: a?.redeemed || a?.redeem || 0,
+          }));
+          setLocalMasterAgencies(mapped);
+        }
+      } catch (e) {
+        if (!ignore) setLocalMasterAgencies([]);
+      }
+    };
+    if (isApiMode) run();
+    return () => { ignore = true; };
+  }, [isApiMode, adminCode]);
+
+  if (!subAdmin && !isApiMode) {
     return (
       <div className="flex-1 bg-[#1A1A1A] text-white flex items-center justify-center">
         <div className="text-center">

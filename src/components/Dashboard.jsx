@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { LogOut, Crown, Shield, User, ChevronDown } from 'lucide-react';
+import { LogOut, Crown, Shield, User, ChevronDown, Bell } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';
@@ -8,6 +8,23 @@ import { metricsData as staticMetrics, financialMetricsData, supporterCardsData 
 import SubAdminForm from './SubAdminForm';
 
 import authService from '../services/authService';
+
+const notificationUsers = [
+  {
+    id: 1,
+    username: 'john_doe',
+    dp: 'https://randomuser.me/api/portraits/men/32.jpg',
+    request: 'DP Confirmation',
+    region: 'USA'
+  },
+  {
+    id: 2,
+    username: 'jane_smith',
+    dp: 'https://randomuser.me/api/portraits/women/44.jpg',
+    request: 'DP Confirmation',
+    region: 'UK'
+  }
+];
 
 const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [dynamicCounts, setDynamicCounts] = useState({
@@ -19,13 +36,20 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   });
   const [loadingCounts, setLoadingCounts] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showDpModal, setShowDpModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const userMenuRef = useRef(null);
+  const notificationMenuRef = useRef(null);
 
   // close on outside click
   useEffect(() => {
     const onDocClick = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setShowUserMenu(false);
+      }
+      if (notificationMenuRef.current && !notificationMenuRef.current.contains(e.target)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', onDocClick);
@@ -160,7 +184,61 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
           
           {/* User Info & Logout Button */}
           {currentUser && (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
+              {/* Notification Button - Only for super-admin */}
+              {currentUser.userType === 'super-admin' && (
+                <div className="relative" ref={notificationMenuRef}>
+                  <button
+                    onClick={() => setShowNotifications(v => !v)}
+                    className="flex items-center justify-center bg-[#1A1A1A] px-5 py-3 rounded-xl border border-gray-700 hover:border-gray-600 focus:outline-none"
+                    aria-label="Notifications"
+                    style={{ minWidth: '64px', minHeight: '48px' }}
+                  >
+                    <Bell className="w-7 h-7 text-pink-400" />
+                    {notificationUsers.length > 0 && (
+                      <span className="ml-2 inline-block w-3 h-3 rounded-full bg-pink-500"></span>
+                    )}
+                  </button>
+                  {showNotifications && (
+                    <div className="absolute left-0 mt-2 w-96 bg-[#1A1A1A] border border-gray-700 rounded-xl shadow-2xl z-50 transition-all duration-300 animate-fade-in">
+                      <div className="p-6 border-b border-gray-800">
+                        <h4 className="text-white text-lg font-bold">DP Confirmation Requests</h4>
+                      </div>
+                      <ul className="max-h-96 overflow-y-auto">
+                        {notificationUsers.length === 0 ? (
+                          <li className="px-6 py-10 text-gray-400 text-center text-lg">No notifications</li>
+                        ) : (
+                          notificationUsers.map(user => (
+                            <li key={user.id} className="flex items-center justify-between px-6 py-5 hover:bg-gray-800 transition">
+                              <div className="flex items-center space-x-4">
+                                <img
+                                  src={user.dp}
+                                  alt={user.username}
+                                  className="w-14 h-14 rounded-full border border-gray-700 object-cover"
+                                />
+                                <div>
+                                  <p className="text-white font-semibold text-base">{user.username}</p>
+                                  <p className="text-sm text-gray-400">{user.request}</p>
+                                </div>
+                              </div>
+                              <button
+                                className="bg-gradient-to-r from-[#7209B7] to-[#4361EE] text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setShowDpModal(true);
+                                  setShowNotifications(false);
+                                }}
+                              >
+                                See Request
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
               {/* User Badge with dropdown */}
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -339,6 +417,87 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
           </div>
         </div>
       </section>
+
+      {/* DP Verification Modal */}
+      {showDpModal && selectedUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60"
+          style={{ animation: 'fadeIn 0.3s' }}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className="bg-[#181818] rounded-2xl shadow-2xl border border-gray-800 w-full max-w-lg p-8 relative transform transition-all duration-300 scale-95 opacity-0 animate-modal-pop"
+            style={{ animation: 'modalPop 0.35s forwards' }}
+          >
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-white text-xl"
+              onClick={() => setShowDpModal(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <div className="flex flex-col items-center">
+              <img
+                src={selectedUser.dp}
+                alt={selectedUser.username}
+                className="w-32 h-32 rounded-full border-4 border-[#7209B7] object-cover mb-4 shadow-lg transition-all duration-300"
+              />
+              <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">DP Verification</h2>
+              <div className="mb-4 w-full flex flex-col items-center">
+                <p className="text-gray-400 text-lg mb-1">
+                  <span className="font-semibold text-white">{selectedUser.username}</span> has requested DP confirmation.
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 mt-2">
+                  <div className="bg-[#22223b] rounded-lg px-4 py-2 flex items-center space-x-2">
+                    <span className="text-gray-400 text-sm">User ID:</span>
+                    <span className="text-white font-semibold text-sm">{selectedUser.id}</span>
+                  </div>
+                  <div className="bg-[#22223b] rounded-lg px-4 py-2 flex items-center space-x-2">
+                    <span className="text-gray-400 text-sm">Region:</span>
+                    <span className="text-white font-semibold text-sm">{selectedUser.region}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex space-x-4 mt-6">
+                <button
+                  className="bg-gradient-to-r from-[#4361EE] to-[#4CC9F0] text-white px-6 py-2 rounded-xl font-semibold text-lg shadow hover:scale-105 hover:opacity-90 transition-all duration-200"
+                  onClick={() => {
+                    // handle approve logic here
+                    setShowDpModal(false);
+                  }}
+                >
+                  Approve
+                </button>
+                <button
+                  className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-6 py-2 rounded-xl font-semibold text-lg shadow hover:scale-105 hover:opacity-90 transition-all duration-200"
+                  onClick={() => {
+                    // handle reject logic here
+                    setShowDpModal(false);
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Animations */}
+          <style>
+            {`
+              @keyframes fadeIn {
+                from { opacity: 0 }
+                to { opacity: 1 }
+              }
+              @keyframes modalPop {
+                from { opacity: 0; transform: scale(0.95);}
+                to { opacity: 1; transform: scale(1);}
+              }
+              .animate-fade-in { animation: fadeIn 0.3s; }
+              .animate-modal-pop { animation: modalPop 0.35s forwards; }
+            `}
+          </style>
+        </div>
+      )}
     </main>
   );
 };

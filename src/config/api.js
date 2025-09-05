@@ -15,6 +15,8 @@ export const API_CONFIG = {
     RECHARGE_PLAN_CREATE: '/auth/api/saveplan',
     // Approve profile picture (JWT protected)
     APPROVE_PROFILE: '/auth/api/approveprofile',
+    // List all pending profile pictures (JWT protected)
+    ALL_PENDING_PICS: '/auth/api/allpendingpics',
     // User profile by id (JWT protected)
     GET_USER_BY_ID: '/auth/user/getByid',
     // Fetch master agencies by admin code (JWT protected)

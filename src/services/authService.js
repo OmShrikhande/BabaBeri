@@ -569,6 +569,70 @@ class AuthService {
 
     return this.getAllMasterAgenciesByAdminCode(adminCode);
   }
+
+  // List all pending profile pics (JWT, Super Admin)
+  async getAllPendingProfilePics() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can list pending profile pics.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ALL_PENDING_PICS}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch pending profile pics: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get pending profile pics error:', error);
+      return { success: false, error: error.message || 'Failed to fetch pending profile pics.' };
+    }
+  }
+
+  // Approve/Reject profile pic (JWT, Super Admin)
+  async updateProfilePicStatus(usercode, status = 'APPROVED') {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    if (!usercode || String(usercode).trim() === '') {
+      return { success: false, error: 'User code is required.' };
+    }
+
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can update profile pic status.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_PROFILE}?usercode=${encodeURIComponent(usercode)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to update profile pic status: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      // API may return plain text like "Status approved successfully"
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw || { message: 'Updated successfully' }; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Update profile pic status error:', error);
+      return { success: false, error: error.message || 'Failed to update profile pic status.' };
+    }
+  }
 }
 
 // Create and export a singleton instance

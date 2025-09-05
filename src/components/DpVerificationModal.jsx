@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useDeferredValue } from 'react';
 import { X, Search, CheckCircle2, XCircle, User2, MapPin, BadgeCheck } from 'lucide-react';
+import authService from '../services/authService.js';
 
 /**
  * DpVerificationModal
@@ -11,8 +12,8 @@ import { X, Search, CheckCircle2, XCircle, User2, MapPin, BadgeCheck } from 'luc
  * - onClose: () => void
  * - requests: Array<{ id: string | number, username: string, dp: string, request?: string, region?: string }>
  * - initialSelectedId?: string | number
- * - onApprove?: (id: string | number) => void
- * - onReject?: (id: string | number) => void
+ * - onApprove?: (usercode: string) => void
+ * - onReject?: (usercode: string) => void
  */
 const DpVerificationModal = ({
   isOpen,
@@ -21,30 +22,88 @@ const DpVerificationModal = ({
   initialSelectedId = null,
   onApprove,
   onReject,
+  fullPage = false, // new prop
 }) => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50); // tuned for responsiveness
   const [selectedId, setSelectedId] = useState(initialSelectedId);
 
+  // Fetched pending requests from API (when requests prop not provided)
+  const [fetchedRequests, setFetchedRequests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const deferredSearch = useDeferredValue(search);
 
+  // Load pending requests when modal opens if parent didn't supply data
   useEffect(() => {
-    if (!isOpen) return;
-    setSelectedId(initialSelectedId ?? (requests[0]?.id ?? null));
-    setPage(1);
-    setSearch('');
+    let active = true;
+    const load = async () => {
+      if (!isOpen) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await authService.getAllPendingProfilePics();
+        if (!active) return;
+        if (res?.success) {
+          const items = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+          // Map API payload -> UI structure
+          const mapped = (items || []).map((item) => {
+            const usercode = item?.usercode ?? '';
+            const fallbackId = item?.id != null ? String(item.id) : Math.random().toString(36).slice(2);
+            const id = usercode && String(usercode).trim() ? String(usercode) : `pending-${fallbackId}`;
+            return {
+              id, // used by UI selection and keys
+              username: usercode && String(usercode).trim() ? String(usercode) : `User ${item?.id ?? ''}`.trim(),
+              dp: item?.path || '',
+              region: 'Unknown',
+              request: 'DP Confirmation',
+              _raw: item,
+            };
+          });
+          setFetchedRequests(mapped);
+          // Reset selection when opening
+          setSelectedId(initialSelectedId ?? (mapped[0]?.id ?? null));
+          setPage(1);
+          setSearch('');
+        } else {
+          setError(res?.error || 'Failed to load pending profile pics.');
+          setFetchedRequests([]);
+        }
+      } catch (e) {
+        setError(e?.message || 'Failed to load pending profile pics.');
+        setFetchedRequests([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    // Only fetch if parent didn't provide requests
+    if (isOpen && (!requests || requests.length === 0)) {
+      load();
+    } else if (isOpen) {
+      // When using parent-supplied requests, still reset controls
+      setSelectedId(initialSelectedId ?? (requests[0]?.id ?? null));
+      setPage(1);
+      setSearch('');
+    }
+
+    return () => { active = false; };
   }, [isOpen, initialSelectedId, requests]);
 
+  // Use parent-provided requests if available; otherwise use fetched
+  const data = useMemo(() => (requests && requests.length ? requests : fetchedRequests), [requests, fetchedRequests]);
+
   const filtered = useMemo(() => {
-    if (!deferredSearch) return requests;
-    const q = deferredSearch.toLowerCase();
-    return requests.filter((r) =>
+    if (!deferredSearch) return data;
+    const q = String(deferredSearch).toLowerCase();
+    return data.filter((r) =>
       `${r.username}`.toLowerCase().includes(q) ||
       `${r.region ?? ''}`.toLowerCase().includes(q) ||
       `${r.id}`.toLowerCase().includes(q)
     );
-  }, [requests, deferredSearch]);
+  }, [data, deferredSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -65,28 +124,80 @@ const DpVerificationModal = ({
 
   const selected = useMemo(() => filtered.find((r) => r.id === selectedId) ?? null, [filtered, selectedId]);
 
+  // Resolve usercode for approve/reject
+  const getUsercodeFromSelected = (sel) => {
+    if (!sel) return null;
+    const raw = sel._raw || {};
+    // Prefer usercode from API; fallback to id if our mapping used it
+    return raw.usercode || (sel.id?.startsWith('pending-') ? null : sel.id) || null;
+  };
+
+  const actOnProfile = async (status) => {
+    const usercode = getUsercodeFromSelected(selected);
+    if (!usercode) {
+      alert('User code not available for this request.');
+      return;
+    }
+    try {
+      const res = await authService.updateProfilePicStatus(usercode, status);
+      if (!res?.success) {
+        throw new Error(res?.error || 'Request failed.');
+      }
+      // Optimistically remove from local list if we own it
+      if (!requests || requests.length === 0) {
+        setFetchedRequests((prev) => prev.filter((r) => r !== selected));
+      }
+      if (status === 'APPROVED') onApprove?.(usercode);
+      if (status === 'REJECT') onReject?.(usercode);
+      onClose?.();
+    } catch (e) {
+      console.error('Profile pic action error:', e);
+      alert(e?.message || 'Failed to update status.');
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog" aria-modal="true">
-      <div className="relative bg-[#121212] w-full max-w-6xl rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
+    <div
+      className={
+        fullPage
+          ? "fixed inset-0 z-50 bg-[#121212] flex flex-col"
+          : "fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      }
+      role="dialog"
+      aria-modal="true"
+      style={fullPage ? { minHeight: '100vh', height: '100vh', overflow: 'auto' } : {}}
+    >
+      <div
+        className={
+          fullPage
+            ? "w-full h-full flex flex-col"
+            : "relative bg-[#121212] w-full max-w-6xl rounded-2xl border border-gray-800 shadow-2xl overflow-hidden"
+        }
+        style={fullPage ? { borderRadius: 0, border: 'none', boxShadow: 'none', height: '100vh', maxWidth: '100vw', overflow: 'auto' } : {}}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gradient-to-r from-[#1A1A1A] to-[#181818]">
+        <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-800 ${fullPage ? "bg-[#121212]" : "bg-gradient-to-r from-[#1A1A1A] to-[#181818]"}`}>
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">DP Verification</h2>
             <p className="text-gray-400 text-sm">Review and action profile photo verification requests</p>
           </div>
-          <button
-            className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {loading && <span className="text-xs text-gray-400">Loading...</span>}
+            {error && <span className="text-xs text-red-400" title={error}>Failed to load</span>}
+            <button
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0" style={{ height: '80vh' }}>
+        <div className={`grid grid-cols-1 lg:grid-cols-12 gap-0 ${fullPage ? "flex-1 overflow-auto" : ""}`} style={fullPage ? { minHeight: '0' } : { height: '80vh' }}>
           {/* Left: List */}
           <div className="lg:col-span-5 xl:col-span-4 border-r border-gray-800 flex flex-col">
             {/* Controls */}
@@ -132,6 +243,7 @@ const DpVerificationModal = ({
                           className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-white/5 ${active ? 'bg-white/5' : ''}`}
                           onClick={() => setSelectedId(r.id)}
                         >
+                          {/* Thumbnail */}
                           <img src={r.dp} alt={r.username} className="w-10 h-10 rounded-full object-cover border border-gray-700" />
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-white truncate flex items-center gap-2">
@@ -193,7 +305,7 @@ const DpVerificationModal = ({
                     </h3>
                     <div className="mt-2 grid grid-cols-2 gap-2 max-w-md">
                       <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg px-3 py-2">
-                        <p className="text-[11px] text-gray-400">User ID</p>
+                        <p className="text-[11px] text-gray-400">User Code</p>
                         <p className="text-sm font-semibold text-white">{selected.id}</p>
                       </div>
                       <div className="bg-[#1a1a1a] border border-gray-800 rounded-lg px-3 py-2">
@@ -231,24 +343,20 @@ const DpVerificationModal = ({
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   <button
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-[#4361EE] to-[#4CC9F0] text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow hover:opacity-90 hover:scale-[1.01] transition"
-                    onClick={() => {
-                      onApprove?.(selected.id);
-                      onClose?.();
-                    }}
+                    onClick={() => actOnProfile('APPROVED')}
+                    disabled={loading}
                   >
                     <CheckCircle2 className="w-4 h-4" /> Approve
                   </button>
                   <button
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow hover:opacity-90 hover:scale-[1.01] transition"
-                    onClick={() => {
-                      onReject?.(selected.id);
-                      onClose?.();
-                    }}
+                    onClick={() => actOnProfile('REJECT')}
+                    disabled={loading}
                   >
                     <XCircle className="w-4 h-4" /> Reject
                   </button>
                   <button
-                    className="ml-auto px-4 py-2 rounded-lg text-sm bg-white/5 text-gray-300 hover:bg-white/10 border border-gray-800"
+                    className="ml-auto px-4 py-2 rounded-lg text-sm bg_WHITE/5 text-gray-300 hover:bg-white/10 border border-gray-800"
                     onClick={onClose}
                   >
                     Close
@@ -264,10 +372,12 @@ const DpVerificationModal = ({
         </div>
 
         {/* Tiny animations */}
-        <style>{`
-          @keyframes modalPop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-          .animate-modal { animation: modalPop .25s ease-out; }
-        `}</style>
+        {!fullPage && (
+          <style>{`
+            @keyframes modalPop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+            .animate-modal { animation: modalPop .25s ease-out; }
+          `}</style>
+        )}
       </div>
     </div>
   );

@@ -37,20 +37,15 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   });
   const [loadingCounts, setLoadingCounts] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showDpModal, setShowDpModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const userMenuRef = useRef(null);
-  const notificationMenuRef = useRef(null);
 
   // close on outside click
   useEffect(() => {
     const onDocClick = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setShowUserMenu(false);
-      }
-      if (notificationMenuRef.current && !notificationMenuRef.current.contains(e.target)) {
-        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', onDocClick);
@@ -188,9 +183,12 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
             <div className="flex items-center space-x-6">
               {/* Notification Button - Only for super-admin */}
               {currentUser.userType === 'super-admin' && (
-                <div className="relative" ref={notificationMenuRef}>
+                <div>
                   <button
-                    onClick={() => setShowNotifications(v => !v)}
+                    onClick={() => {
+                      setShowDpModal(true);
+                      setSelectedUser(notificationUsers[0] || null);
+                    }}
                     className="flex items-center justify-center bg-[#1A1A1A] px-5 py-3 rounded-xl border border-gray-700 hover:border-gray-600 focus:outline-none"
                     aria-label="Notifications"
                     style={{ minWidth: '64px', minHeight: '48px' }}
@@ -200,44 +198,6 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
                       <span className="ml-2 inline-block w-3 h-3 rounded-full bg-pink-500"></span>
                     )}
                   </button>
-                  {showNotifications && (
-                    <div className="absolute left-0 mt-2 w-96 bg-[#1A1A1A] border border-gray-700 rounded-xl shadow-2xl z-50 transition-all duration-300 animate-fade-in">
-                      <div className="p-6 border-b border-gray-800">
-                        <h4 className="text-white text-lg font-bold">DP Confirmation Requests</h4>
-                      </div>
-                      <ul className="max-h-96 overflow-y-auto">
-                        {notificationUsers.length === 0 ? (
-                          <li className="px-6 py-10 text-gray-400 text-center text-lg">No notifications</li>
-                        ) : (
-                          notificationUsers.map(user => (
-                            <li key={user.id} className="flex items-center justify-between px-6 py-5 hover:bg-gray-800 transition">
-                              <div className="flex items-center space-x-4">
-                                <img
-                                  src={user.dp}
-                                  alt={user.username}
-                                  className="w-14 h-14 rounded-full border border-gray-700 object-cover"
-                                />
-                                <div>
-                                  <p className="text-white font-semibold text-base">{user.username}</p>
-                                  <p className="text-sm text-gray-400">{user.request}</p>
-                                </div>
-                              </div>
-                              <button
-                                className="bg-gradient-to-r from-[#7209B7] to-[#4361EE] text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition"
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowDpModal(true);
-                                  setShowNotifications(false);
-                                }}
-                              >
-                                See Request
-                              </button>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               )}
               {/* User Badge with dropdown */}
@@ -419,17 +379,18 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
         </div>
       </section>
 
-      {/* DP Verification Modal */}
-      {showDpModal && selectedUser && (
+      {/* DP Verification Modal as full-page overlay */}
+      {showDpModal && (
         <DpVerificationModal
           isOpen={showDpModal}
           onClose={() => setShowDpModal(false)}
           requests={notificationUsers}
           initialSelectedId={selectedUser?.id}
+          fullPage={true}
           onApprove={async (id) => {
             try {
               const user = notificationUsers.find(u => u.id === id);
-              const usercode = user?.usercode || user?.username || `PH${id}`; // fallback if your data has no explicit code
+              const usercode = user?.usercode || user?.username || `PH${id}`;
               const res = await authService.approveProfile(usercode);
               if (!res.success) {
                 console.error(res.error || 'Approve failed');
@@ -441,7 +402,6 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
             }
           }}
           onReject={(id) => {
-            // TODO: call backend reject; currently just close
             setShowDpModal(false);
           }}
         />
@@ -451,3 +411,4 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
 };
 
 export default Dashboard;
+

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useDeferredValue } from 'react';
-import { Search, Filter, RefreshCw, Users, Shield, Crown, Sparkles, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, RefreshCw, Users, Shield, Crown, Sparkles, Calendar, ChevronLeft, ChevronRight, X, BadgeCheck, MapPin, Mail, Phone } from 'lucide-react';
 import authService from '../services/authService';
 
 // Advanced Host Details page with animated, theme-matching UI
@@ -13,6 +13,7 @@ const HostDetails = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
+  const [selected, setSelected] = useState(null);
 
   const deferredSearch = useDeferredValue(search);
 
@@ -29,11 +30,14 @@ const HostDetails = () => {
       const mapped = (raw || []).map((h, idx) => {
         const id = h?.id ?? h?._id ?? h?.usercode ?? h?.code ?? `host-${idx}`;
         const username = h?.username || h?.name || h?.usercode || `Host ${idx + 1}`;
-        const avatar = h?.avatar || h?.dp || h?.profilePic || h?.photo || '/image.png';
+        const avatar = h?.avatar || h?.path || h?.dp || h?.profilePic || h?.photo || '';
         const status = (h?.status || h?.accountStatus || 'active').toString().toLowerCase();
         const createdAt = h?.createdAt || h?.joinDate || h?.joinedOn || null;
         const agency = h?.agency || h?.agencyName || h?.masterAgency || h?.parent || '—';
-        return { id: String(id), username: String(username), avatar, status, createdAt, agency, _raw: h };
+        const email = h?.email || h?.mail || '';
+        const phone = h?.phone || h?.mobile || h?.contact || '';
+        const region = h?.region || h?.country || h?.location || '';
+        return { id: String(id), username: String(username), avatar, status, createdAt, agency, email, phone, region, _raw: h };
       });
       setHosts(mapped);
     } catch (e) {
@@ -65,6 +69,12 @@ const HostDetails = () => {
     // Reset to page 1 on filters/search change
     setPage(1);
   }, [deferredSearch, statusFilter, pageSize]);
+
+  useEffect(() => {
+    const onEsc = (e) => { if (e.key === 'Escape') setSelected(null); };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, []);
 
   return (
     <div className="h-full flex flex-col bg-[#1A1A1A] text-white overflow-hidden">
@@ -169,13 +179,20 @@ const HostDetails = () => {
         {!loading && !error && (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             {visible.map((h, idx) => (
-              <div
+              <button
                 key={h.id}
-                className="bg-[#121212] border border-gray-800 rounded-xl p-4 card-hover request-card-enter request-card-enter-active"
+                className="text-left bg-[#121212] border border-gray-800 rounded-xl p-4 card-hover request-card-enter request-card-enter-active w-full"
                 style={{ animationDelay: `${idx * 40}ms` }}
+                onClick={() => setSelected(h)}
+                aria-label={`Open details for ${h.username}`}
               >
                 <div className="flex items-center gap-3">
-                  <img src={h.avatar} alt={h.username} className="w-12 h-12 rounded-full object-cover border border-gray-700" />
+                  <img
+                    src={h.avatar || '/image.png'}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/image.png'; e.currentTarget.classList.add('grayscale'); }}
+                    alt={h.username}
+                    className="w-12 h-12 rounded-full object-cover border border-gray-700"
+                  />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate text-white">{h.username}</div>
                     <div className="text-[11px] text-gray-400 truncate">ID: {h.id}</div>
@@ -192,7 +209,7 @@ const HostDetails = () => {
                   </div>
                 </div>
                 <div className="mt-2 text-[11px] text-gray-400 truncate">Agency: {h.agency || '—'}</div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -227,6 +244,87 @@ const HostDetails = () => {
           </button>
         </div>
       </div>
+
+      {/* Slide-over detail panel */}
+      {selected && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSelected(null)} aria-hidden="true" />
+          <aside className="absolute right-0 top-0 h-full w-full sm:w-[520px] bg-[#121212] border-l border-gray-800 shadow-2xl transform transition-transform duration-300 translate-x-0 overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+              <div>
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <BadgeCheck className="w-5 h-5 text-[#9d4edd]" /> Host Profile
+                </h2>
+                <p className="text-gray-400 text-xs">Structured details for {selected.username}</p>
+              </div>
+              <button className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white" aria-label="Close details" onClick={() => setSelected(null)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="flex items-start gap-4">
+                <img
+                  src={selected.avatar || '/image.png'}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/image.png'; e.currentTarget.classList.add('grayscale'); }}
+                  alt={selected.username}
+                  className="w-20 h-20 rounded-xl object-cover border-2 border-[#7209B7]"
+                />
+                <div className="min-w-0">
+                  <div className="text-2xl font-bold text-white truncate">{selected.username}</div>
+                  <div className="text-xs text-gray-400 truncate">ID: {selected.id}</div>
+                  <div className="mt-2 text-xs">
+                    <span className={`inline-block px-2 py-0.5 rounded-full border text-[10px] ${selected.status === 'blocked' ? 'border-red-700 text-red-300 bg-red-900/10' : selected.status === 'inactive' ? 'border-yellow-700 text-yellow-300 bg-yellow-900/10' : 'border-green-700 text-green-300 bg-green-900/10'}`}>{selected.status || 'active'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg px-3 py-2">
+                  <div className="text-[11px] text-gray-400">Agency</div>
+                  <div className="text-sm text-white truncate">{selected.agency || '—'}</div>
+                </div>
+                <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg px-3 py-2">
+                  <div className="text-[11px] text-gray-400">Joined</div>
+                  <div className="text-sm text-white truncate">{selected.createdAt ? new Date(selected.createdAt).toLocaleString() : '—'}</div>
+                </div>
+                <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg px-3 py-2 flex items-center gap-2">
+                  <Mail className="w-3 h-3 text-gray-400" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-gray-400">Email</div>
+                    <div className="text-sm text-white truncate">{selected.email || '—'}</div>
+                  </div>
+                </div>
+                <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg px-3 py-2 flex items-center gap-2">
+                  <Phone className="w-3 h-3 text-gray-400" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-gray-400">Phone</div>
+                    <div className="text-sm text-white truncate">{selected.phone || '—'}</div>
+                  </div>
+                </div>
+                <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg px-3 py-2 flex items-center gap-2 sm:col-span-2">
+                  <MapPin className="w-3 h-3 text-gray-400" />
+                  <div className="min-w-0">
+                    <div className="text-[11px] text-gray-400">Region</div>
+                    <div className="text-sm text-white truncate">{selected.region || '—'}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional structured info sections (extend as needed) */}
+              <div className="grid grid-cols-1 gap-3">
+                <div className="bg-[#0f0f0f] border border-gray-800 rounded-lg p-3">
+                  <div className="text-[11px] text-gray-400 mb-1">About</div>
+                  <div className="text-sm text-gray-300">This host is managed under {selected.agency || '—'} and joined on {selected.createdAt ? new Date(selected.createdAt).toLocaleDateString() : '—'}.</div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 };

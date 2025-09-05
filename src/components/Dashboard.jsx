@@ -10,23 +10,6 @@ import DpVerificationModal from './DpVerificationModal';
 
 import authService from '../services/authService';
 
-const notificationUsers = [
-  {
-    id: 1,
-    username: 'john_doe',
-    dp: 'https://randomuser.me/api/portraits/men/32.jpg',
-    request: 'DP Confirmation',
-    region: 'USA'
-  },
-  {
-    id: 2,
-    username: 'jane_smith',
-    dp: 'https://randomuser.me/api/portraits/women/44.jpg',
-    request: 'DP Confirmation',
-    region: 'UK'
-  }
-];
-
 const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [dynamicCounts, setDynamicCounts] = useState({
     SUPERADMIN: null,
@@ -187,16 +170,14 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
                   <button
                     onClick={() => {
                       setShowDpModal(true);
-                      setSelectedUser(notificationUsers[0] || null);
+                      setSelectedUser(null);
                     }}
                     className="flex items-center justify-center bg-[#1A1A1A] px-5 py-3 rounded-xl border border-gray-700 hover:border-gray-600 focus:outline-none"
                     aria-label="Notifications"
                     style={{ minWidth: '64px', minHeight: '48px' }}
                   >
                     <Bell className="w-7 h-7 text-pink-400" />
-                    {notificationUsers.length > 0 && (
-                      <span className="ml-2 inline-block w-3 h-3 rounded-full bg-pink-500"></span>
-                    )}
+                    <span className="ml-2 inline-block w-3 h-3 rounded-full bg-pink-500"></span>
                   </button>
                 </div>
               )}
@@ -384,13 +365,11 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
         <DpVerificationModal
           isOpen={showDpModal}
           onClose={() => setShowDpModal(false)}
-          requests={notificationUsers}
-          initialSelectedId={selectedUser?.id}
+          requests={[]}
+          initialSelectedId={null}
           fullPage={true}
-          onApprove={async (id) => {
+          onApprove={async (usercode) => {
             try {
-              const user = notificationUsers.find(u => u.id === id);
-              const usercode = user?.usercode || user?.username || `PH${id}`;
               const res = await authService.approveProfile(usercode);
               if (!res.success) {
                 console.error(res.error || 'Approve failed');
@@ -401,7 +380,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
               setShowDpModal(false);
             }
           }}
-          onReject={(id) => {
+          onReject={() => {
             setShowDpModal(false);
           }}
         />

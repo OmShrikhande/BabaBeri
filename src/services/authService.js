@@ -283,6 +283,31 @@ class AuthService {
     }
   }
 
+  // Get all hosts (HOST details)
+  async getAllHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const url = `https://proxstream.online/auth/user/getallhost?role=HOST`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get all hosts error:', error);
+      return { success: false, error: error.message || 'Failed to fetch hosts.' };
+    }
+  }
+
   // Create Sub-Admin
   async createSubAdmin(adminData) {
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;

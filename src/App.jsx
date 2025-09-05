@@ -18,6 +18,7 @@ import Profile from './components/Profile';
 import Login from './components/Login';
 import AuthTest from './components/AuthTest';
 import MasterAgency from './components/MasterAgency';
+import { default as HostDetails } from './components/HostDetails';
 import authService from './services/authService';
 import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
 
@@ -268,6 +269,9 @@ function App() {
         return <DiamondsCashout />;
       case 'block-user':
         return <BlockUsers />;
+      case 'users-details':
+      case 'user-details':
+        return <HostDetails />;
       case 'auth-test':
         return <AuthTest />;
       case 'profile':

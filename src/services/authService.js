@@ -354,20 +354,21 @@ class AuthService {
       name: agencyData?.name?.trim(),
       email: agencyData?.email?.trim(),
       password: agencyData?.password,
+      adminName: agencyData?.adminName // <-- Add adminName field
     };
 
-    if (!base.name || !base.email || !base.password) {
-      return { success: false, error: 'Name, email, and password are required.' };
+    if (!base.name || !base.email || !base.password || !base.adminName) {
+      return { success: false, error: 'Name, email, password, and admin name are required.' };
     }
 
     // Allow additional fields from the form to pass through (e.g., phone, address)
-    const { name, email, password, ...rest } = agencyData || {};
+    const { name, email, password, adminName, ...rest } = agencyData || {};
     const payload = {
-      ...rest, // pass backend-specific fields if any
+      ...rest,
       name: base.name,
       email: base.email,
-      password: base.password
-      // Do NOT include role unless backend explicitly requires it
+      password: base.password,
+      adminName: base.adminName // <-- Send adminName to API
     };
 
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_MASTER_AGENCY}`;
@@ -656,6 +657,58 @@ class AuthService {
     } catch (error) {
       console.error('Update profile pic status error:', error);
       return { success: false, error: error.message || 'Failed to update profile pic status.' };
+    }
+  }
+
+  // Get total available coins (JWT, Super Admin)
+  async getTotalAvailableCoins() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can fetch total available coins.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/api/getTotalCoins`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch total coins: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get total available coins error:', error);
+      return { success: false, error: error.message || 'Failed to fetch total available coins.' };
+    }
+  }
+
+  // Get total of all sell coins (JWT, Super Admin)
+  async getTotalSellCoins() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can fetch total sell coins.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/api/getTotalCoinsSell`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch total sell coins: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get total sell coins error:', error);
+      return { success: false, error: error.message || 'Failed to fetch total sell coins.' };
     }
   }
 }

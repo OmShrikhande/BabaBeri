@@ -153,7 +153,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
-              onClick={onBack}
+              onClick={onBack} // <-- Ensure this calls the parent navigation
               className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800 rounded-lg"
               aria-label="Go back"
             >
@@ -479,6 +479,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
 
             <div className="p-6">
               <MasterAgencyForm
+                adminName={subAdmin.name} // <-- Pass admin name to the form
                 onCreated={(created) => {
                   // Optimistically add to local list; ensure required fields exist
                   const newItem = {
@@ -488,6 +489,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
                     totalAgency: created?.totalAgency || '0',
                     myEarning: created?.myEarning || 0,
                     redeemed: created?.redeemed || 0,
+                    adminName: created?.adminName || subAdmin.name // <-- Store admin name
                   };
                   setLocalMasterAgencies(prev => {
                     const base = prev ?? (subAdmin?.masterAgencies || []);

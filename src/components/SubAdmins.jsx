@@ -127,6 +127,7 @@ const SubAdmins = ({ onNavigateToDetail }) => {
   const handleViewSubAdmin = (subAdmin) => {
     if (onNavigateToDetail) {
       onNavigateToDetail({ id: subAdmin?.id, code: subAdmin?.adminId, name: subAdmin?.name });
+      // Make sure your parent passes an onBack handler to SubAdminDetail for the arrow to work.
     }
   };
 

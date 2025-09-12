@@ -22,6 +22,12 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showDpModal, setShowDpModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [overallCoins, setOverallCoins] = useState(null);
+  const [overallCoinsLoading, setOverallCoinsLoading] = useState(false);
+  const [overallCoinsError, setOverallCoinsError] = useState(null);
+  const [totalCoinsSell, setTotalCoinsSell] = useState(null);
+  const [totalCoinsSellLoading, setTotalCoinsSellLoading] = useState(false);
+  const [totalCoinsSellError, setTotalCoinsSellError] = useState(null);
   const userMenuRef = useRef(null);
 
   // close on outside click
@@ -58,6 +64,68 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     return () => { ignore = true; };
   }, []);
 
+  // Fetch overall coins (API)
+  useEffect(() => {
+    let ignore = false;
+    const fetchOverallCoins = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setOverallCoinsLoading(true);
+      setOverallCoinsError(null);
+      try {
+        const res = await authService.getTotalAvailableCoins();
+        if (!ignore) {
+          if (res.success) {
+            // API may return { coins: number } or similar
+            setOverallCoins(res.data?.coins ?? res.data ?? 0);
+          } else {
+            setOverallCoinsError(res.error || 'Failed to fetch overall coins');
+            setOverallCoins(0);
+          }
+        }
+      } catch (e) {
+        if (!ignore) {
+          setOverallCoinsError(e?.message || 'Failed to fetch overall coins');
+          setOverallCoins(0);
+        }
+      } finally {
+        if (!ignore) setOverallCoinsLoading(false);
+      }
+    };
+    fetchOverallCoins();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
+  // Fetch total coins sell (API)
+  useEffect(() => {
+    let ignore = false;
+    const fetchTotalCoinsSell = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setTotalCoinsSellLoading(true);
+      setTotalCoinsSellError(null);
+      try {
+        const res = await authService.getTotalSellCoins();
+        if (!ignore) {
+          if (res.success) {
+            // API may return { totalSell: number } or similar
+            setTotalCoinsSell(res.data?.totalSell ?? res.data ?? 0);
+          } else {
+            setTotalCoinsSellError(res.error || 'Failed to fetch total coins sell');
+            setTotalCoinsSell(0);
+          }
+        }
+      } catch (e) {
+        if (!ignore) {
+          setTotalCoinsSellError(e?.message || 'Failed to fetch total coins sell');
+          setTotalCoinsSell(0);
+        }
+      } finally {
+        if (!ignore) setTotalCoinsSellLoading(false);
+      }
+    };
+    fetchTotalCoinsSell();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
   const metricsCards = [
     {
       title: 'Total Sub-Admins',
@@ -85,7 +153,9 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     },
     {
       title: 'Overall Coins',
-      value: staticMetrics.overallCoins,
+      value: overallCoinsLoading
+        ? 'Loading...'
+        : (overallCoins !== null ? overallCoins : (staticMetrics.overallCoins ?? 'N/A')),
       icon: 'Coins',
       color: 'pink'
     },
@@ -113,10 +183,14 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const financialCards = [
     {
       title: 'Total Coins Sell',
-      value: financialMetricsData.totalCoinsSell.value,
-      formatted: financialMetricsData.totalCoinsSell.formatted,
-      change: financialMetricsData.totalCoinsSell.change,
-      trend: financialMetricsData.totalCoinsSell.trend,
+      value: totalCoinsSellLoading
+        ? 'Loading...'
+        : (totalCoinsSell !== null ? totalCoinsSell : 'N/A'),
+      formatted: totalCoinsSellLoading
+        ? ''
+        : (totalCoinsSell !== null ? totalCoinsSell.toLocaleString() : ''),
+      change: '', // API does not provide change/trend, leave blank
+      trend: '',  // API does not provide change/trend, leave blank
       icon: 'Coins',
       color: 'yellow'
     },

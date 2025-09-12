@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Building2, Mail, Lock, AlertCircle, CheckCircle, Loader2, PlusCircle } from 'lucide-react';
+import { Building2, Mail, Lock, AlertCircle, CheckCircle, Loader2, PlusCircle, User } from 'lucide-react';
 import authService from '../services/authService';
 
 // Reusable form to create a Master Agency
 // Props:
 // - onCreated: function(newAgencyData) -> called when API succeeds
 // - disabled: boolean -> disable form when parent restricts
-const MasterAgencyForm = ({ onCreated, disabled = false }) => {
+// - adminName: string -> default admin name to use
+const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    adminName: adminName || ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,7 +34,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false }) => {
     setSuccess('');
 
     // Basic validation
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim() || !formData.adminName.trim()) {
       setError('All fields are required.');
       setIsLoading(false);
       return;
@@ -48,6 +50,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false }) => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        adminName: formData.adminName
       });
 
       if (result.success) {
@@ -56,7 +59,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false }) => {
         // Inform parent
         onCreated && onCreated(created);
         // Reset form
-        setFormData({ name: '', email: '', password: '' });
+        setFormData({ name: '', email: '', password: '', adminName: adminName || '' });
       } else {
         setError(result.error || 'Failed to create master agency.');
       }
@@ -89,7 +92,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name */}
+        {/* Master Agency Name */}
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Master Agency Name</label>
           <div className="relative">
@@ -143,6 +146,24 @@ const MasterAgencyForm = ({ onCreated, disabled = false }) => {
             />
           </div>
           <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+        </div>
+
+        {/* Admin Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Admin Name</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              name="adminName"
+              value={formData.adminName}
+              onChange={handleInputChange}
+              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
+              placeholder="Enter admin name"
+              required
+              disabled={isLoading || disabled}
+            />
+          </div>
         </div>
 
         <button

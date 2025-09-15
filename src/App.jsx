@@ -19,6 +19,7 @@ import Login from './components/Login';
 import AuthTest from './components/AuthTest';
 import MasterAgency from './components/MasterAgency';
 import { default as HostDetails } from './components/HostDetails';
+import RoleStagesPage from './components/RoleStages/RoleStagesPage';
 import authService from './services/authService';
 import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
 
@@ -267,6 +268,8 @@ function App() {
         return <CoinRecharge />;
       case 'diamonds-wallet':
         return <DiamondsCashout />;
+      case 'role-stages':
+        return <RoleStagesPage currentUser={currentUser} />;
       case 'block-user':
         return <BlockUsers />;
       case 'users-details':

@@ -73,7 +73,9 @@ export const getFilteredNavigationItems = (navigationItems, userType) => {
 
   // If user has access to all routes, return all navigation items
   if (permissions.allowedRoutes === 'all') {
-    return navigationItems;
+    // Only Super Admin should see Role Stages in sidebar per requirement
+    const withRoleStages = navigationItems;
+    return withRoleStages;
   }
 
   // Filter navigation items based on allowed routes

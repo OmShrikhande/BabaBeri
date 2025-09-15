@@ -140,11 +140,18 @@ export const getDefaultRouteForUser = (userType) => {
   return routes.length > 0 ? routes[0] : 'dashboard';
 };
 
+// Check if user is super admin
+export const isSuperAdmin = (userType) => {
+  const normalized = normalizeUserType(userType);
+  return normalized === USER_TYPES.SUPER_ADMIN;
+};
+
 export default {
   ROLE_PERMISSIONS,
   getFilteredNavigationItems,
   canAccessRoute,
   getUserRoleDisplayName,
   isAdminLevel,
-  getDefaultRouteForUser
+  getDefaultRouteForUser,
+  isSuperAdmin
 };

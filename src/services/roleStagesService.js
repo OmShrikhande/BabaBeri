@@ -3,7 +3,7 @@
 
 const STORAGE_KEY = 'roleStagesConfig';
 
-export const DEFAULT_ROLES = ['admin', 'master-agency', 'agency', 'host'];
+export const DEFAULT_ROLES = ['admin', 'master-agency', 'agency'];
 
 const createDefaultStages = () => [
   { id: `s1-${Date.now()}`, name: 'Stage 1', value: 0, description: '' },
@@ -22,7 +22,7 @@ const createDefaultConfig = () => {
   return obj;
 };
 
-const readStorage = () => {
+const readStorage = (allowUnlimitedStages = false) => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return createDefaultConfig();
@@ -31,8 +31,8 @@ const readStorage = () => {
     DEFAULT_ROLES.forEach((role) => {
       if (!parsed[role]) parsed[role] = { stages: createDefaultStages(), updatedAt: new Date().toISOString() };
       if (!Array.isArray(parsed[role].stages)) parsed[role].stages = createDefaultStages();
-      // Enforce max 3 stages
-      if (parsed[role].stages.length > 3) parsed[role].stages = parsed[role].stages.slice(0, 3);
+      // Enforce max 3 stages unless unlimited
+      if (!allowUnlimitedStages && parsed[role].stages.length > 3) parsed[role].stages = parsed[role].stages.slice(0, 3);
     });
     return parsed;
   } catch {
@@ -53,10 +53,12 @@ export const getByRole = (role) => {
   return data[role] || { stages: [], updatedAt: null };
 };
 
-export const createStage = (role, stage) => {
-  const data = readStorage();
+// Add allowUnlimitedStages param to createStage
+export const createStage = (role, stage, allowUnlimitedStages = false) => {
+  const data = readStorage(allowUnlimitedStages);
   const current = data[role] || { stages: [], updatedAt: null };
-  if (current.stages.length >= 3) throw new Error('Maximum of 3 stages allowed per role');
+  // Only enforce max 3 if not unlimited
+  if (!allowUnlimitedStages && current.stages.length >= 3) throw new Error('Maximum of 3 stages allowed per role');
   const newStage = {
     id: stage?.id || `s-${Math.random().toString(36).slice(2)}-${Date.now()}`,
     name: String(stage?.name || '').trim() || `Stage ${current.stages.length + 1}`,

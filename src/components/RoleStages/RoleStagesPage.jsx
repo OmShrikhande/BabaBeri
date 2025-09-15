@@ -5,7 +5,7 @@ import StageForm from './StageForm';
 import StageList from './StageList';
 import ConfirmDialog from './ConfirmDialog';
 import { Shield, Plus } from 'lucide-react';
-import { getUserRoleDisplayName } from '../../utils/roleBasedAccess';
+import { getUserRoleDisplayName, isSuperAdmin } from '../../utils/roleBasedAccess';
 
 const Section = ({ title, children, className = '' }) => (
   <section className={`bg-[#121212] rounded-xl border border-gray-800 p-6 ${className}`}>
@@ -21,6 +21,8 @@ const RoleStagesPage = ({ currentUser }) => {
   const [editing, setEditing] = useState(null); // stage being edited
   const [confirm, setConfirm] = useState(null); // { stage }
 
+  const allowUnlimitedStages = isSuperAdmin(currentUser?.userType);
+
   // Load stages for the selected role
   useEffect(() => {
     const data = getByRole(activeRole);
@@ -32,11 +34,12 @@ const RoleStagesPage = ({ currentUser }) => {
     setStages(data.stages || []);
   };
 
-  const canAddMore = stages.length < 3;
+  // Use unlimited logic for Super Admin
+  const canAddMore = allowUnlimitedStages || stages.length < 3;
 
   const handleCreate = async (payload) => {
     try {
-      createStage(activeRole, payload);
+      createStage(activeRole, payload, allowUnlimitedStages);
       refresh();
       setEditing(null);
     } catch (e) {
@@ -113,7 +116,11 @@ const RoleStagesPage = ({ currentUser }) => {
               Reset Role
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Max 3 stages per role. Customize label, value, and description.</p>
+          <p className="text-xs text-gray-500 mt-2">
+            {allowUnlimitedStages
+              ? 'Super Admin: unlimited stages per role. Customize label, value, and description.'
+              : 'Max 3 stages per role. Customize label, value, and description.'}
+          </p>
         </Section>
 
         {/* Stages List */}

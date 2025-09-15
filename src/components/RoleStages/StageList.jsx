@@ -11,9 +11,18 @@ const StageList = ({ stages = [], onEdit, onDelete }) => {
         <div key={stage.id} className="bg-[#0A0A0A] rounded-lg border border-gray-800 p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-xs text-gray-400">#{idx + 1}</div>
+            {stage.image && (
+              <img
+                src={stage.image}
+                alt={`${stage.name} logo`}
+                className="w-10 h-10 object-contain"
+              />
+            )}
             <div>
               <div className="text-white font-semibold">{stage.name}</div>
-              <div className="text-gray-400 text-sm">Value: <span className="text-gray-200 font-medium">{stage.value}</span></div>
+              <div className="text-gray-400 text-sm">
+                Percentage: <span className="text-gray-200 font-medium">{Number(stage.percentage ?? stage.value ?? 0)}%</span>
+              </div>
               {stage.description && <div className="text-gray-500 text-xs mt-1">{stage.description}</div>}
             </div>
           </div>

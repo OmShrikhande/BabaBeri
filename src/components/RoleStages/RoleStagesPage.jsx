@@ -21,7 +21,7 @@ const RoleStagesPage = ({ currentUser }) => {
   const [editing, setEditing] = useState(null); // stage being edited
   const [confirm, setConfirm] = useState(null); // { stage }
 
-  const allowUnlimitedStages = isSuperAdmin(currentUser?.userType);
+
 
   // Load stages for the selected role
   useEffect(() => {
@@ -34,7 +34,7 @@ const RoleStagesPage = ({ currentUser }) => {
     setStages(data.stages || []);
   };
 
-  // Use unlimited logic for Super Admin
+  const allowUnlimitedStages = isSuperAdmin(currentUser?.userType);
   const canAddMore = allowUnlimitedStages || stages.length < 3;
 
   const handleCreate = async (payload) => {
@@ -76,7 +76,7 @@ const RoleStagesPage = ({ currentUser }) => {
   };
 
   return (
-    <div className="relative flex min-h-[100dvh] bg-[#0B0B0B] text-white flex-col h-full overflow-hidden">
+    <div className="relative flex min-h-screen h-screen bg-[#0B0B0B] text-white flex-col overflow-hidden">
       {/* Header */}
       <div className="p-4 sm:p-6 border-b border-gray-800 bg-[#121212] flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ const RoleStagesPage = ({ currentUser }) => {
           <div className="mt-4 flex items-center gap-2">
             <button
               disabled={!canAddMore}
-              onClick={() => setEditing({ id: null, name: '', value: 0, description: '' })}
+              onClick={() => setEditing({ id: null, name: '', percentage: 0, description: '' })}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg ${canAddMore ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}
             >
               <Plus className="w-4 h-4" /> Add Stage
@@ -116,11 +116,7 @@ const RoleStagesPage = ({ currentUser }) => {
               Reset Role
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
-            {allowUnlimitedStages
-              ? 'Super Admin: unlimited stages per role. Customize label, value, and description.'
-              : 'Max 3 stages per role. Customize label, value, and description.'}
-          </p>
+          <p className="text-xs text-gray-500 mt-2">Max 3 stages per role. Customize label, percentage, and description.</p>
         </Section>
 
         {/* Stages List */}

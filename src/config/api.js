@@ -20,7 +20,9 @@ export const API_CONFIG = {
     // User profile by id (JWT protected)
     GET_USER_BY_ID: '/auth/user/getByid',
     // Fetch master agencies by admin code (JWT protected)
-    GET_ALL_MASTER_AGENCY: '/auth/getallMasterAgency'
+    GET_ALL_MASTER_AGENCY: '/auth/getallMasterAgency',
+    // Get all active hosts (JWT protected)
+    GET_ACTIVE_HOSTS: '/auth/api/allactivate-deactivate-host'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

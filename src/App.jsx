@@ -37,6 +37,8 @@ function App() {
   const [selectedSubAdmin, setSelectedSubAdmin] = useState(null); // { id, code, name }
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
   const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
+  const [agencies, setAgencies] = useState([]);
+  const [agenciesLoading, setAgenciesLoading] = useState(true);
 
   // Check for existing authentication on app load
   useEffect(() => {
@@ -67,6 +69,79 @@ function App() {
       authService.logout();
     }
   }, []);
+
+  // Load agencies data when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAgenciesData();
+    }
+  }, [isAuthenticated]);
+
+  const loadAgenciesData = async () => {
+    setAgenciesLoading(true);
+    try {
+      const response = await authService.getActiveHosts();
+
+      if (response.success) {
+        // Transform API data: group hosts by owner (agency code)
+        const hostsByAgency = {};
+
+        if (Array.isArray(response.data)) {
+          response.data.forEach(host => {
+            const agencyCode = host.owner || 'Unknown';
+            if (!hostsByAgency[agencyCode]) {
+              hostsByAgency[agencyCode] = [];
+            }
+            hostsByAgency[agencyCode].push({
+              id: `H${host.id}`,
+              name: host.name,
+              earnings: host.diamond || 0, // Assuming diamond as earnings
+              redeemed: 0 // Not provided in API
+            });
+          });
+        }
+
+        // Create agency objects from grouped hosts
+        const transformedAgencies = Object.keys(hostsByAgency).map((agencyCode, index) => {
+          const hosts = hostsByAgency[agencyCode];
+          const totalEarnings = hosts.reduce((sum, host) => sum + host.earnings, 0);
+
+          // Use mock agency data structure, but with real host data
+          return {
+            id: agencyCode,
+            name: `Agency ${agencyCode}`, // Default name since not provided
+            totalAgencies: hosts.length,
+            goals: {
+              current: 1,
+              total: 2,
+              progress: 50,
+              moneyEarned: totalEarnings,
+              moneyTarget: 10000
+            },
+            earnings: {
+              lastMonth: Math.floor(totalEarnings * 0.8),
+              thisMonth: totalEarnings,
+              redeemDiamonds: Math.floor(totalEarnings * 0.1)
+            },
+            tier: 'Royal Silver', // Default tier
+            revenueShare: 10,
+            hosts: hosts
+          };
+        });
+
+        setAgencies(transformedAgencies);
+      } else {
+        console.error('Failed to fetch active hosts:', response.error);
+        // Fallback to empty array or handle error
+        setAgencies([]);
+      }
+    } catch (error) {
+      console.error('Error loading agencies:', error);
+      setAgencies([]);
+    } finally {
+      setAgenciesLoading(false);
+    }
+  };
 
   // Authentication handlers
   const handleLogin = (loginData) => {

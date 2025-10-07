@@ -308,6 +308,31 @@ class AuthService {
     }
   }
 
+  // Get all active hosts
+  async getActiveHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_HOSTS}?status=Activate`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch active hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+     console.error('Get active hosts error:', error);
+      return { success: false, error: error.message || 'Failed to fetch active hosts.' };
+    }
+  }
+
   // Create Sub-Admin
   async createSubAdmin(adminData) {
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;

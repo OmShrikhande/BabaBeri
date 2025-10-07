@@ -1,29 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, Trash2, Eye, Building2, Filter, MoreVertical } from 'lucide-react';
-import { agenciesData } from '../data/agencyData';
 import { CardSkeleton, TableSkeleton } from './LoadingSkeleton';
 import EntityMovementModal from './EntityMovementModal';
 
-const Agencies = ({ onNavigateToDetail, currentUser }) => {
+const Agencies = ({ onNavigateToDetail, currentUser, agencies = [], loading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [agencies, setAgencies] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filterTier, setFilterTier] = useState('all');
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
 
-  // Simulate loading agencies data
-  useEffect(() => {
-    const loadAgencies = async () => {
-      setLoading(true);
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setAgencies(agenciesData);
-      setLoading(false);
-    };
 
-    loadAgencies();
-  }, []);
 
   const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

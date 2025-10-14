@@ -15,13 +15,57 @@ const HostDetails = () => {
   const [pageSize, setPageSize] = useState(24);
   const [selected, setSelected] = useState(null);
 
+  // Counts state
+  const [total, setTotal] = useState(0);
+  const [active, setActive] = useState(0);
+  const [inactive, setInactive] = useState(0);
+  const [blocked, setBlocked] = useState(0);
+
   const deferredSearch = useDeferredValue(search);
 
-  const load = async () => {
+  const loadCounts = async () => {
+    try {
+      const allRes = await authService.getAllHosts();
+      if (allRes.success) {
+        const raw = Array.isArray(allRes.data) ? allRes.data : (allRes.data?.data || []);
+        const mapped = (raw || []).map((h, idx) => {
+          const id = h?.id ?? h?._id ?? h?.usercode ?? h?.code ?? `host-${idx}`;
+          const username = h?.username || h?.name || h?.usercode || `Host ${idx + 1}`;
+          const avatar = h?.avatar || h?.path || h?.dp || h?.profilePic || h?.photo || '';
+          const status = (h?.status || h?.accountStatus || 'active').toString().toLowerCase();
+          const createdAt = h?.createdAt || h?.joinDate || h?.joinedOn || null;
+          const agency = h?.agency || h?.agencyName || h?.masterAgency || h?.parent || '—';
+          const email = h?.email || h?.mail || '';
+          const phone = h?.phone || h?.mobile || h?.contact || '';
+          const region = h?.region || h?.country || h?.location || '';
+          return { id: String(id), username: String(username), avatar, status, createdAt, agency, email, phone, region, _raw: h };
+        });
+        setTotal(mapped.length);
+      }
+
+      const activeRes = await authService.getActiveHosts();
+      setActive(activeRes.success ? (Array.isArray(activeRes.data) ? activeRes.data.length : (activeRes.data?.data?.length || 0)) : 0);
+
+      const inactiveRes = await authService.getInactiveHosts();
+      setInactive(inactiveRes.success ? (Array.isArray(inactiveRes.data) ? inactiveRes.data.length : (inactiveRes.data?.data?.length || 0)) : 0);
+
+      const blockedRes = await authService.getBlockedHosts();
+      setBlocked(blockedRes.success ? (Array.isArray(blockedRes.data) ? blockedRes.data.length : (blockedRes.data?.data?.length || 0)) : 0);
+    } catch (e) {
+      console.error('Failed to load counts:', e);
+    }
+  };
+
+  const loadDisplay = async (status) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await authService.getAllHosts();
+      let res;
+      if (status === 'all') res = await authService.getAllHosts();
+      else if (status === 'active') res = await authService.getActiveHosts();
+      else if (status === 'inactive') res = await authService.getInactiveHosts();
+      else if (status === 'blocked') res = await authService.getBlockedHosts();
+
       if (!res?.success) throw new Error(res?.error || 'Failed to load hosts');
 
       const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
@@ -48,17 +92,16 @@ const HostDetails = () => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { loadCounts(); loadDisplay('all'); }, []);
 
   // Filtering & search
   const filtered = useMemo(() => {
     const q = (deferredSearch || '').toString().toLowerCase();
     return hosts.filter(h => {
       const matchesQuery = !q || h.username.toLowerCase().includes(q) || h.id.toLowerCase().includes(q) || (h.agency || '').toLowerCase().includes(q);
-      const matchesStatus = statusFilter === 'all' || (h.status || 'active') === statusFilter;
-      return matchesQuery && matchesStatus;
+      return matchesQuery;
     });
-  }, [hosts, deferredSearch, statusFilter]);
+  }, [hosts, deferredSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -85,7 +128,7 @@ const HostDetails = () => {
             <h1 className="text-2xl sm:text-3xl font-extrabold gradient-text">Host Details</h1>
             <p className="text-gray-400 text-sm">Explore and manage all hosts with rich animations and smooth interactions</p>
           </div>
-          <button onClick={load} className="px-3 py-2 rounded-lg bg-[#0f0f0f] border border-gray-800 text-gray-200 hover:bg-white/5 button-hover"
+          <button onClick={() => { loadCounts(); loadDisplay(statusFilter); }} className="px-3 py-2 rounded-lg bg-[#0f0f0f] border border-gray-800 text-gray-200 hover:bg-white/5 button-hover"
             aria-label="Reload">
             <RefreshCw className="w-5 h-5" />
           </button>
@@ -110,7 +153,11 @@ const HostDetails = () => {
               <select
                 className="bg-[#0f0f0f] border border-gray-800 rounded-lg pl-9 pr-8 py-2 text-sm text-gray-200 focus:outline-none"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setStatusFilter(value);
+                  loadDisplay(value);
+                }}
                 aria-label="Status filter"
               >
                 <option value="all">All</option>
@@ -143,19 +190,19 @@ const HostDetails = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-[#121212] border border-gray-800 rounded-xl p-4 glow-pink hover-glow card-hover">
             <div className="flex items-center gap-2 text-gray-300 text-sm"><Users className="w-4 h-4 text-[#4CC9F0]" /> Total Hosts</div>
-            <div className="text-2xl font-extrabold mt-1">{hosts.length.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold mt-1">{total.toLocaleString()}</div>
           </div>
           <div className="bg-[#121212] border border-gray-800 rounded-xl p-4 glow-purple hover-glow card-hover">
             <div className="flex items-center gap-2 text-gray-300 text-sm"><Shield className="w-4 h-4 text-[#4361EE]" /> Active</div>
-            <div className="text-2xl font-extrabold mt-1">{hosts.filter(h => (h.status||'').includes('active')).length.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold mt-1">{active.toLocaleString()}</div>
           </div>
           <div className="bg-[#121212] border border-gray-800 rounded-xl p-4 glow-blue hover-glow card-hover">
             <div className="flex items-center gap-2 text-gray-300 text-sm"><Crown className="w-4 h-4 text-[#F72585]" /> Inactive</div>
-            <div className="text-2xl font-extrabold mt-1">{hosts.filter(h => (h.status||'') === 'inactive').length.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold mt-1">{inactive.toLocaleString()}</div>
           </div>
           <div className="bg-[#121212] border border-gray-800 rounded-xl p-4 glow-cyan hover-glow card-hover">
             <div className="flex items-center gap-2 text-gray-300 text-sm"><Sparkles className="w-4 h-4 text-[#9d4edd]" /> Blocked</div>
-            <div className="text-2xl font-extrabold mt-1">{hosts.filter(h => (h.status||'') === 'blocked').length.toLocaleString()}</div>
+            <div className="text-2xl font-extrabold mt-1">{blocked.toLocaleString()}</div>
           </div>
         </div>
 

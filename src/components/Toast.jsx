@@ -88,7 +88,7 @@ export const useToast = () => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = (message, type = 'success', duration = 3000) => {
-    const id = Date.now();
+    const id = Date.now() + Math.random(); // Add random component to ensure uniqueness
     const newToast = { id, message, type, duration };
     setToasts((prev) => [...prev, newToast]);
   };

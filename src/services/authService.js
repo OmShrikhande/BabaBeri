@@ -333,6 +333,56 @@ class AuthService {
     }
   }
 
+  // Get all inactive hosts
+  async getInactiveHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/api/allactivate-deactivate-host?status=Deactivate`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch inactive hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get inactive hosts error:', error);
+      return { success: false, error: error.message || 'Failed to fetch inactive hosts.' };
+    }
+  }
+
+  // Get all blocked hosts
+  async getBlockedHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/api/allactivate-deactivate-host?status=Blocked`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch blocked hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null;
+      try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get blocked hosts error:', error);
+      return { success: false, error: error.message || 'Failed to fetch blocked hosts.' };
+    }
+  }
+
   // Create Sub-Admin
   async createSubAdmin(adminData) {
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;
@@ -734,6 +784,184 @@ class AuthService {
     } catch (error) {
       console.error('Get total sell coins error:', error);
       return { success: false, error: error.message || 'Failed to fetch total sell coins.' };
+    }
+  }
+
+  // Activate all hosts (Super Admin only)
+  async activateAllHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can activate all hosts.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/api/allactivate-deactivate-host?status=Activate`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to activate all hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Activate all hosts error:', error);
+      return { success: false, error: error.message || 'Failed to activate all hosts.' };
+    }
+  }
+
+  // Deactivate all hosts (Super Admin only)
+  async deactivateAllHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can deactivate all hosts.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/api/allactivate-deactivate-host?status=Deactivate`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to deactivate all hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Deactivate all hosts error:', error);
+      return { success: false, error: error.message || 'Failed to deactivate all hosts.' };
+    }
+  }
+
+  // Block all hosts (Super Admin only)
+  async blockAllHosts() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can block all hosts.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/api/allactivate-deactivate-host?status=Blocked`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to block all hosts: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Block all hosts error:', error);
+      return { success: false, error: error.message || 'Failed to block all hosts.' };
+    }
+  }
+
+  // Get all pending cashout list (Super Admin only)
+  async getAllPendingCashout() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can fetch pending cashout list.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/allpendingcashout`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch pending cashout list: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get pending cashout error:', error);
+      return { success: false, error: error.message || 'Failed to fetch pending cashout list.' };
+    }
+  }
+
+  // Get cashout history (Super Admin only)
+  async getCashoutHistory() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can fetch cashout history.' };
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/cashouthistory`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to fetch cashout history: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch { data = raw; }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get cashout history error:', error);
+      return { success: false, error: error.message || 'Failed to fetch cashout history.' };
+    }
+  }
+
+  // Save diamond by super admin (Super Admin only)
+  async saveDiamond(payload) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) { this.logout(); return { success: false, error: 'Session expired. Please login again.' }; }
+    const callerRole = normalizeUserType(this.getUserType());
+    if (callerRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can save diamonds.' };
+    }
+    // Basic payload validation
+    if (!payload || typeof payload !== 'object') {
+      return { success: false, error: 'Payload must be an object.' };
+    }
+    const required = ['diamonds', 'status'];
+    const missing = required.filter(k => payload[k] === undefined || payload[k] === null || String(payload[k]).trim() === '');
+    if (missing.length) {
+      return { success: false, error: `Missing required fields: ${missing.join(', ')}` };
+    }
+    
+    // Add usercode if provided
+    const requestPayload = {
+      diamonds: payload.diamonds,
+      status: payload.status
+    };
+    
+    if (payload.usercode) {
+      requestPayload.usercode = payload.usercode;
+    }
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/saveDiamond`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify(requestPayload),
+      });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        let message = `Failed to save diamond: ${response.status} ${response.statusText}`;
+        try { const parsed = raw ? JSON.parse(raw) : null; if (parsed?.message) message = parsed.message; } catch {}
+        return { success: false, status: response.status, error: raw ? `${message} | Details: ${raw}` : message };
+      }
+      let data = null; try { data = raw ? JSON.parse(raw) : null; } catch {}
+      return { success: true, data: data || { message: 'Diamond saved successfully' } };
+    } catch (error) {
+      console.error('Save diamond error:', error);
+      return { success: false, error: error.message || 'Failed to save diamond.' };
     }
   }
 }

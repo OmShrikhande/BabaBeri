@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import API_CONFIG, { DEFAULT_HEADERS, TOKEN_CONFIG } from '../../config/api';
 
 // Shared utilities -----------------------------------------------------------
@@ -11,6 +11,10 @@ const getStoredUserInfo = () => {
     return {};
   }
 };
+
+const deriveUserCode = (userInfo) => (
+  userInfo.userCode || userInfo.UserCode || userInfo.code || ''
+);
 
 const buildAuthHeaders = (token) => (
   token
@@ -30,7 +34,7 @@ export const useHostData = ({ addToast }) => {
   const token = useMemo(() => getStoredToken(), []);
   const headers = useMemo(() => buildAuthHeaders(token), [token]);
   const userInfo = useMemo(() => getStoredUserInfo(), []);
-  const userCode = userInfo.userCode || userInfo.UserCode;
+  const userCode = deriveUserCode(userInfo);
 
   useEffect(() => {
     if (!userCode) {
@@ -236,35 +240,69 @@ export const usePlanManagement = ({ initialPlans, addToast }) => {
 };
 
 // History -------------------------------------------------------------------
-export const useRechargeHistory = ({ headers }) => {
+export const useRechargeHistory = ({ headers, addToast }) => {
   const [history, setHistory] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    async function fetchHistory() {
-      try {
-        const response = await fetch(
-          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_CASHOUT_HISTORY}`,
-          { method: 'GET', headers }
-        );
-        if (!response.ok) throw new Error('Failed to fetch history');
-        const data = await response.json();
-        const normalized = Array.isArray(data) ? data : data.history || [];
-        if (isMounted) {
-          setHistory(normalized);
-        }
-      } catch (error) {
-        console.error('Fetch history error:', error);
-        // Non-blocking, keep silent on failure
-      }
+  const fetchHistory = useCallback(async ({ userCode, signal }) => {
+    if (!userCode) {
+      addToast?.('error', 'User code is required to load history');
+      return [];
     }
 
-    fetchHistory();
-    return () => {
-      isMounted = false;
-    };
-  }, [headers]);
+    const query = new URLSearchParams({ userCode }).toString();
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_RECHARGE_HISTORY}?${query}`;
 
-  return history;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('You are not authorized to view recharge history');
+      }
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.message || body.error || 'Failed to fetch history');
+      }
+
+      const data = await response.json();
+      const records = Array.isArray(data)
+        ? data
+        : data.history || data.records || data.items || [];
+
+      return records;
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Fetch history error:', error);
+        addToast?.('error', error.message || 'Could not load history');
+      }
+      throw error;
+    }
+  }, [headers, addToast]);
+
+  const loadHistory = useCallback(async ({ userCode }) => {
+    const controller = new AbortController();
+    setIsLoadingHistory(true);
+    try {
+      const records = await fetchHistory({ userCode, signal: controller.signal });
+      setHistory(records);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setHistory([]);
+      }
+    } finally {
+      setIsLoadingHistory(false);
+    }
+    return () => controller.abort();
+  }, [fetchHistory]);
+
+  return {
+    history,
+    isLoadingHistory,
+    loadHistory
+  };
 };

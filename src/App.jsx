@@ -80,7 +80,15 @@ function App() {
   const loadAgenciesData = async () => {
     setAgenciesLoading(true);
     try {
-      const userCode = authService.getUserInfo()?.userCode || authService.getUserInfo()?.UserCode;
+      const profile = await authService.ensureUserProfileCached();
+      const userCode = authService.extractUserCode(profile);
+
+      if (!userCode) {
+        console.warn('Unable to fetch active hosts: missing user code in profile.');
+        setAgencies([]);
+        return;
+      }
+
       const response = await authService.getActiveHosts({ userCode });
 
       if (response.success) {

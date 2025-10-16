@@ -55,7 +55,11 @@ const CoinRecharge = () => {
     actions: planActions
   } = usePlanManagement({ initialPlans: INITIAL_PLANS, addToast });
 
-  const history = useRechargeHistory({ headers: hostState.headers });
+  const {
+    history,
+    isLoadingHistory,
+    loadHistory
+  } = useRechargeHistory({ headers: hostState.headers, addToast });
   const [activeTab, setActiveTab] = useState('offers');
 
 
@@ -103,6 +107,10 @@ const CoinRecharge = () => {
         isRecharging={hostState.isRecharging}
         onSearchChange={(event) => hostActions.setHostSearch(event.target.value)}
         onSelectHost={(event) => {
+          if (event.option) {
+            hostActions.setSelectedHost(event.option);
+            return;
+          }
           const selected = hostState.filteredHosts.find((host) => String(host.id) === event.target.value);
           hostActions.setSelectedHost(selected || null);
         }}
@@ -163,7 +171,13 @@ const CoinRecharge = () => {
           />
         )}
 
-        {activeTab === 'history' && <HistoryTab history={history} />}
+        {activeTab === 'history' && (
+          <HistoryTab
+            history={history}
+            loadHistory={loadHistory}
+            isLoading={isLoadingHistory}
+          />
+        )}
       </div>
 
       <OfferModal

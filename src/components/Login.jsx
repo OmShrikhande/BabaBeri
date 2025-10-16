@@ -42,6 +42,19 @@ const Login = ({ onLogin }) => {
           isDemo: false,
           apiData: result.data
         });
+
+        // Persist user info returned from the API to guarantee downstream fields like userCode exist
+        if (result.data) {
+          try {
+            const mergedInfo = {
+              ...(authService.getUserInfo() || {}),
+              ...(typeof result.data === 'object' ? result.data : {})
+            };
+            localStorage.setItem('userInfo', JSON.stringify(mergedInfo));
+          } catch (storageError) {
+            console.error('Failed to cache user info after login:', storageError);
+          }
+        }
       } else {
         setError(result.error || 'Login failed. Please check your credentials.');
       }

@@ -31,6 +31,8 @@ export const API_CONFIG = {
     GET_ALL_PENDING_CASHOUT: '/auth/superadmin/allpendingcashout',
     // Get cashout history (Super Admin only)
     GET_CASHOUT_HISTORY: '/auth/superadmin/cashouthistory',
+    // Recharge history lookup (Admin/Super Admin only)
+    GET_RECHARGE_HISTORY: '/auth/api/gethistory',
     // Add coins to host (Admin/Super Admin only)
     COINS_PLUS: '/auth/api/coinsplus'
   },

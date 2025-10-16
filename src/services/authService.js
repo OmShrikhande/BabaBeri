@@ -86,6 +86,59 @@ class AuthService {
     return userInfo ? JSON.parse(userInfo) : null;
   }
 
+  // Extract user code from various payload shapes
+  extractUserCode(source) {
+    if (!source) return null;
+
+    if (typeof source === 'string') {
+      const trimmed = source.trim();
+      return trimmed.length ? trimmed : null;
+    }
+
+    const possibleKeys = ['userCode', 'UserCode', 'code', 'Code', 'user_code', 'usercode', 'Usercode'];
+    for (const key of possibleKeys) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        const value = source[key];
+        if (typeof value === 'string') {
+          const trimmedValue = value.trim();
+          if (trimmedValue.length) {
+            return trimmedValue;
+          }
+        } else if (typeof value === 'number') {
+          return String(value);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // Ensure we have fresh profile data cached locally (adds userCode when missing)
+  async ensureUserProfileCached() {
+    const token = this.getToken();
+    if (!token || this.isTokenExpired(token)) {
+      return null;
+    }
+
+    const currentInfo = this.getUserInfo();
+    if (this.extractUserCode(currentInfo)) {
+      return currentInfo;
+    }
+
+    try {
+      const freshProfile = await this.fetchUserProfile();
+      if (freshProfile && typeof freshProfile === 'object') {
+        const mergedProfile = { ...(currentInfo || {}), ...freshProfile };
+        localStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(mergedProfile));
+        return mergedProfile;
+      }
+    } catch (error) {
+      console.error('Failed to refresh user profile:', error);
+    }
+
+    return currentInfo;
+  }
+
   // Get users by role
   async getUsersByRole(role) {
     const token = this.getToken();
@@ -438,7 +491,7 @@ class AuthService {
     }
 
     const role = normalizeUserType(this.getUserType());
-    if (role !== USER_TYPES.ADMIN && role !== USER_TYPES.SUPER_ADMIN) {
+    if (role !== USER_TYPES.ADMIN || role !== USER_TYPES.SUPER_ADMIN) {
       return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can view active hosts.' };
     }
 

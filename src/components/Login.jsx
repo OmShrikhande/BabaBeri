@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, LayoutDashboard, AlertCircle } from 'lucide-react';
 import authService from '../services/authService';
-
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: '',

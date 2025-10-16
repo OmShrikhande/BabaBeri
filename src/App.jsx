@@ -80,7 +80,8 @@ function App() {
   const loadAgenciesData = async () => {
     setAgenciesLoading(true);
     try {
-      const response = await authService.getActiveHosts();
+      const userCode = authService.getUserInfo()?.userCode || authService.getUserInfo()?.UserCode;
+      const response = await authService.getActiveHosts({ userCode });
 
       if (response.success) {
         // Transform API data: group hosts by owner (agency code)

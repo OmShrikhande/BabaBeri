@@ -278,7 +278,7 @@ class AuthService {
       return { success: false, error: 'Session expired. Please login again.' };
     }
 
-    const url = `${API_CONFIG.BASE_URL}/auth/user/getallhost?role=HOST`;
+    const url = 'https://proxstream.online/auth/user/getallhost?role=HOST';
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
       const raw = await response.text().catch(() => '');
@@ -298,44 +298,6 @@ class AuthService {
     }
   }
 
-  // Get sellers (hosts subset)
-  async getSellers(options = {}) {
-    const token = this.getToken();
-    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return { success: false, error: 'Session expired. Please login again.' };
-    }
-
-    const params = new URLSearchParams({ role: 'HOST' });
-    if (options.search) {
-      params.append('search', options.search);
-    }
-    if (options.status) {
-      params.append('status', options.status);
-    }
-
-    const url = `${API_CONFIG.BASE_URL}/auth/user/getallhost?${params.toString()}`;
-
-    try {
-      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
-      const raw = await response.text().catch(() => '');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sellers: ${response.status} ${response.statusText}\n${raw}`);
-      }
-      let data = null;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error('Invalid response format');
-      }
-      return { success: true, data };
-    } catch (error) {
-      console.error('Get sellers error:', error);
-      return { success: false, error: error.message || 'Failed to fetch sellers.' };
-    }
-  }
-
   // Add coins to host (Admin/Super Admin only)
   async addCoinsToHost(hostId, amount) {
     const token = this.getToken();
@@ -351,7 +313,7 @@ class AuthService {
       return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can recharge coins.' };
     }
 
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.COINS_PLUS}`;
+    const url = 'https://proxstream.online/auth/api/coinsplus';
     try {
       const response = await this.makeAuthenticatedRequest(url, {
         method: 'PUT',
@@ -378,133 +340,6 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to add coins.' };
     }
   }
-
-  // Update seller activation state (Admin/Super Admin only)
-  async updateSellerActivation({ userCode, status }) {
-    if (!userCode) {
-      return { success: false, error: 'User code is required to update seller status.' };
-    }
-
-    const token = this.getToken();
-    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return { success: false, error: 'Session expired. Please login again.' };
-    }
-
-    const role = normalizeUserType(this.getUserType());
-    if (role !== USER_TYPES.ADMIN && role !== USER_TYPES.SUPER_ADMIN) {
-      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can update seller activation.' };
-    }
-
-    const paramsString = new URLSearchParams({ UserCode: userCode });
-    if (status) {
-      paramsString.append('status', status);
-    }
-
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ACTIVE_DEACTIVE_SELLER}?${paramsString.toString()}`;
-
-    try {
-      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
-      const raw = await response.text().catch(() => '');
-
-      if (!response.ok) {
-        throw new Error(`Failed to update seller activation: ${response.status} ${response.statusText}\n${raw}`);
-      }
-
-      let data = null;
-      if (raw) {
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          data = { message: raw };
-        }
-      }
-
-      return { success: true, data: data || { message: 'Seller activation updated successfully.' } };
-    } catch (error) {
-      console.error('Update seller activation error:', error);
-      return { success: false, error: error.message || 'Failed to update seller activation.' };
-    }
-  }
-
-  // Get active hosts
-  async getActiveHosts({ userCode } = {}) {
-    const token = this.getToken();
-    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return { success: false, error: 'Session expired. Please login again.' };
-    }
-
-    const role = normalizeUserType(this.getUserType());
-    if (role !== USER_TYPES.ADMIN && role !== USER_TYPES.SUPER_ADMIN) {
-      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can view active hosts.' };
-    }
-
-    const userCodeParam = userCode || this.getUserInfo()?.userCode || this.getUserInfo()?.UserCode;
-    if (!userCodeParam) {
-      return { success: false, error: 'UserCode is required to fetch active hosts.' };
-    }
-
-    const params = new URLSearchParams({ UserCode: userCodeParam });
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_HOSTS}?${params.toString()}`;
-
-    try {
-      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
-      const raw = await response.text().catch(() => '');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch active hosts: ${response.status} ${response.statusText}\n${raw}`);
-      }
-      let data = null;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error('Invalid response format');
-      }
-      return { success: true, data: data };
-    } catch (error) {
-      console.error('Get active hosts error:', error);
-      return { success: false, error: error.message || 'Failed to fetch active hosts.' };
-    }
-  }
-
-  // Get all pending cashout requests (Super Admin only)
-  async getAllPendingCashout() {
-    const token = this.getToken();
-    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    if (this.isTokenExpired(token)) {
-      this.logout();
-      return { success: false, error: 'Session expired. Please login again.' };
-    }
-
-    const role = normalizeUserType(this.getUserType());
-    if (role !== USER_TYPES.SUPER_ADMIN) {
-      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can view pending cashout requests.' };
-    }
-
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_PENDING_CASHOUT}`;
-
-    try {
-      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
-      const raw = await response.text().catch(() => '');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch pending cashout requests: ${response.status} ${response.statusText}\n${raw}`);
-      }
-      let data = null;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error('Invalid response format');
-      }
-      return { success: true, data: data };
-    } catch (error) {
-      console.error('Get pending cashout error:', error);
-      return { success: false, error: error.message || 'Failed to fetch pending cashout requests.' };
-    }
-  }
 }
 
-// Export singleton instance
-const authService = new AuthService();
-export default authService;
+export default AuthService;

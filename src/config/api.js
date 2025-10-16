@@ -21,14 +21,18 @@ export const API_CONFIG = {
     GET_USER_BY_ID: '/auth/user/getByid',
     // Fetch master agencies by admin code (JWT protected)
     GET_ALL_MASTER_AGENCY: '/auth/getallMasterAgency',
-  // Get all active hosts (JWT protected)
-  GET_ACTIVE_HOSTS: '/auth/api/allactivate-deactivate-host',
-  // Save diamond by super admin
-  SAVE_DIAMOND: '/auth/superadmin/saveDiamond',
-  // Get all pending cashout list (Super Admin only)
-  GET_ALL_PENDING_CASHOUT: '/auth/superadmin/allpendingcashout',
-  // Get cashout history (Super Admin only)
-  GET_CASHOUT_HISTORY: '/auth/superadmin/cashouthistory'
+    // Get all active hosts (JWT protected)
+    GET_ACTIVE_HOSTS: '/auth/api/allactivate-deactivate-host',
+    // Activate/deactivate seller (Admin/Super Admin only)
+    ACTIVE_DEACTIVE_SELLER: '/auth/superadmin/active-deactive-seller',
+    // Save diamond by super admin
+    SAVE_DIAMOND: '/auth/superadmin/saveDiamond',
+    // Get all pending cashout list (Super Admin only)
+    GET_ALL_PENDING_CASHOUT: '/auth/superadmin/allpendingcashout',
+    // Get cashout history (Super Admin only)
+    GET_CASHOUT_HISTORY: '/auth/superadmin/cashouthistory',
+    // Add coins to host (Admin/Super Admin only)
+    COINS_PLUS: '/auth/api/coinsplus'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

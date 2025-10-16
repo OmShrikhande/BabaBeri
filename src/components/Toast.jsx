@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
 
-const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
+const Toast = ({ id, message, type = 'success', duration = 3000, onRemove }) => {
   const [isVisible, setIsVisible] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      setTimeout(onClose, 300); // Wait for animation to complete
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
-
-  const handleClose = () => {
+  const closeToast = useCallback(() => {
     setIsVisible(false);
-    setTimeout(onClose, 300);
+    setTimeout(() => onRemove(id), 300); // Wait for exit animation
+  }, [id, onRemove]);
+
+  useEffect(() => {
+    const timer = setTimeout(closeToast, duration);
+    return () => clearTimeout(timer);
+  }, [duration, closeToast]);
+
+  const handleManualClose = () => {
+    if (!isVisible) return;
+    closeToast();
   };
 
   const getIcon = () => {
@@ -57,47 +58,15 @@ const Toast = ({ message, type = 'success', duration = 3000, onClose }) => {
       {getIcon()}
       <span className="text-white font-medium flex-1">{message}</span>
       <button
-        onClick={handleClose}
+        onClick={handleManualClose}
         className="text-gray-400 hover:text-white transition-colors"
+        type="button"
+        aria-label="Dismiss notification"
       >
         <X className="w-4 h-4" />
       </button>
     </div>
   );
-};
-
-// Toast Container Component
-export const ToastContainer = ({ toasts, removeToast }) => {
-  return (
-    <div className="fixed top-0 right-0 z-50 p-4 space-y-2">
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
-    </div>
-  );
-};
-
-// Hook for managing toasts
-export const useToast = () => {
-  const [toasts, setToasts] = useState([]);
-
-  const addToast = (message, type = 'success', duration = 3000) => {
-    const id = Date.now() + Math.random(); // Add random component to ensure uniqueness
-    const newToast = { id, message, type, duration };
-    setToasts((prev) => [...prev, newToast]);
-  };
-
-  const removeToast = (id) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
-
-  return { toasts, addToast, removeToast };
 };
 
 export default Toast;

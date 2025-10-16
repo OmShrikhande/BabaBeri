@@ -1,6 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import API_CONFIG from '../config/api';
-import { useToast, ToastContainer } from './Toast';
+import useToast from '../hooks/useToast';
+import ToastList from './ToastList';
+
+const COINS_PLUS_URL = (() => {
+  const baseUrl = API_CONFIG.BASE_URL ?? import.meta.env.VITE_API_BASE_URL ?? '';
+  return `${baseUrl}${API_CONFIG.ENDPOINTS.COINS_PLUS}`;
+})();
 import CoinRechargeHeader from './CoinRecharge/CoinRechargeHeader';
 import HostRechargeSection from './CoinRecharge/HostRechargeSection';
 import OffersTab from './CoinRecharge/Tabs/OffersTab';
@@ -52,10 +58,6 @@ const CoinRecharge = () => {
   const history = useRechargeHistory({ headers: hostState.headers });
   const [activeTab, setActiveTab] = useState('offers');
 
-  const coinsPlusUrl = useMemo(() => {
-    const baseUrl = API_CONFIG.BASE_URL ?? import.meta.env.VITE_API_BASE_URL ?? '';
-    return `${baseUrl}${API_CONFIG.ENDPOINTS.COINS_PLUS}`;
-  }, []);
 
   const handleRecharge = useCallback(async () => {
     if (!hostState.selectedHost || !hostState.rechargeAmount) {
@@ -65,7 +67,7 @@ const CoinRecharge = () => {
 
     hostActions.setIsRecharging(true);
     try {
-      const url = `${coinsPlusUrl}?id=${hostState.selectedHost.id}&coins=${hostState.rechargeAmount}`;
+      const url = `${COINS_PLUS_URL}?id=${hostState.selectedHost.id}&coins=${hostState.rechargeAmount}`;
       const response = await fetch(url, {
         method: 'PUT',
         headers: hostState.headers
@@ -85,7 +87,7 @@ const CoinRecharge = () => {
     } finally {
       hostActions.setIsRecharging(false);
     }
-  }, [hostState.selectedHost, hostState.rechargeAmount, hostState.headers, hostActions, coinsPlusUrl, addToast]);
+  }, [hostState.selectedHost, hostState.rechargeAmount, hostState.headers, hostActions, addToast]);
 
   return (
     <div className="min-h-screen bg-[#121212] text-white p-6">
@@ -180,7 +182,7 @@ const CoinRecharge = () => {
         onSubmit={planActions.handlePlanSubmit}
       />
 
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <ToastList toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

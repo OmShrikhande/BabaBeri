@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Bell, Wallet, PlusCircle, XCircle, CircleDollarSign, Clock, ClipboardList, Edit2, Trash2 } from 'lucide-react';
-import { ToastContainer, useToast } from './Toast';
+import useToast from '../hooks/useToast';
+import ToastList from './ToastList';
 import CustomDropdown from './CustomDropdown';
 import authService from '../services/authService';
 import {
@@ -1151,7 +1152,7 @@ const DiamondsCashout = () => {
       </div>
 
       {/* Toast Container */}
-      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <ToastList toasts={toasts} removeToast={removeToast} />
     </div>
   );
 };

@@ -15,6 +15,7 @@
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.525.0",
     "postcss": "^8.5.6",
+    "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-dev-tools": "^0.0.1",
     "react-dom": "^19.1.0",

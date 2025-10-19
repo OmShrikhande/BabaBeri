@@ -252,10 +252,13 @@ const SubAdmins = ({ onNavigateToDetail }) => {
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-4 gap-6 px-6 py-4">
+              <div className="grid grid-cols-7 gap-2 px-2 py-2">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Sub-Admin Name</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Sub-Admin ID</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Master Agencies</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current diamond</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">overall diamond</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">total coins</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Action</div>
               </div>
             </div>
@@ -271,7 +274,7 @@ const SubAdmins = ({ onNavigateToDetail }) => {
               {!listLoading && !listError && subAdmins.map((subAdmin, index) => (
                 <div 
                   key={subAdmin.id} 
-                  className="grid grid-cols-4 gap-6 px-6 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                  className="grid grid-cols-7 gap-2 px-2 py-4 hover:bg-[#222222] transition-all duration-200 group"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Sub-Admin Name */}
@@ -291,6 +294,18 @@ const SubAdmins = ({ onNavigateToDetail }) => {
                   <div className="flex items-center">
                     <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.masterAgenciesCount}</span>
                   </div>
+                  {/* Current diamonds */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.diamond}</span>
+                  </div>
+                  {/* overall diamonds */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.diamond}</span>
+                  </div>
+                  {/* Total Coins */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.coins}</span>
+                  </div>
 
                   {/* Action Button */}
                   <div className="flex items-center">
@@ -304,7 +319,48 @@ const SubAdmins = ({ onNavigateToDetail }) => {
                     </button>
                   </div>
                 </div>
+                
               ))}
+
+              <div 
+                 
+                  className="grid grid-cols-7 gap-2 px-2 py-4 hover:bg-[#222222] transition-all duration-200 group"
+                
+                >
+                  {/* Sub-Admin Name */}
+                  <div className="flex items-center space-x-4">
+                  
+                    <div>
+                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors"></div>
+                    </div>
+                  </div>
+
+                  {/* Sub-Admin ID */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors"></span>
+                  </div>
+
+                  {/* Master Agencies */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">total </span>
+                  </div>
+                  {/* Current diamonds */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">344</span>
+                  </div>
+                  {/* overall diamonds */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">432</span>
+                  </div>
+                  {/* Total Coins */}
+                  <div className="flex items-center">
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">3242</span>
+                  </div>
+
+                  {/* Action Button */}
+                
+                </div>
+                
             </div>
 
             {/* Empty State */}

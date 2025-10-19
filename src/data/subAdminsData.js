@@ -9,6 +9,9 @@ export const subAdminsData = [
     email: 'subadmin1@example.com',
     mobile: '+91 9876543210',
     aadhaar: '1234 5678 9012',
+    currentdiamond: 12500000,
+    overalldiamonds: 50000000,
+    totalcoins: 7500000,
     dateOfBirth: '1990-01-15',
     status: 'active',
     goalsRemaining: {

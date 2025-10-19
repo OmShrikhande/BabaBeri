@@ -20,6 +20,7 @@ import AuthTest from './components/AuthTest';
 import MasterAgency from './components/MasterAgency';
 import { default as HostDetails } from './components/HostDetails';
 import RoleStagesPage from './components/RoleStages/RoleStagesPage';
+import UserActivation from './components/UserActivation';
 import authService from './services/authService';
 import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
 
@@ -356,6 +357,8 @@ function App() {
         return <RoleStagesPage currentUser={currentUser} />;
       case 'block-user':
         return <BlockUsers />;
+      case 'user-activation':
+        return <UserActivation />;
       case 'users-details':
       case 'user-details':
         return <HostDetails />;

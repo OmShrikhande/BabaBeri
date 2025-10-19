@@ -135,11 +135,12 @@ export const navigationItems = [
   { id: 'ranking', label: 'Rankings', icon: 'Trophy' },
   { id: 'role-stages', label: 'Role Stages', icon: 'Shield' },
   // { id: 'analytics', label: 'Analytics', icon: 'BarChart' },
-  { id: 'user-details', label: 'User Details', icon: 'User' }, // Slight rename for clarity
+  { id: 'user-details', label: 'User Details', icon: 'Users' }, // Slight rename for clarity
   { id: 'vip-levels', label: 'VIP / Levels', icon: 'Crown' },
   { id: 'gifts-banners', label: 'Gifts / Banners', icon: 'Gift' },
   // { id: 'recordings', label: 'Recordings', icon: 'Video' },
   { id: 'block-user', label: 'Block Users', icon: 'UserX' },
+  { id: 'user-activation', label: 'Activation Center', icon: 'Shield' },
   { id: 'reports-ban', label: 'Reports / Ban Request', icon: 'Flag' },
   // { id: 'ai-warnings', label: 'AI Warnings', icon: 'AlertTriangle' }, // Renamed from "All Warnings"
   // { id: 'songs-library', label: 'Songs Library', icon: 'Music' },

@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck, 
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX, 
-  AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X, LogOut, User
+  AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X, LogOut, User,
+  ShieldCheck
 } from 'lucide-react';
 import { navigationItems } from '../data/dashboardData';
 import { getFilteredNavigationItems, getUserRoleDisplayName } from '../utils/roleBasedAccess';

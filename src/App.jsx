@@ -81,16 +81,9 @@ function App() {
   const loadAgenciesData = async () => {
     setAgenciesLoading(true);
     try {
-      const profile = await authService.ensureUserProfileCached();
-      const userCode = authService.extractUserCode(profile);
+      await authService.ensureUserProfileCached();
 
-      if (!userCode) {
-        console.warn('Unable to fetch active hosts: missing user code in profile.');
-        setAgencies([]);
-        return;
-      }
-
-      const response = await authService.getActiveHosts({ userCode });
+      const response = await authService.getActiveHosts();
 
       if (response.success) {
         // Transform API data: group hosts by owner (agency code)

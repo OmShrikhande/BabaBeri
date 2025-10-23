@@ -481,8 +481,7 @@ class AuthService {
     }
   }
 
-  // Get active hosts
-  async getActiveHosts({ userCode } = {}) {
+  async getAllPendingProfilePics() {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
     if (this.isTokenExpired(token)) {
@@ -491,20 +490,98 @@ class AuthService {
     }
 
     const role = normalizeUserType(this.getUserType());
-    if (role !== USER_TYPES.ADMIN || role !== USER_TYPES.SUPER_ADMIN) {
-      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can view active hosts.' };
+    if (![USER_TYPES.ADMIN, USER_TYPES.SUPER_ADMIN].includes(role)) {
+      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can view pending profile pictures.' };
     }
 
-    const userCodeParam = userCode || this.getUserInfo()?.userCode || this.getUserInfo()?.UserCode;
-    if (!userCodeParam) {
-      return { success: false, error: 'UserCode is required to fetch active hosts.' };
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ALL_PENDING_PICS}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch pending profile pictures: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get pending profile pictures error:', error);
+      return { success: false, error: error.message || 'Failed to fetch pending profile pictures.' };
+    }
+  }
+
+  async updateProfilePicStatus(userCode, status) {
+    if (!userCode) {
+      return { success: false, error: 'User code is required to update profile picture status.' };
     }
 
-    const params = new URLSearchParams({ UserCode: userCodeParam });
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_HOSTS}?${params.toString()}`;
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (![USER_TYPES.ADMIN, USER_TYPES.SUPER_ADMIN].includes(role)) {
+      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can update profile picture status.' };
+    }
+
+    const normalizedStatus = String(status || 'APPROVED').trim().toUpperCase();
+    const allowedStatuses = ['APPROVED', 'REJECT'];
+    const statusParam = allowedStatuses.includes(normalizedStatus) ? normalizedStatus : 'APPROVED';
+
+    const params = new URLSearchParams({ usercode: userCode, status: statusParam });
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_PROFILE}?${params.toString()}`;
 
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to update profile picture status: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+      }
+      return { success: true, data: data || { message: 'Profile picture status updated successfully.' } };
+    } catch (error) {
+      console.error('Update profile picture status error:', error);
+      return { success: false, error: error.message || 'Failed to update profile picture status.' };
+    }
+  }
+
+  // Get active hosts
+  async getActiveHosts({ status } = {}) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (![USER_TYPES.ADMIN, USER_TYPES.SUPER_ADMIN].includes(role)) {
+      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can view active hosts.' };
+    }
+
+    const allowedStatuses = ['activate', 'deactivate', 'blocked'];
+    const normalizedStatus = String(status || 'activate').trim().toLowerCase();
+    const statusParam = allowedStatuses.includes(normalizedStatus) ? normalizedStatus : 'activate';
+
+    const params = new URLSearchParams({ status: statusParam });
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_HOSTS}?${params.toString()}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
       const raw = await response.text().catch(() => '');
       if (!response.ok) {
         throw new Error(`Failed to fetch active hosts: ${response.status} ${response.statusText}\n${raw}`);
@@ -515,8 +592,27 @@ class AuthService {
       } catch {
         throw new Error('Invalid response format');
       }
-      return { success: true, data: data };
+      return { success: true, data };
     } catch (error) {
+      const message = error?.message || '';
+      if (message.includes('403') || message.toLowerCase().includes('forbidden')) {
+        try {
+          const fallback = await this.getAllHosts();
+          if (fallback.success) {
+            const list = Array.isArray(fallback.data) ? fallback.data : fallback.data?.data || [];
+            const filtered = list.filter((item) => {
+              const value = (item?.status || item?.accountStatus || '').toString().toLowerCase();
+              if (statusParam === 'activate') return value === 'activate' || value === 'active';
+              if (statusParam === 'deactivate') return value === 'deactivate' || value === 'inactive';
+              if (statusParam === 'blocked') return value === 'blocked';
+              return false;
+            });
+            return { success: true, data: filtered };
+          }
+        } catch (fallbackError) {
+          console.error('Active hosts fallback error:', fallbackError);
+        }
+      }
       console.error('Get active hosts error:', error);
       return { success: false, error: error.message || 'Failed to fetch active hosts.' };
     }

@@ -122,6 +122,8 @@ export const supporterCardsData = {
 
 export const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+  // Quick-create action for the UI
+  { id: 'create', label: 'Create', icon: 'UserRoundPlus' },
   { id: 'sub-admins', label: 'Sub Admin', icon: 'Users' },
   { id: 'master-agency', label: 'Master Agency', icon: 'Building' },
   { id: 'agencies', label: 'Agencies', icon: 'Building2' },

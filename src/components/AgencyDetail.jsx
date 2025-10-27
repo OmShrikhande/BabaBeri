@@ -54,7 +54,7 @@ const AgencyDetail = ({ agencyId, onBack }) => {
                 ${agency.goals.moneyEarned.toLocaleString()} / ${agency.goals.moneyTarget.toLocaleString()}
               </p>
               <p className="text-gray-400 text-sm">
-                {goalsRemaining > 0 ? `${goalsRemaining}/2 Goals Remaining` : 'All Goals Completed!'}
+                {goalsRemaining > 0 ? `${goalsRemaining} Goals Remaining` : 'All Goals Completed!'}
               </p>
             </div>
           </div>

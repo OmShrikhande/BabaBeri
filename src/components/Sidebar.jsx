@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+// import React, { useState, useRef } from 'react';
 import { 
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck, 
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX, 
   AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X, LogOut, User,
-  ShieldCheck
+  ShieldCheck,UserRoundPlus
 } from 'lucide-react';
 import { navigationItems } from '../data/dashboardData';
 import { getFilteredNavigationItems, getUserRoleDisplayName } from '../utils/roleBasedAccess';
@@ -11,7 +11,7 @@ import { getFilteredNavigationItems, getUserRoleDisplayName } from '../utils/rol
 const iconMap = {
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck,
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX,
-  AlertTriangle, Video, Flag, BarChart, UserCog, Settings
+  AlertTriangle, Video, Flag, BarChart, UserCog, Settings,UserRoundPlus
 };
 
 const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation, currentUser, onLogout }) => {
@@ -72,7 +72,7 @@ const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigatio
                   clearTimeout(window.__brandClickTimer);
                   window.__brandClickTimer = null;
                 }
-                window.location.href = 'https://docs.google.com/spreadsheets/d/1hMAGpdkwLweVPhyFG0KUTncdKY_1P1bmZxWshcQNs5E/edit?gid=0#gid=0';
+                window.open('https://docs.google.com/spreadsheets/d/1hMAGpdkwLweVPhyFG0KUTncdKY_1P1bmZxWshcQNs5E/edit?gid=0#gid=0','blank');
               }}
             >
               <h1 className="text-xl font-bold text-white">PRO X STREAM</h1>

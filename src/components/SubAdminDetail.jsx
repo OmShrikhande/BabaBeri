@@ -188,7 +188,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
               <div className="bg-[#121212] p-6 rounded-xl border border-gray-800">
                 <div className="mb-4">
                   <div className="text-gray-400 text-sm mb-1">Sub-admins / {subAdmin.name}</div>
-                  <h2 className="text-2xl font-bold text-white">1/2 Goals Remaining</h2>
+                  <h2 className="text-2xl font-bold text-white">1 Goals Remaining</h2>
                   <div className="text-gray-400 mt-1">${subAdmin.goalsRemaining?.current || 1180} / $10000</div>
                 </div>
                 
@@ -206,7 +206,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
                 </div>
                 
                 <p className="text-gray-400 text-sm mt-4">
-                  Complete the remaining goal to reach the next, goal. Increase your revenue share by completing these goals.
+                  Complete the remaining goal to 5%. Increase your revenue share by completing these goals.
                 </p>
               </div>
 

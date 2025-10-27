@@ -21,8 +21,30 @@ import MasterAgency from './components/MasterAgency';
 import { default as HostDetails } from './components/HostDetails';
 import RoleStagesPage from './components/RoleStages/RoleStagesPage';
 import UserActivation from './components/UserActivation';
+import AdminDashboard from './components/AdminDashboard';
+import MasterAgencyDashboard from './components/MasterAgencyDashboard';
+import AgencyDashboard from './components/AgencyDashboard';
 import authService from './services/authService';
 import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
+
+const getPathForUserType = (userType) => {
+  if (!userType) {
+    return '/';
+  }
+  if (userType === 'super-admin') {
+    return '/';
+  }
+  if (userType === 'admin') {
+    return '/admin';
+  }
+  if (userType === 'master-agency') {
+    return '/master-agency';
+  }
+  if (userType === 'agency') {
+    return '/agency';
+  }
+  return '/';
+};
 
 function App() {
   // Authentication state
@@ -40,6 +62,24 @@ function App() {
   const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
   const [agencies, setAgencies] = useState([]);
   const [agenciesLoading, setAgenciesLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      if (window.location.pathname !== '/') {
+        window.history.replaceState(null, '', '/');
+      }
+      return;
+    }
+
+    const targetPath = getPathForUserType(currentUser?.userType);
+    if (targetPath && window.location.pathname !== targetPath) {
+      window.history.replaceState(null, '', targetPath);
+    }
+  }, [isAuthenticated, activeRoute, currentUser]);
 
   // Check for existing authentication on app load
   useEffect(() => {
@@ -59,11 +99,13 @@ function App() {
       setCurrentUser(user);
       setIsAuthenticated(true);
 
-      // If admin, land directly on SubAdminDetail with a default sub-admin
+      // Route to appropriate dashboard based on user type
       if (type === 'admin') {
-        setActiveRoute('admin-subadmin-detail');
-        setSelectedSubAdminId(1); // legacy
-        setSelectedSubAdmin({ id: 1 }); // default sub-admin; adjust if needed
+        setActiveRoute('admin-dashboard');
+      } else if (type === 'master-agency') {
+        setActiveRoute('master-agency-dashboard');
+      } else if (type === 'agency') {
+        setActiveRoute('agency-dashboard');
       }
     } else if (token) {
       // Token exists but is expired
@@ -174,11 +216,13 @@ function App() {
     setCurrentUser(userData);
     setIsAuthenticated(true);
 
-    // If admin, navigate to SubAdminDetail directly and set a default sub-admin id
+    // Route to appropriate dashboard based on user type
     if (userType === 'admin') {
-      setActiveRoute('admin-subadmin-detail');
-      setSelectedSubAdminId(1); // legacy
-      setSelectedSubAdmin({ id: 1 }); // default sub-admin; adjust if needed
+      setActiveRoute('admin-dashboard');
+    } else if (userType === 'master-agency') {
+      setActiveRoute('master-agency-dashboard');
+    } else if (userType === 'agency') {
+      setActiveRoute('agency-dashboard');
     }
   };
 
@@ -280,6 +324,12 @@ function App() {
     }
 
     switch (activeRoute) {
+      case 'admin-dashboard':
+        return <AdminDashboard />;
+      case 'master-agency-dashboard':
+        return <MasterAgencyDashboard />;
+      case 'agency-dashboard':
+        return <AgencyDashboard />;
       case 'host-verification':
         return <HostVerification />;
       case 'agencies':
@@ -326,16 +376,6 @@ function App() {
           );
         }
         return <SubAdmins onNavigateToDetail={handleNavigateToSubAdminDetail} />;
-      case 'admin-subadmin-detail':
-        // direct landing page for admins; no sidebar tab
-        return (
-          <SubAdminDetail
-            subAdminId={selectedSubAdminId || 1}
-            onBack={() => {}}
-            onNavigateToMasterAgency={handleNavigateToMasterAgency}
-            currentUser={currentUser}
-          />
-        );
       case 'master-agency':
         return <MasterAgency onNavigateToDetail={handleNavigateToMasterAgency} currentUser={currentUser} />;
       case 'live-monitoring':

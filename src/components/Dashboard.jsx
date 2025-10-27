@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { LogOut, Crown, Shield, User, ChevronDown, Bell } from 'lucide-react';
+import { LogOut, Crown, Shield, User, ChevronDown, Bell,UserRoundPlus } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';

@@ -17,6 +17,9 @@ export const normalizeUserType = (value) => {
   if ([
     'master-agency', 'master', 'masteragency'
   ].includes(v)) return USER_TYPES.MASTER_AGENCY;
+  if ([
+    'agency', 'agencies'
+  ].includes(v)) return 'agency';
   return v; // fallback to normalized raw string
 };
 
@@ -28,12 +31,12 @@ export const ROLE_PERMISSIONS = {
     allowedRoutes: 'all'
   },
   [USER_TYPES.ADMIN]: {
-    // Admin lands on SubAdminDetail directly; no sidebar tab for it
+    // Admin lands on AdminDashboard directly; no sidebar tab for it
     canAccess: (route) => {
-      const allowedRoutes = ['admin-subadmin-detail']; // synthetic route, not in sidebar
+      const allowedRoutes = ['admin-dashboard', 'admin-subadmin-detail']; // synthetic route, not in sidebar
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: ['admin-subadmin-detail']
+    allowedRoutes: ['admin-dashboard', 'admin-subadmin-detail']
   },
   'sub-admin': {
     // Sub-admin can only access sub-admin related routes
@@ -50,12 +53,20 @@ export const ROLE_PERMISSIONS = {
     ]
   },
   'master-agency': {
-    // Master agency can only access master agency; no dashboard
+    // Master agency can access master agency dashboard and agencies
     canAccess: (route) => {
-      const allowedRoutes = ['agency-dashboard', 'agencies', 'add-agency'];
+      const allowedRoutes = ['master-agency-dashboard', 'agencies', 'add-agency'];
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: ['agencies']
+    allowedRoutes: ['master-agency-dashboard', 'agencies']
+  },
+  'agency': {
+    // Agency can access agency dashboard
+    canAccess: (route) => {
+      const allowedRoutes = ['agency-dashboard'];
+      return allowedRoutes.includes(route);
+    },
+    allowedRoutes: ['agency-dashboard']
   }
 };
 

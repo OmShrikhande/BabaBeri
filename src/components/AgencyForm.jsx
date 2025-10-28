@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Mail, Lock, AlertCircle, CheckCircle, Loader2, PlusCircle, Users } from 'lucide-react';
+import { Building2, User, AlertCircle, CheckCircle, Loader2, PlusCircle, Users } from 'lucide-react';
 import authService from '../services/authService';
 
 const AgencyForm = ({ onCreated, disabled = false }) => {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    userId: '',
     masterAgencyName: ''
   });
   const [masterAgencies, setMasterAgencies] = useState([]);
@@ -55,20 +53,8 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
     setError('');
     setSuccess('');
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim() || !formData.confirmPassword.trim() || !formData.masterAgencyName.trim()) {
+    if (!formData.name.trim() || !formData.userId.trim() || !formData.masterAgencyName.trim()) {
       setError('All fields are required.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long.');
       setIsLoading(false);
       return;
     }
@@ -76,8 +62,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
     try {
       const result = await authService.createAgency({
         name: formData.name,
-        email: formData.email,
-        password: formData.password,
+        userId: formData.userId,
         masterAgencyName: formData.masterAgencyName
       });
 
@@ -85,7 +70,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
         setSuccess(`Agency "${formData.name}" created successfully!`);
         const created = result.data;
         onCreated && onCreated(created);
-        setFormData({ name: '', email: '', password: '', confirmPassword: '', masterAgencyName: '' });
+  setFormData({ name: '', userId: '', masterAgencyName: '' });
       } else {
         setError(result.error || 'Failed to create agency.');
       }
@@ -158,54 +143,17 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">User ID</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              name="userId"
+              value={formData.userId}
               onChange={handleInputChange}
               className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
-              placeholder="Enter email"
+              placeholder="Enter user ID"
               required
-              disabled={isLoading || disabled}
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
-              placeholder="Enter a secure password (min. 6 characters)"
-              required
-              minLength={6}
-              disabled={isLoading || disabled}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Confirm Password</label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
-              placeholder="Confirm your password"
-              required
-              minLength={6}
               disabled={isLoading || disabled}
             />
           </div>

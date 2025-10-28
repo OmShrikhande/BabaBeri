@@ -25,6 +25,7 @@ import AdminDashboard from './components/AdminDashboard';
 import MasterAgencyDashboard from './components/MasterAgencyDashboard';
 import AgencyDashboard from './components/AgencyDashboard';
 import authService from './services/authService';
+import Createlayout from './components/Create/Createlayout';
 import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
 
 const getPathForUserType = (userType) => {
@@ -397,6 +398,8 @@ function App() {
         return <HostDetails />;
       case 'auth-test':
         return <AuthTest />;
+    case 'create':
+      return <Createlayout />;
       case 'profile':
         return <Profile currentUser={currentUser} onBack={() => handleNavigation(previousRoute || 'dashboard')} />;
       case 'dashboard':

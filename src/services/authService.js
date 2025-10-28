@@ -652,6 +652,160 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to fetch pending cashout requests.' };
     }
   }
+
+  // Create admin
+  async createAdmin({ name, email, password }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to create admin: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create admin error:', error);
+      return { success: false, error: error.message || 'Failed to create admin.' };
+    }
+  }
+
+  // Create sub-admin
+  async createSubAdmin({ name, email, password }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_ADMIN}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to create sub-admin: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create sub-admin error:', error);
+      return { success: false, error: error.message || 'Failed to create sub-admin.' };
+    }
+  }
+
+  // Create master agency
+  async createMasterAgency({ name, email, password, adminName }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_MASTER_AGENCY}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password, adminName })
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to create master agency: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create master agency error:', error);
+      return { success: false, error: error.message || 'Failed to create master agency.' };
+    }
+  }
+
+  // Create agency
+  async createAgency({ name, email, password, masterAgencyName }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_AGENCY}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({ name, email, password, masterAgencyName })
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to create agency: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Create agency error:', error);
+      return { success: false, error: error.message || 'Failed to create agency.' };
+    }
+  }
+
+  // Get all admins for dropdown
+  async getAdmins() {
+    return this.getUsersByRole('ADMIN');
+  }
+
+  // Get all master agencies for dropdown
+  async getMasterAgencies() {
+    return this.getUsersByRole('MASTER_AGENCY');
+  }
 }
 
 // Export singleton instance

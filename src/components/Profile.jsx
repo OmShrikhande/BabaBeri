@@ -254,7 +254,7 @@ const Profile = ({ currentUser, onBack }) => {
 
   return (
     <div
-      className="relative flex min-h-[100dvh] bg-[#0B0B0B] text-white flex-col h-full overflow-hidden"
+      className="relative flex min-h-[100dvh] bg-[#0B0B0B] text-white flex-col h-full overflow-x-hidden"
       ref={bgRef}
       onMouseMove={handlePointerMove}
       onTouchMove={handleTouchMove}

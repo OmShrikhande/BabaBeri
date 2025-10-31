@@ -247,6 +247,72 @@ class AuthService {
     }
   }
 
+  async getUserById(user) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const candidates = [];
+    if (typeof user === 'object' && user !== null) {
+      const extracted = this.extractUserCode(user);
+      if (extracted) {
+        const trimmed = String(extracted).trim();
+        if (trimmed.length) candidates.push(trimmed);
+      }
+      ['id', 'userId', 'userID', 'uid', 'code'].forEach((key) => {
+        const value = user[key];
+        if (value !== undefined && value !== null) {
+          const trimmed = String(value).trim();
+          if (trimmed.length) candidates.push(trimmed);
+        }
+      });
+    } else if (typeof user === 'number' || typeof user === 'string') {
+      const trimmed = String(user).trim();
+      if (trimmed.length) candidates.push(trimmed);
+    }
+
+    const identifier = candidates.find((value) => value.length);
+    if (!identifier) {
+      return { success: false, error: 'User id is required to fetch profile.' };
+    }
+
+    const params = new URLSearchParams();
+    ['id', 'userId', 'userid', 'UserCode', 'usercode'].forEach((key) => {
+      params.append(key, identifier);
+    });
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_USER_BY_ID}?${params.toString()}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+      }
+      const payload = data?.data ?? data ?? null;
+      if (payload && typeof payload === 'object') {
+        const existingCode = this.extractUserCode(payload);
+        if (!existingCode) {
+          payload.userCode = identifier;
+        }
+      }
+      return { success: true, data: payload };
+    } catch (error) {
+      console.error('Get user by id error:', error);
+      return { success: false, error: error.message || 'Failed to fetch user.' };
+    }
+  }
+
   // Decode JWT token (basic implementation)
   decodeToken(token = null) {
     const tokenToUse = token || this.getToken();

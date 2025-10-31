@@ -3,9 +3,11 @@ import ErrorBoundary from '../ErrorBoundary';
 import AdminForm from '../AdminForm';
 import MasterAgencyForm from '../MasterAgencyForm';
 import AgencyForm from '../AgencyForm';
-import { Loader2 } from 'lucide-react';
+import MoveLayout from '../Move/MoveLayout';
+import { Loader2, ArrowRightLeft } from 'lucide-react';
 
 function Createlayout() {
+  const [view, setView] = useState('create'); // 'create' or 'move'
   const [createdItems, setCreatedItems] = useState({
     admins: [],
     masterAgencies: [],
@@ -43,22 +45,42 @@ function Createlayout() {
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-b from-[#0F0F0F] to-[#1A1A1A] p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Create User Accounts</h1>
-            <p className="text-gray-400">Create admins, master agencies, and agencies for your platform</p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">{view === 'create' ? 'Create User Accounts' : 'Move User Accounts'}</h1>
+              <p className="text-gray-400">
+                {view === 'create' 
+                  ? 'Create admins, master agencies, and agencies for your platform'
+                  : 'Move or reassign users between different roles in your platform'
+                }
+              </p>
+            </div>
+            <button
+              onClick={() => setView(view === 'create' ? 'move' : 'create')}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg text-white font-bold hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#F72585] focus:ring-opacity-50"
+            >
+              <ArrowRightLeft className="w-5 h-5" />
+              <span>{view === 'create' ? 'Switch to Move' : 'Switch to Create'}</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {view === 'create' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminForm onCreated={handleAdminCreated} />
+              </Suspense>
+              <Suspense fallback={<LoadingFallback />}>
+                <MasterAgencyForm onCreated={handleMasterAgencyCreated} />
+              </Suspense>
+              <Suspense fallback={<LoadingFallback />}>
+                <AgencyForm onCreated={handleAgencyCreated} />
+              </Suspense>
+            </div>
+          ) : (
             <Suspense fallback={<LoadingFallback />}>
-              <AdminForm onCreated={handleAdminCreated} />
+              <MoveLayout />
             </Suspense>
-            <Suspense fallback={<LoadingFallback />}>
-              <MasterAgencyForm onCreated={handleMasterAgencyCreated} />
-            </Suspense>
-            <Suspense fallback={<LoadingFallback />}>
-              <AgencyForm onCreated={handleAgencyCreated} />
-            </Suspense>
-          </div>
+          )}
         </div>
       </div>
     </ErrorBoundary>

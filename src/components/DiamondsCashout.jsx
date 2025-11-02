@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search, Bell, Wallet, PlusCircle, XCircle, CircleDollarSign, Clock, ClipboardList, Edit2, Trash2 } from 'lucide-react';
 import useToast from '../hooks/useToast';
 import ToastList from './ToastList';
 import CustomDropdown from './CustomDropdown';
+import WalletSummary from './DiamondsCashout/WalletSummary';
+import DiamondCreditTable from './DiamondsCashout/DiamondCreditTable';
 import authService from '../services/authService';
-import {
-  filterOptions
-} from '../data/diamondsDemoData';
+import { filterOptions } from '../data/diamondsDemoData';
 
 const INITIAL_CREDIT_FORM = {
   usercode: '',
@@ -18,45 +18,14 @@ const INITIAL_CREDIT_FORM = {
   notes: ''
 };
 
-const CREDIT_STATUS_OPTIONS = [
-  { value: 'CREDIT', label: 'Credit' },
-  { value: 'DEBIT', label: 'Debit' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'FAILED', label: 'Failed' }
-];
-
-const PAYMENT_METHOD_OPTIONS = [
-  { value: 'MANUAL', label: 'Manual Entry' },
-  { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-  { value: 'UPI', label: 'UPI' },
-  { value: 'CASH', label: 'Cash' },
-  { value: 'OTHER', label: 'Other' }
-];
-
 const DiamondsCashout = () => {
-  // Toast hook
   const { toasts, addToast, removeToast } = useToast();
-
   // Error boundary for component
   const [componentError, setComponentError] = useState(null);
 
-  // Reset error when component mounts
   useEffect(() => {
     setComponentError(null);
   }, []);
-
-  // State management
-  const [searchUserId, setSearchUserId] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState('Monthly');
-  const [cashoutRequests, setCashoutRequests] = useState([]);
-  const [cashoutHistory, setCashoutHistory] = useState([]);
-  const [loadingRequests, setLoadingRequests] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [loadingUser, setLoadingUser] = useState(false);
-  const [error, setError] = useState(null);
-
-  // Admin wallet data
   const [walletSummary, setWalletSummary] = useState({
     totalCredited: 0,
     totalDebited: 0,
@@ -72,10 +41,23 @@ const DiamondsCashout = () => {
   const [submittingCredit, setSubmittingCredit] = useState(false);
   const [deletingCreditId, setDeletingCreditId] = useState(null);
 
+  // State management
+  const [searchUserId, setSearchUserId] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedFilter, setSelectedFilter] = useState('Monthly');
+  const [cashoutRequests, setCashoutRequests] = useState([]);
+  const [cashoutHistory, setCashoutHistory] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(false);
+  const [error, setError] = useState(null);
+  const [showAdminWallet, setShowAdminWallet] = useState(false);
+
   const resetCreditForm = () => {
     setCreditForm(INITIAL_CREDIT_FORM);
     setEditingCreditId(null);
   };
+
 
   const handleCreditFieldChange = (field, value) => {
     setCreditForm(prev => ({
@@ -146,7 +128,6 @@ const DiamondsCashout = () => {
       addToast('Please enter a user ID', 'error');
       return;
     }
-
     try {
       setLoadingUser(true);
       const response = await authService.getUserById(searchUserId);
@@ -436,6 +417,22 @@ const DiamondsCashout = () => {
 
     return true;
   };
+
+// Options
+const CREDIT_STATUS_OPTIONS = [
+  { value: 'CREDIT', label: 'Credit' },
+  { value: 'DEBIT', label: 'Debit' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'FAILED', label: 'Failed' }
+];
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: 'MANUAL', label: 'Manual Entry' },
+  { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+  { value: 'UPI', label: 'UPI' },
+  { value: 'CASH', label: 'Cash' },
+  { value: 'OTHER', label: 'Other' }
+];
 
   const handleSubmitCredit = async (event) => {
     event?.preventDefault?.();
@@ -831,329 +828,302 @@ const DiamondsCashout = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 main-content-scroll">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Diamonds Wallet (Cashout)</h1>
-      </div>
-
-      {/* Exchange Rate Bar */}
-      <div className="flex items-center justify-between bg-[#1A1A1A] rounded-lg p-4 border border-gray-700">
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-              <span className="text-black text-xs font-bold">●</span>
-            </div>
-            <span className="text-white font-medium">1 Coins</span>
-          </div>
-          
-          <div className="text-gray-400 text-xl font-bold">=</div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
-              <span className="text-black text-xs font-bold">♦</span>
-            </div>
-            <span className="text-white font-medium">1 Diamonds</span>
-          </div>
-        </div>
-
-        <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center glow-pink">
-          <span className="text-white text-lg">⚡</span>
-        </div>
-      </div>
-
-      {/* Admin Wallet Overview */}
-      <div className="space-y-4">
-        <div className="bg-[#1A1A1A] rounded-lg border border-gray-700 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-white">Admin Diamonds Wallet</h2>
-              <p className="text-sm text-gray-400">Monitor and manage all diamond credits in real-time</p>
-            </div>
+    <>
+      <div className="p-6 space-y-6 main-content-scroll">
+        {showAdminWallet ? (
+          <div>
             <button
-              onClick={openCreateCreditModal}
-              className="hidden md:inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+              onClick={() => setShowAdminWallet(false)}
+              className="flex items-center mb-4 text-sm font-semibold text-gray-200 hover:text-white transition-colors"
             >
-              <PlusCircle className="w-4 h-4 mr-2" />
-              Add Credit
+              <XCircle className="w-4 h-4 mr-1" />
+              Back
             </button>
-          </div>
-          {renderWalletCards()}
-        </div>
-        <div className="bg-[#1A1A1A] rounded-lg border border-gray-700 p-5">
-          {renderCreditTable()}
-        </div>
-      </div>
-
-      {/* Search and Filter Section */}
-      <div className="flex items-end justify-between space-x-4">
-        <div className="flex-1 max-w-md">
-          <label className="block text-sm font-medium text-gray-300 mb-2">Search User</label>
-          <div className="relative">
-            <input
-              type="text"
-              value={searchUserId}
-              onChange={(e) => setSearchUserId(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter user ID to search"
-              className="w-full px-4 py-3 pr-12 bg-[#1A1A1A] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] transition-colors"
+            <WalletSummary
+              walletSummary={walletSummary}
+              loadingWallet={loadingWallet}
+              onAddCredit={openCreateCreditModal}
             />
-            <button
-              onClick={handleUserSearch}
-              disabled={loadingUser}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center hover:glow-pink transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingUser ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <Search className="w-4 h-4 text-white" />
-              )}
-            </button>
+            <DiamondCreditTable
+              lastUpdatedLabel={formattedLastUpdated}
+              loading={loadingCredits}
+              credits={diamondCredits}
+              onAddCredit={openCreateCreditModal}
+              onEditCredit={openEditCreditModal}
+              onDeleteCredit={handleDeleteCredit}
+              deletingId={deletingCreditId}
+            />
           </div>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <Bell className="w-6 h-6 text-gray-400 hover:text-white transition-colors cursor-pointer" />
-          
-          {/* Filter Dropdown */}
-          <CustomDropdown
-            options={filterOptions}
-            value={selectedFilter}
-            onChange={handleFilterSelect}
-            className="w-32"
-          />
-        </div>
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Section - User Details and History (3/4 width) */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* User Profile Card */}
-          {loadingUser ? (
-            <div className="bg-[#1A1A1A] rounded-lg p-6 border border-gray-700">
-              <div className="flex items-center justify-center py-8">
-                <div className="w-8 h-8 border-2 border-[#F72585] border-t-transparent rounded-full animate-spin"></div>
-                <span className="ml-3 text-gray-400">Loading user...</span>
-              </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-white">Diamonds Wallet (Cashout)</h1>
+              <button
+                onClick={() => setShowAdminWallet(true)}
+                className="flex items-center px-3 py-2 bg-[#1A1A1A] border border-gray-700 rounded-lg text-sm font-semibold text-gray-200 hover:text-white hover:border-gray-500 transition-colors"
+              >
+                <Wallet className="w-5 h-5 mr-2 text-[#F72585]" />
+                Admin Wallet
+              </button>
             </div>
-          ) : selectedUser ? (
-            <div className="bg-[#1A1A1A] rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors duration-300">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <img
-                      src={selectedUser.avatar}
-                      alt={selectedUser.name}
-                      className="w-16 h-16 rounded-full border-2 border-[#F72585] object-cover"
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-[#1A1A1A]"></div>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{selectedUser.name}</h3>
-                    <p className="text-gray-400 text-sm">{selectedUser.username}</p>
-                  </div>
-                </div>
 
-                <div className="flex items-center space-x-12">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center space-x-2 mb-1">
-                      <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
-                        <span className="text-black text-xs font-bold">●</span>
-                      </div>
-                      <span className="text-2xl font-bold text-white">{selectedUser.totalCashout}</span>
-                    </div>
-                    <p className="text-gray-400 text-sm">Total Cashout</p>
+            {/* Exchange Rate Bar */}
+            <div className="flex items-center justify-between bg-[#1A1A1A] rounded-lg p-4 border border-gray-700">
+              <div className="flex items-center space-x-8">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-black text-xs font-bold">●</span>
                   </div>
-                  
-                  <div className="text-center">
-                    <div className="flex items-center justify-center space-x-2 mb-1">
-                      <div className="w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center">
-                        <span className="text-black text-xs font-bold">♦</span>
-                      </div>
-                      <span className="text-2xl font-bold text-white">{selectedUser.totalDiamonds}</span>
-                    </div>
-                    <p className="text-gray-400 text-sm">Total Diamonds</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-[#1A1A1A] rounded-lg p-6 border border-gray-700">
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-white mb-2">Search for a User</h3>
-                <p className="text-gray-400">Enter a user ID above to view their cashout details and history</p>
-              </div>
-            </div>
-          )}
-
-          {/* Cashout History */}
-          {selectedUser && (
-            <div className="bg-[#1A1A1A] rounded-lg border border-gray-700">
-              <div className="p-6 border-b border-gray-700">
-                <h3 className="text-lg font-semibold text-white">Cashout History</h3>
-              </div>
-              
-              <div className="p-6">
-                {/* Table Header */}
-                <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-300 pb-2 border-b border-gray-700">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center">
-                      <span className="text-black text-xs font-bold">♦</span>
-                    </div>
-                    <span>Diamonds</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span>📅</span>
-                    <span>Date & Time</span>
-                  </div>
+                  <span className="text-white font-medium">1 Coins</span>
                 </div>
                 
-                {/* Table Body */}
-                <div className="space-y-3 max-h-80 overflow-y-auto coin-scroll">
-                  {loadingHistory ? (
-                    <div className="text-center py-4 text-gray-400">Loading history...</div>
-                  ) : cashoutHistory.length > 0 ? (
-                    cashoutHistory.map((record, index) => {
-                      // Validate record data structure
-                      if (!record || typeof record !== 'object') {
-                        console.warn('Invalid history record:', record);
-                        return null;
-                      }
-                      
-                      const diamonds = record.diamonds || 0;
-                      const date = record.date || 'Unknown date';
-                      
-                      return (
-                        <div
-                          key={index}
-                          className="grid grid-cols-2 gap-4 py-3 border-b border-gray-700 last:border-b-0 hover:bg-gray-800/30 transition-colors duration-200 rounded-lg px-2"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center">
-                              <span className="text-black text-xs font-bold">♦</span>
-                            </div>
-                            <span className="text-white font-medium">{diamonds}</span>
-                          </div>
-                          <div className="text-gray-400 text-sm">{date}</div>
-                        </div>
-                      );
-                    }).filter(Boolean) // Remove null entries
-                  ) : (
-                    <div className="text-center py-4 text-gray-400">
-                      {selectedUser ? 'No cashout history found for this user' : 'Search for a user to view cashout history'}
-                    </div>
-                  )}
+                <div className="text-gray-400 text-xl font-bold">=</div>
+                
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
+                    <span className="text-black text-xs font-bold">♦</span>
+                  </div>
+                  <span className="text-white font-medium">1 Diamonds</span>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* Right Section - Cashout Requests (1/4 width) */}
-        <div className="lg:col-span-1">
-          <div className="bg-[#1A1A1A] rounded-lg border border-gray-700">
-            <div className="p-4 border-b border-gray-700">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-semibold text-white">Cashout Requests</h3>
-                <div className="w-6 h-6 bg-[#F72585] rounded-full flex items-center justify-center glow-pink">
-                  <span className="text-white text-xs font-bold">{cashoutRequests.filter(r => r.status === 'pending').length}</span>
-                </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center glow-pink">
+                <span className="text-white text-lg">⚡</span>
               </div>
             </div>
-            
-            <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto coin-scroll">
-              {loadingRequests ? (
-                <div className="text-center py-4 text-gray-400">Loading cashout requests...</div>
-              ) : cashoutRequests.length > 0 ? (
-                cashoutRequests.map((request) => {
-                  // Validate request data structure
-                  if (!request || typeof request !== 'object') {
-                    console.warn('Invalid request object:', request);
-                    return null;
-                  }
-                  
-                  // Ensure user object exists with fallbacks
-                  const user = request.user || {};
-                  const avatar = user.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
-                  const name = user.name || 'Unknown User';
-                  const time = user.time || 'Unknown time';
-                  const amount = request.amount || 0;
-                  const status = request.status || 'pending';
-                  
-                  return (
-                    <div key={request.id || Math.random()} className="space-y-3 p-3 bg-[#121212] rounded-lg border border-gray-700 hover:border-gray-600 transition-colors duration-300">
-                      <div className="flex items-center space-x-3">
+
+            {/* Search and Filter Section */}
+            <div className="flex items-end justify-between space-x-4">
+              <div className="flex-1 max-w-md">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Search User</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchUserId}
+                    onChange={(e) => setSearchUserId(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Enter user ID to search"
+                    className="w-full px-4 py-3 pr-12 bg-[#1A1A1A] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] transition-colors"
+                  />
+                  <button
+                    onClick={handleUserSearch}
+                    disabled={loadingUser}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center hover:glow-pink transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingUser ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Search className="w-4 h-4 text-white" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <Bell className="w-6 h-6 text-gray-400 hover:text-white transition-colors cursor-pointer" />
+                
+                {/* Filter Dropdown */}
+                <CustomDropdown
+                  options={filterOptions}
+                  value={selectedFilter}
+                  onChange={handleFilterSelect}
+                  className="w-32"
+                />
+              </div>
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* Left Section - User Details and History (3/4 width) */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* User Profile Card */}
+                {loadingUser ? (
+                  <div className="bg-[#1A1A1A] rounded-lg p-6 border border-gray-700">
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-8 h-8 border-2 border-[#F72585] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-3 text-gray-400">Loading user...</span>
+                    </div>
+                  </div>
+                ) : selectedUser ? (
+                  <div className="bg-[#1A1A1A] rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors duration-300">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
                         <div className="relative">
                           <img
-                            src={avatar}
-                            alt={name}
-                            className="w-10 h-10 rounded-full border border-gray-600 object-cover"
-                            onError={(e) => {
-                              e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
-                            }}
+                            src={selectedUser.avatar}
+                            alt={selectedUser.name}
+                            className="w-16 h-16 rounded-full border-2 border-[#F72585] object-cover"
                           />
-                          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-[#121212]"></div>
+                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-[#1A1A1A]"></div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-medium text-sm truncate">{name}</h4>
-                          <p className="text-gray-400 text-xs">{time}</p>
+                        <div>
+                          <h3 className="text-xl font-bold text-white">{selectedUser.name}</h3>
+                          <p className="text-gray-400 text-sm">{selectedUser.username}</p>
                         </div>
-                        <div className="flex items-center space-x-1">
+                      </div>
+
+                      <div className="flex items-center space-x-12">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center space-x-2 mb-1">
+                            <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                              <span className="text-black text-xs font-bold">●</span>
+                            </div>
+                            <span className="text-2xl font-bold text-white">{selectedUser.totalCashout}</span>
+                          </div>
+                          <p className="text-gray-400 text-sm">Total Cashout</p>
+                        </div>
+                        
+                        <div className="text-center">
+                          <div className="flex items-center justify-center space-x-2 mb-1">
+                            <div className="w-5 h-5 bg-cyan-400 rounded-full flex items-center justify-center">
+                              <span className="text-black text-xs font-bold">♦</span>
+                            </div>
+                            <span className="text-2xl font-bold text-white">{selectedUser.totalDiamonds}</span>
+                          </div>
+                          <p className="text-gray-400 text-sm">Total Diamonds</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#1A1A1A] rounded-lg p-6 border border-gray-700">
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Search className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-2">Search for a User</h3>
+                      <p className="text-gray-400">Enter a user ID above to view their cashout details and history</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cashout History Table */}
+                {selectedUser && (
+                  <div className="bg-[#1A1A1A] rounded-lg border border-gray-700">
+                    <div className="p-6 border-b border-gray-700">
+                      <h3 className="text-lg font-semibold text-white">Cashout History</h3>
+                    </div>
+                    
+                    <div className="p-6">
+                      {/* History Table Header */}
+                      <div className="grid grid-cols-2 gap-4 mb-4 text-sm font-medium text-gray-300 pb-2 border-b border-gray-700">
+                        <div className="flex items-center space-x-2">
                           <div className="w-4 h-4 bg-cyan-400 rounded-full flex items-center justify-center">
                             <span className="text-black text-xs font-bold">♦</span>
                           </div>
-                          <span className="text-white font-bold text-sm">{amount.toLocaleString()}</span>
+                          <span>Diamonds</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span>📅</span>
+                          <span>Date & Time</span>
                         </div>
                       </div>
-                      
-                      {status === 'pending' && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApprove(request.id)}
-                            className="flex-1 py-2 px-3 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-xs font-medium hover:glow-pink transition-all duration-300 transform hover:scale-105"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReject(request.id)}
-                            className="flex-1 py-2 px-3 bg-gray-600 text-white rounded-lg text-xs font-medium hover:bg-gray-700 transition-colors transform hover:scale-105"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                      
-                      {status === 'approved' && (
-                        <div className="text-center py-2 px-3 bg-green-900/20 text-green-400 rounded-lg text-xs font-medium border border-green-500/30">
-                          Approved
-                        </div>
-                      )}
-                      
-                      {status === 'rejected' && (
-                        <div className="text-center py-2 px-3 bg-red-900/20 text-red-400 rounded-lg text-xs font-medium border border-red-500/30">
-                          Rejected
-                        </div>
-                      )}
+                      {/* History Table Body */}
+                      <div className="space-y-3 max-h-80 overflow-y-auto coin-scroll">
+                        {loadingHistory ? (
+                          <div className="text-center py-4 text-gray-400">Loading history...</div>
+                        ) : cashoutHistory.length > 0 ? (
+                          cashoutHistory.map((record, index) => (
+                            <div key={index} className="grid grid-cols-2 gap-4 items-center py-2 border-b border-gray-800">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-4 h-4 bg-cyan-400 rounded-full flex items center justify-center">
+                                  <span className="text-black text-xs font-bold">♦</span>
+                                </div>
+                                <span className="text-white font-bold text-sm">{record.diamonds}</span>
+                              </div>
+                              <div className="text-gray-400 text-xs">{record.date}</div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-4 text-gray-400">
+                            {selectedUser ? 'No cashout history found for this user' : 'Search for a user to view cashout history'}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  );
-                }).filter(Boolean) // Remove null entries
-              ) : (
-                <div className="text-center py-4 text-gray-400">
-                  {error ? `Error: ${error}` : 'No pending cashout requests found'}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+                  </div>
+                )}
+              </div>
 
+              {/* Right Section - Cashout Requests (1/4 width) */}
+              <div className="lg:col-span-1">
+                <div className="bg-[#1A1A1A] rounded-lg border border-gray-700">
+                  <div className="p-4 border-b border-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-lg font-semibold text-white">Cashout Requests</h3>
+                      <div className="w-6 h-6 bg-[#F72585] rounded-full flex items-center justify-center glow-pink">
+                        <span className="text-white text-xs font-bold">{cashoutRequests.filter(r => r.status === 'pending').length}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto coin-scroll">
+                    {loadingRequests ? (
+                      <div className="text-center py-4 text-gray-400">Loading cashout requests...</div>
+                    ) : cashoutRequests.length > 0 ? (
+                      cashoutRequests.map((request) => {
+                        const { id, user, amount, status, time } = request;
+                        return (
+                          <div key={id} className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                                <span className="text-black text-xs font bold">●</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-medium text-sm truncate">{user.name}</h4>
+                                <p className="text-gray-400 text-xs">{time}</p>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <div className="w-4 h-4 bg-cyan-400 rounded-full flex items center justify-center">
+                                  <span className="text-black text-xs font-bold">♦</span>
+                                </div>
+                                <span className="text-white font-bold text-sm">{amount.toLocaleString()}</span>
+                              </div>
+                            </div>
+                            {status === 'pending' && (
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleApprove(request.id)}
+                                  className="flex-1 py-2 px-3 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-xs font-medium hover:glow-pink transition-all duration-300 transform hover:scale-105"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleReject(request.id)}
+                                  className="flex-1 py-2 px-3 bg-gray-600 text-white rounded-lg text-xs font-medium hover:bg-gray-700 transition-colors transform hover:scale-105"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                            {status === 'approved' && (
+                              <div className="text-center py-2 px-3 bg-green-900/20 text-green-400 rounded-lg text-xs font-medium border border-green-500/30">
+                                Approved
+                              </div>
+                            )}
+                            {status === 'rejected' && (
+                              <div className="text-center py-2 px-3 bg-red-900/20 text-red-400 rounded-lg text-xs font-medium border border-red-500/30">
+                                Rejected
+                              </div>
+                            )}
+                          </div>
+                        );
+                      }).filter(Boolean)
+                    ) : (
+                      <div className="text-center py-4 text-gray-400">
+                        {error ? `Error: ${error}` : 'No pending cashout requests found'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+      {renderCreditModal()}
       {/* Toast Container */}
       <ToastList toasts={toasts} removeToast={removeToast} />
-    </div>
+    </>
   );
 };
 

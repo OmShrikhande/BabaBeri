@@ -4,7 +4,7 @@ import ToastList from '../ToastList';
 import ExchangeRateBar from './ExchangeRateBar';
 import WalletSummary from './WalletSummary';
 import DiamondCreditsModal from './DiamondCreditsModal';
-import DiamondCreditsTable from './DiamondCreditsTable';
+
 import UserSearchSection from './UserSearchSection';
 import UserProfileCard from './UserProfileCard';
 import CashoutHistorySection from './CashoutHistorySection';
@@ -14,8 +14,9 @@ import { useCreditManagement } from './hooks/useCreditManagement';
 import { useCashoutRequests } from './hooks/useCashoutRequests';
 import { useUserSearch } from './hooks/useUserSearch';
 import authService from '../../services/authService';
+import { Wallet } from 'lucide-react';
 
-const DiamondsCashout = () => {
+const DiamondsCashout = ({ onNavigateToWallet }) => {
   const { toasts, addToast, removeToast } = useToast();
   const [componentError, setComponentError] = useState(null);
   const [selectedFilter, setSelectedFilter] = useState('Monthly');
@@ -32,16 +33,7 @@ const DiamondsCashout = () => {
   const cashoutReqs = useCashoutRequests(addToast);
   const userSearch = useUserSearch(addToast);
 
-  const formattedLastUpdated = useMemo(() => {
-    if (!walletData.walletSummary.lastUpdated) {
-      return 'Not available';
-    }
-    const date = new Date(walletData.walletSummary.lastUpdated);
-    if (Number.isNaN(date.getTime())) {
-      return walletData.walletSummary.lastUpdated;
-    }
-    return date.toLocaleString();
-  }, [walletData.walletSummary.lastUpdated]);
+
 
   useEffect(() => {
     cashoutReqs.fetchPendingRequests();
@@ -71,6 +63,8 @@ const DiamondsCashout = () => {
     addToast(`Filter changed to ${filter}`, 'success');
   };
 
+
+
   if (componentError) {
     return (
       <div className="p-6">
@@ -95,25 +89,16 @@ const DiamondsCashout = () => {
     <div className="p-6 space-y-6 main-content-scroll">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Diamonds Wallet (Cashout)</h1>
+        <button
+          onClick={onNavigateToWallet}
+          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+        >
+          <Wallet className="w-4 h-4 mr-2" />
+          Wallet
+        </button>
       </div>
 
       <ExchangeRateBar />
-
-      <WalletSummary
-        walletSummary={walletData.walletSummary}
-        loadingWallet={walletData.loadingWallet}
-        onAddCredit={creditMgmt.openCreateCreditModal}
-      />
-
-      <DiamondCreditsTable
-        diamondCredits={walletData.diamondCredits}
-        loadingCredits={walletData.loadingCredits}
-        deletingCreditId={creditMgmt.deletingCreditId}
-        formattedLastUpdated={formattedLastUpdated}
-        onAddClick={creditMgmt.openCreateCreditModal}
-        onEditClick={creditMgmt.openEditCreditModal}
-        onDeleteClick={handleDeleteCredit}
-      />
 
       <UserSearchSection
         searchUserId={userSearch.searchUserId}
@@ -149,6 +134,8 @@ const DiamondsCashout = () => {
           />
         </div>
       </div>
+
+
 
       <DiamondCreditsModal
         isOpen={creditMgmt.creditModalOpen}

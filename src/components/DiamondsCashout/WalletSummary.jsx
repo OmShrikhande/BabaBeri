@@ -33,7 +33,7 @@ const WalletSummary = ({ walletSummary, loadingWallet, onAddCredit }) => {
       <div className="bg-[#1A1A1A] rounded-lg border border-gray-700 p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-white">Admin Diamonds Wallet</h2>
+            <h2 className="text-xl font-semibold text-white">Admin Wallet</h2>
             <p className="text-sm text-gray-400">Monitor and manage all diamond credits in real-time</p>
           </div>
           <button

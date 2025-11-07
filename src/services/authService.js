@@ -719,6 +719,48 @@ class AuthService {
     }
   }
 
+  async getDiamondWalletSummary() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can view wallet summary.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SUPERADMIN_BALANCE}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch wallet summary: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+      }
+      const summary = {
+        totalCredited: data.totalCredited ?? data.totalCredit ?? 0,
+        totalDebited: data.totalDebited ?? data.totalDebit ?? 0,
+        currentBalance: data.currentBalance ?? 0,
+        lastUpdated: data.lastUpdated ?? null
+      };
+      return { success: true, data: summary };
+    } catch (error) {
+      console.error('Get wallet summary error:', error);
+      return { success: false, error: error.message || 'Failed to fetch wallet summary.' };
+    }
+  }
+
   // Create admin
   async createAdmin({ name, email, password }) {
     const token = this.getToken();

@@ -50,7 +50,7 @@ const DiamondCreditsTable = ({
           className="flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
         >
           <PlusCircle className="w-4 h-4 mr-2" />
-          Add Credit
+          Add Credits
         </button>
       </div>
 

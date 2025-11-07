@@ -13,6 +13,7 @@ import { useWalletData } from './hooks/useWalletData';
 import { useCreditManagement } from './hooks/useCreditManagement';
 import { useCashoutRequests } from './hooks/useCashoutRequests';
 import { useUserSearch } from './hooks/useUserSearch';
+import authService from '../../services/authService';
 
 const DiamondsCashout = () => {
   const { toasts, addToast, removeToast } = useToast();
@@ -55,7 +56,7 @@ const DiamondsCashout = () => {
   }, [userSearch.selectedUser]);
 
   useEffect(() => {
-    console.log('Auth status:', require('../../services/authService').default.isAuthenticated());
+    console.log('Auth status:', authService.isAuthenticated());
   }, []);
 
   const handleDeleteCredit = (creditId) => {

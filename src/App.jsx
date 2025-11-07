@@ -59,7 +59,7 @@ function App() {
   const [previousRoute, setPreviousRoute] = useState(null);
   const [selectedAgencyId, setSelectedAgencyId] = useState(null);
   const [selectedSubAdminId, setSelectedSubAdminId] = useState(null); // legacy ID usage
-  const [selectedSubAdmin, setSelectedSubAdmin] = useState(null); // { id, code, name }
+  const [selectedSubAdmin, setSelectedSubAdmin] = useState(null); // { id, code, name, subUsers }
   const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
   const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
   const [agencies, setAgencies] = useState([]);
@@ -281,7 +281,7 @@ function App() {
 
   // Sub-admin navigation handlers
   const handleNavigateToSubAdminDetail = (subAdmin) => {
-    // subAdmin: { id, code, name }
+    // subAdmin: { id, code, name, subUsers }
     setSelectedSubAdminId(subAdmin?.id);
     setSelectedSubAdmin(subAdmin);
     setSelectedMasterAgencyId(null); // Reset master agency when selecting sub admin
@@ -372,6 +372,7 @@ function App() {
               subAdminId={selectedSubAdmin?.id}
               adminCode={selectedSubAdmin?.code}
               subAdminName={selectedSubAdmin?.name}
+              subUsers={selectedSubAdmin?.subUsers || []}
               onBack={handleBackToSubAdmins}
               onNavigateToMasterAgency={handleNavigateToMasterAgency}
               currentUser={currentUser}

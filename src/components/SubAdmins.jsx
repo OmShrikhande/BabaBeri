@@ -45,9 +45,23 @@ const SubAdmins = ({ onNavigateToDetail }) => {
   
 
 
-  const handleViewSubAdmin = (subAdmin) => {
+  const handleViewSubAdmin = async (subAdmin) => {
     if (onNavigateToDetail) {
-      onNavigateToDetail({ id: subAdmin?.id, code: subAdmin?.adminId, name: subAdmin?.name });
+      // Call the API to get sub users
+      try {
+        const res = await authService.getAllSubUserByCode(subAdmin?.adminId);
+        const subUsers = res.success ? (Array.isArray(res.data) ? res.data : (res.data?.result || res.data?.data || [])) : [];
+        onNavigateToDetail({
+          id: subAdmin?.id,
+          code: subAdmin?.adminId,
+          name: subAdmin?.name,
+          subUsers: subUsers
+        });
+      } catch (error) {
+        console.error('Failed to fetch sub users:', error);
+        // Still navigate even if API fails
+        onNavigateToDetail({ id: subAdmin?.id, code: subAdmin?.adminId, name: subAdmin?.name, subUsers: [] });
+      }
       // Make sure your parent passes an onBack handler to SubAdminDetail for the arrow to work.
     }
   };

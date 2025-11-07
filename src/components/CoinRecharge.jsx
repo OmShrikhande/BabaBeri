@@ -9,7 +9,7 @@ const COINS_PLUS_URL = (() => {
 })();
 import CoinRechargeHeader from './CoinRecharge/CoinRechargeHeader';
 import HostRechargeSection from './CoinRecharge/HostRechargeSection';
-import OffersTab from './CoinRecharge/Tabs/OffersTab';
+// import OffersTab from './CoinRecharge/Tabs/OffersTab';
 import PlansTab from './CoinRecharge/Tabs/PlansTab';
 import HistoryTab from './CoinRecharge/Tabs/HistoryTab';
 import OfferModal from './CoinRecharge/Modals/OfferModal';
@@ -147,12 +147,7 @@ const CoinRecharge = () => {
       </div>
 
       <div className="space-y-6">
-        {activeTab === 'offers' && (
-          <OffersTab
-            offers={offerState.offers}
-            onOpenModal={() => offerActions.setShowOfferModal(true)}
-          />
-        )}
+      
 
         {activeTab === 'plans' && (
           <PlansTab

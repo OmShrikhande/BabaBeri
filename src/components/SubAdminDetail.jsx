@@ -1,18 +1,17 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
-import authService from '../services/authService';
+// import authService from '../services/authService';
 
-const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser, adminCode, subAdminName }) => {
+const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser, adminCode, subAdminName, subUsers = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [localMasterAgencies, setLocalMasterAgencies] = useState(null);
 
   // Calendar selection value (YYYY-MM for Monthly, YYYY-MM-DD for Daily)
   const [selectedValue, setSelectedValue] = useState(() => {
@@ -53,35 +52,21 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
   }, [subAdmin, selectedPeriod, selectedValue]);
 
   const effectiveMasterAgencies = useMemo(() => {
-    return localMasterAgencies ?? subAdmin?.masterAgencies ?? [];
-  }, [localMasterAgencies, subAdmin]);
+    if (subUsers.length > 0) {
+      // Map subUsers from API to expected format
+      return subUsers.map((u, idx) => ({
+        id: u?.id || u?._id || u?.agencyId || u?.userid || idx + 1,
+        name: u?.name || u?.username || u?.fullname || u?.agencyname || `Master Agency ${idx + 1}`,
+        agencyId: u?.code || u?.usercode || u?.agencyCode || u?.agencyid || u?.userid || '',
+        totalAgency: u?.totalAgency || u?.total || u?.count || 0,
+        myEarning: u?.myEarning || u?.earning || 0,
+        redeemed: u?.redeemed || u?.redeem || 0,
+      }));
+    }
+    return subAdmin?.masterAgencies ?? [];
+  }, [subUsers, subAdmin]);
 
-  // Fetch master agencies when adminCode provided (API mode)
-  useEffect(() => {
-    let ignore = false;
-    const run = async () => {
-      if (!adminCode) return;
-      try {
-        const res = await authService.getMasterAgenciesByAdminCode(adminCode);
-        const items = Array.isArray(res?.data) ? res.data : (res?.data?.result || res?.data?.data || []);
-        if (!ignore) {
-          const mapped = (items || []).map((a, idx) => ({
-            id: a?.id || a?._id || a?.agencyId || a?.userid || idx + 1,
-            name: a?.name || a?.username || a?.fullname || a?.agencyname || `Master Agency ${idx + 1}`,
-            agencyId: a?.code || a?.usercode || a?.agencyCode || a?.agencyid || a?.userid || '',
-            totalAgency: a?.totalAgency || a?.total || a?.count || 0,
-            myEarning: a?.myEarning || a?.earning || 0,
-            redeemed: a?.redeemed || a?.redeem || 0,
-          }));
-          setLocalMasterAgencies(mapped);
-        }
-      } catch (e) {
-        if (!ignore) setLocalMasterAgencies([]);
-      }
-    };
-    if (isApiMode) run();
-    return () => { ignore = true; };
-  }, [isApiMode, adminCode]);
+
 
   if (!subAdmin && !isApiMode) {
     return (
@@ -435,28 +420,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
               </button>
             </div>
 
-            <div className="p-6">
-              <MasterAgencyForm
-                adminName={subAdmin.name} // <-- Pass admin name to the form
-                onCreated={(created) => {
-                  // Optimistically add to local list; ensure required fields exist
-                  const newItem = {
-                    id: created?.id || Math.floor(Math.random() * 1000000),
-                    name: created?.name || created?.email || 'New Master Agency',
-                    agencyId: created?.agencyId || `#${String(created?.id || Date.now()).slice(-6)}`,
-                    totalAgency: created?.totalAgency || '0',
-                    myEarning: created?.myEarning || 0,
-                    redeemed: created?.redeemed || 0,
-                    adminName: created?.adminName || subAdmin.name // <-- Store admin name
-                  };
-                  setLocalMasterAgencies(prev => {
-                    const base = prev ?? (subAdmin?.masterAgencies || []);
-                    return [newItem, ...base];
-                  });
-                  setShowCreateModal(false);
-                }}
-              />
-            </div>
+            
           </div>
         </div>
       )}

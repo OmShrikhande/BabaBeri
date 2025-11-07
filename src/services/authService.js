@@ -388,6 +388,36 @@ class AuthService {
     }
   }
 
+  // Get all sub users by code
+  async getAllSubUserByCode(code) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/api/geAllsubUserByCode?code=${encodeURIComponent(code)}&role=MASTER_AGENCY`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sub users: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+      return { success: true, data: data };
+    } catch (error) {
+      console.error('Get all sub users by code error:', error);
+      return { success: false, error: error.message || 'Failed to fetch sub users.' };
+    }
+  }
+
   // Get diamond credits
   async getDiamondCredits() {
     const token = this.getToken();

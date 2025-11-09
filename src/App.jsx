@@ -301,6 +301,7 @@ function App() {
 
   const handleBackToSubAdmins = () => {
     setSelectedSubAdminId(null);
+    setSelectedSubAdmin(null);
     setSelectedMasterAgencyId(null);
     setSelectedAgencyHostId(null);
   };

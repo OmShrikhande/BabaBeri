@@ -181,14 +181,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-gray-400 text-sm">{loading ? 'Loading…' : `Total: ${masterAgencies.length} Master Agencies`}{error ? ` • ${error}` : ''}</div>
-            {(currentRole === 'super-admin' || currentRole === 'admin') && (
-              <button
-                onClick={() => setShowCreate((prev) => !prev)}
-                className="flex items-center gap-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-4 py-2 rounded-lg font-bold hover:opacity-90 transition-opacity"
-              >
-                <Plus className="w-4 h-4" /> {showCreate ? 'Close' : 'New Master Agency'}
-              </button>
-            )}
+            
           </div>
         </div>
       </div>

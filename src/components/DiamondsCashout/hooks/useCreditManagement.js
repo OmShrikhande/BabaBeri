@@ -46,7 +46,7 @@ export const useCreditManagement = (addToast, onSuccess) => {
   }, [resetCreditForm]);
 
   const validateCreditPayload = useCallback(() => {
-    const requiredFields = ['usercode', 'diamonds', 'status'];
+    const requiredFields = ['diamonds', 'status'];
     const missing = requiredFields.filter(field => {
       const value = creditForm[field];
       return value === undefined || value === null || String(value).trim() === '';
@@ -59,11 +59,6 @@ export const useCreditManagement = (addToast, onSuccess) => {
 
     if (Number.isNaN(Number(creditForm.diamonds))) {
       addToast('Diamonds amount must be a number', 'error');
-      return false;
-    }
-
-    if (creditForm.amount && Number.isNaN(Number(creditForm.amount))) {
-      addToast('Cash amount must be a number', 'error');
       return false;
     }
 
@@ -94,9 +89,14 @@ export const useCreditManagement = (addToast, onSuccess) => {
     };
 
     try {
-      const response = editingCreditId
-        ? await authService.updateDiamondCredit?.(editingCreditId, payload)
-        : await authService.saveDiamond(payload);
+      let response;
+      if (editingCreditId) {
+        // For now, editing is not supported via API
+        addToast('Editing diamond credits is not currently supported', 'error');
+        return;
+      } else {
+        response = await authService.saveDiamond({ diamonds: payload.diamonds, status: payload.status });
+      }
 
       if (response?.success) {
         addToast(response.message || 'Diamond credit saved successfully', 'success');

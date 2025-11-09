@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X } from 'lucide-react';
-import { subAdminsData, royalTiers } from '../data/subAdminsData';
+import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
 import authService from '../services/authService';
@@ -163,27 +163,15 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
               Sub-admins / <span className="text-white">{subAdmin.name}</span>
             </div>
           </div>
-          {/* <h1 className="text-3xl font-bold text-white">Master Agency</h1> */}
-          {/* Create Master Agency button - admin-level only */}
-          {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin') && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-            >
-              <PlusCircle className="w-5 h-5" />
-              New Master Agency
-            </button>
-          )}
+        
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto table-scroll-container">
         <div className="p-6 space-y-6">
-          {/* Goals and Royal Tiers Section */}
-          <div className="grid grid-cols-12 gap-6">
-            {/* Left Side - Goals */}
-            <div className="col-span-8 space-y-6">
+          {/* Goals Section */}
+          <div className="space-y-6">
               {/* Goals Remaining */}
               <div className="bg-[#121212] p-6 rounded-xl border border-gray-800">
                 <div className="mb-4">
@@ -258,36 +246,6 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
                   <div className="text-white text-xl font-bold">{formatNumber(selectedEarnings.redeemDiamonds)}</div>
                 </div>
               </div>
-            </div>
-
-            {/* Right Side - Royal Tiers */}
-            <div className="col-span-4 space-y-4">
-              {royalTiers.map((tier, idx) => {
-                // Determine active tier (example: first one is active)
-                const isActive = idx === 0;
-                return (
-                  <div
-                    key={tier.id}
-                    className={
-                      `bg-[#121212] p-4 rounded-xl border transition-colors ` +
-                      (isActive
-                        ? 'border-[#F72585] ring-2 ring-[#F72585]'
-                        : 'border-gray-700 grayscale pointer-events-none')
-                    }
-                    style={isActive ? {} : { filter: 'grayscale(1)' }}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-12 h-12 bg-gradient-to-br ${tier.bgColor} rounded-lg flex items-center justify-center text-2xl`}>
-                        {tier.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-white font-bold">{tier.name}</h3>
-                        <p className="text-gray-400 text-sm">{tier.revenueShare}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
 
@@ -442,7 +400,7 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
             )}
           </div>
         </div>
-      </div>
+    
 
       {/* Entity Movement Modal */}
       {showMovementModal && selectedMasterAgency && (

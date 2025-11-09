@@ -6,7 +6,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     userId: '',
-    masterAgencyName: ''
+    masterAgencyCode: ''
   });
   const [masterAgencies, setMasterAgencies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +53,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
     setError('');
     setSuccess('');
 
-    if (!formData.name.trim() || !formData.userId.trim() || !formData.masterAgencyName.trim()) {
+    if (!formData.name.trim() || !formData.userId.trim() || !formData.masterAgencyCode.trim()) {
       setError('All fields are required.');
       setIsLoading(false);
       return;
@@ -63,14 +63,14 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
       const result = await authService.createAgency({
         name: formData.name,
         userId: formData.userId,
-        masterAgencyName: formData.masterAgencyName
+        masterAgencyCode: formData.masterAgencyCode
       });
 
       if (result.success) {
         setSuccess(`Agency "${formData.name}" created successfully!`);
         const created = result.data;
         onCreated && onCreated(created);
-  setFormData({ name: '', userId: '', masterAgencyName: '' });
+        setFormData({ name: '', userId: '', masterAgencyCode: '' });
       } else {
         setError(result.error || 'Failed to create agency.');
       }
@@ -125,19 +125,23 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
           <div className="relative">
             <Users className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <select
-              name="masterAgencyName"
-              value={formData.masterAgencyName}
+              name="masterAgencyCode"
+              value={formData.masterAgencyCode}
               onChange={handleInputChange}
               className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
               required
               disabled={isLoading || disabled || isFetchingAgencies}
             >
               <option value="">Select a master agency</option>
-              {masterAgencies.map((agency, index) => (
-                <option key={index} value={agency.name || agency.userName || `Agency ${index}`}>
-                  {agency.name || agency.userName || `Agency ${index}`}
-                </option>
-              ))}
+              {masterAgencies.map((agency, index) => {
+                const code = agency.userCode || agency.UserCode || agency.code || agency.Code || agency.user_code || agency.usercode || agency.Usercode || agency.id || agency.userId;
+                const displayName = agency.name || agency.userName || `Agency ${index}`;
+                return (
+                  <option key={index} value={code}>
+                    {displayName}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>

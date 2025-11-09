@@ -68,11 +68,8 @@ const Wallet = ({ onBack }) => {
             deletingCreditId={creditMgmt.deletingCreditId}
             formattedLastUpdated={formattedLastUpdated}
             onAddClick={creditMgmt.openCreateCreditModal}
-            onEditClick={creditMgmt.openEditCreditModal}
-            onDeleteClick={(creditId) => creditMgmt.handleDeleteCredit(creditId, () => {
-              walletData.fetchDiamondCredits();
-              walletData.fetchWalletSummary();
-            })}
+            onEditClick={() => addToast('Editing is not currently supported', 'info')}
+            onDeleteClick={() => addToast('Deleting is not currently supported', 'info')}
           />
         </div>
       </div>

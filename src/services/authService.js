@@ -761,6 +761,49 @@ class AuthService {
     }
   }
 
+  // Save diamond credit/debit
+  async saveDiamond({ diamonds, status }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can save diamond transactions.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_DIAMOND}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        body: JSON.stringify({ diamonds: Number(diamonds), status })
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to save diamond: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+      }
+
+      return { success: true, data, message: 'Diamond transaction saved successfully' };
+    } catch (error) {
+      console.error('Save diamond error:', error);
+      return { success: false, error: error.message || 'Failed to save diamond transaction.' };
+    }
+  }
+
   // Create admin
   async createAdmin({ name, email, password }) {
     const token = this.getToken();
@@ -870,7 +913,7 @@ class AuthService {
   }
 
   // Create agency
-  async createAgency({ name, email, password, masterAgencyName }) {
+  async createAgency({ name, userId, masterAgencyCode }) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
     if (this.isTokenExpired(token)) {
@@ -878,12 +921,17 @@ class AuthService {
       return { success: false, error: 'Session expired. Please login again.' };
     }
 
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_AGENCY}`;
+    const params = new URLSearchParams({
+      agencycode: userId,
+      agencyname: name,
+      macode: masterAgencyCode
+    });
+
+    const url = `${API_CONFIG.BASE_URL}/auth/upgrade?${params.toString()}`;
 
     try {
       const response = await this.makeAuthenticatedRequest(url, {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password, masterAgencyName })
+        method: 'POST'
       });
 
       const raw = await response.text().catch(() => '');

@@ -32,19 +32,8 @@ const DiamondCreditsModal = ({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="px-6 py-5 space-y-5 max-h-[70vh] overflow-y-auto coin-scroll">
+        <form onSubmit={onSubmit} className="px-6 py-5 space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">User Code</label>
-              <input
-                type="text"
-                value={creditForm.usercode}
-                onChange={(e) => onFieldChange('usercode', e.target.value)}
-                placeholder="Enter user code"
-                className="w-full px-4 py-2.5 bg-[#121212] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585]"
-                required
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Diamonds</label>
               <input
@@ -56,41 +45,6 @@ const DiamondCreditsModal = ({
                 className="w-full px-4 py-2.5 bg-[#121212] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585]"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Cash Amount (₹)</label>
-              <input
-                type="number"
-                min="0"
-                value={creditForm.amount}
-                onChange={(e) => onFieldChange('amount', e.target.value)}
-                placeholder="Optional cash equivalent"
-                className="w-full px-4 py-2.5 bg-[#121212] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Transaction ID</label>
-              <input
-                type="text"
-                value={creditForm.transactionId}
-                onChange={(e) => onFieldChange('transactionId', e.target.value)}
-                placeholder="Optional transaction reference"
-                className="w-full px-4 py-2.5 bg-[#121212] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Payment Method</label>
-              <select
-                value={creditForm.paymentMethod}
-                onChange={(e) => onFieldChange('paymentMethod', e.target.value)}
-                className="w-full px-4 py-2.5 bg-[#121212] border border-gray-700 rounded-lg text-white focus:outline-none focus:border-[#F72585]"
-              >
-                {PAYMENT_METHOD_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value} className="bg-[#121212] text-white">
-                    {option.label}
-                  </option>
-                ))}
-              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
@@ -107,17 +61,6 @@ const DiamondCreditsModal = ({
                 ))}
               </select>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Notes</label>
-            <textarea
-              rows="3"
-              value={creditForm.notes}
-              onChange={(e) => onFieldChange('notes', e.target.value)}
-              placeholder="Optional additional information or remarks"
-              className="w-full px-4 py-2.5 bg-[#121212] border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#F72585] resize-none"
-            />
           </div>
 
           <div className="flex items-center justify-end space-x-3">

@@ -120,17 +120,7 @@ const CoinRecharge = () => {
 
       <div className="mb-6">
         <div className="flex space-x-4 border-b border-gray-700">
-          <button
-            type="button"
-            onClick={() => setActiveTab('offers')}
-            className={`py-2 px-4 focus:outline-none ${
-              activeTab === 'offers'
-                ? 'text-[#F72585] border-b-2 border-[#F72585]'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Special Offers
-          </button>
+          
           <button
             type="button"
             onClick={() => setActiveTab('plans')}

@@ -66,7 +66,7 @@ const HistoryTab = ({ history, loadHistory, isLoading }) => {
         <div>
           <h2 className="text-2xl font-semibold text-white">Recharge History</h2>
           <p className="text-sm text-gray-400">
-            Enter a host&apos;s user code, name, or ID to view their most recent recharge activity.
+            Enter a host&apos;s user code to view their most recent recharge activity.
           </p>
         </div>
         <form

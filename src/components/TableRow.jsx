@@ -1,8 +1,8 @@
 import React from 'react';
-import { Check, X, Minus } from 'lucide-react';
+import { Check, X, Minus, Eye } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
-const TableRow = ({ host, onStatusChange }) => {
+const TableRow = ({ host, onStatusChange, onView }) => {
   const handleApprove = () => {
     onStatusChange(host.id, 'accepted');
   };

@@ -39,7 +39,21 @@ export const useWalletData = (addToast) => {
     try {
       const response = await authService.getDiamondCredits?.();
       if (response?.success) {
-        setDiamondCredits(Array.isArray(response.data) ? response.data : []);
+        // API returns { records: [...], totalCREDIT: number }
+        const creditsData = response.data?.records || [];
+        // Transform API data to match table expectations
+        const transformedCredits = Array.isArray(creditsData) ? creditsData.map(credit => ({
+          id: credit.id,
+          usercode: 'N/A',
+          diamonds: credit.diamonds,
+          amount: null,
+          status: credit.status,
+          transactionId: credit.id.toString(),
+          paymentMethod: 'N/A',
+          createdAt: credit.date,
+          notes: 'N/A'
+        })) : [];
+        setDiamondCredits(transformedCredits);
       } else if (response?.error) {
         addToast(response.error, 'error');
       }

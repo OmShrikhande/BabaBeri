@@ -36,7 +36,9 @@ export const API_CONFIG = {
     // Recharge history lookup (Admin/Super Admin only)
     GET_RECHARGE_HISTORY: '/auth/api/gethistory',
     // Add coins to host (Admin/Super Admin only)
-    COINS_PLUS: '/auth/api/coinsplus'
+    COINS_PLUS: '/auth/api/coinsplus',
+    // Get diamond credits (Super Admin only)
+    COUNT_CREDIT: '/auth/superadmin/count/CREDIT'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

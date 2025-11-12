@@ -388,6 +388,30 @@ class AuthService {
     }
   }
 
+  // Get diamond credits
+  async getDiamondCredits() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.COUNT_CREDIT}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch diamond credits: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get diamond credits error:', error);
+      return { success: false, error: error.message || 'Failed to fetch diamond credits.' };
+    }
+  }
+
   // Get all hosts (HOST details)
   async getAllHosts() {
     const token = this.getToken();

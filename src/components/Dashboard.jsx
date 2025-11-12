@@ -383,56 +383,10 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
         </div>
       </section>
 
-      {currentUser && currentUser.userType === 'super-admin' && (
-        <section 
-          className="mb-8"
-          aria-labelledby="create-sub-admin-heading"
-        >
-          <div className="bg-[#1A1A1A] rounded-xl p-6 border border-gray-800">
-            <h2 id="create-sub-admin-heading" className="text-2xl font-bold text-white mb-4">Create Sub-Admin</h2>
-            <SubAdminForm />
-          </div>
-        </section>
-      )}
+  
 
-      {/* Additional Info Section */}
-      <section className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-[#1A1A1A] rounded-xl p-6 border border-gray-800">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-[#F72585] rounded-full"></div>
-              <span className="text-gray-300 text-sm">New host verification completed</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-[#7209B7] rounded-full"></div>
-              <span className="text-gray-300 text-sm">Voice room limit increased</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 bg-[#4361EE] rounded-full"></div>
-              <span className="text-gray-300 text-sm">New agency registration</span>
-            </div>
-          </div>
-        </div>
+      
 
-        <div className="bg-[#1A1A1A] rounded-xl p-6 border border-gray-800">
-          <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <button className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-4 py-2 rounded-lg text-sm font-medium hover:glow-pink transition-all duration-300">
-              Add Host
-            </button>
-            <button className="bg-gradient-to-r from-[#4361EE] to-[#4CC9F0] text-white px-4 py-2 rounded-lg text-sm font-medium hover:glow-blue transition-all duration-300">
-              View Reports
-            </button>
-            <button className="bg-gradient-to-r from-[#7209B7] to-[#9d4edd] text-white px-4 py-2 rounded-lg text-sm font-medium hover:glow-purple transition-all duration-300">
-              Manage Users
-            </button>
-            <button className="bg-gradient-to-r from-[#4CC9F0] to-[#F72585] text-white px-4 py-2 rounded-lg text-sm font-medium hover:glow-cyan transition-all duration-300">
-              Analytics
-            </button>
-          </div>
-        </div>
-      </section>
 
       {/* DP Verification Modal as full-page overlay */}
       {showDpModal && (

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { getRoles, getByRole, createStage, updateStage, deleteStage, resetRole } from '../../services/roleStagesService';
+import authService from '../../services/authService';
 import RoleSelector from './RoleSelector';
 import StageForm from './StageForm';
 import StageList from './StageList';
@@ -20,6 +21,7 @@ const RoleStagesPage = ({ currentUser }) => {
   const [stages, setStages] = useState([]);
   const [editing, setEditing] = useState(null); // stage being edited
   const [confirm, setConfirm] = useState(null); // { stage }
+  const [percentages, setPercentages] = useState([]);
 
 
 
@@ -29,13 +31,53 @@ const RoleStagesPage = ({ currentUser }) => {
     setStages(data.stages || []);
   }, [activeRole]);
 
+  const getRolePercentage = (role) => {
+    const mapping = {
+      'admin': 'SUPERADMIN',
+      'host': 'HOST',
+      'master-agency': 'MASTER-AGENCY',
+      'agency': 'AGENCY'
+    };
+    const percentFor = mapping[role];
+    const percentage = percentages.find(p => p.percentfor === percentFor);
+    return percentage ? percentage.percent : null;
+  };
+
+  const rolePercentage = getRolePercentage(activeRole);
+  const maxStages = rolePercentage !== null ? rolePercentage : 3;
+  const allowUnlimitedStages = isSuperAdmin(currentUser?.userType);
+  const canAddMore = allowUnlimitedStages || stages.length < maxStages;
+
+  // Fetch percentages if super admin
+  useEffect(() => {
+    if (isSuperAdmin(currentUser?.userType)) {
+      const fetchPercentages = async () => {
+        try {
+          const token = authService.getToken();
+          if (!token) return;
+          const response = await fetch('https://proxstream.online/auth/superadmin/getallpercentage', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setPercentages(data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch percentages:', error);
+        }
+      };
+      fetchPercentages();
+    }
+  }, [currentUser]);
+
   const refresh = () => {
     const data = getByRole(activeRole);
     setStages(data.stages || []);
   };
-
-  const allowUnlimitedStages = isSuperAdmin(currentUser?.userType);
-  const canAddMore = allowUnlimitedStages || stages.length < 3;
 
   const handleCreate = async (payload) => {
     try {
@@ -85,7 +127,16 @@ const RoleStagesPage = ({ currentUser }) => {
           </div>
           <div>
             <h1 className="text-xl font-bold">Role Stages</h1>
-            <p className="text-xs text-gray-400">Super Admin: configure up to 3 stages per role</p>
+            <p className="text-xs text-gray-400">Super Admin: configure stages per role based on percentages</p>
+            {percentages.length > 0 && (
+              <div className="flex gap-2 mt-2">
+                {percentages.map((p) => (
+                  <div key={p.id} className="px-2 py-1 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white text-xs rounded-md">
+                    {p.percentfor}: {p.percent}%
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
         {currentUser && (
@@ -116,7 +167,7 @@ const RoleStagesPage = ({ currentUser }) => {
               Reset Role
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Max 3 stages per role. Customize label, percentage, and description.</p>
+          <p className="text-xs text-gray-500 mt-2">Max {maxStages} stages per role. Customize label, percentage, and description.</p>
         </Section>
 
         {/* Stages List */}

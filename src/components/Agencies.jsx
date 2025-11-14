@@ -1,15 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Trash2, Eye, Building2, Filter, MoreVertical } from 'lucide-react';
 import { CardSkeleton, TableSkeleton } from './LoadingSkeleton';
 import EntityMovementModal from './EntityMovementModal';
+import authService from '../services/authService';
 
-const Agencies = ({ onNavigateToDetail, currentUser, agencies = [], loading = false }) => {
+const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = [], loading: propLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTier, setFilterTier] = useState('all');
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
+  const [agencies, setAgencies] = useState(propAgencies);
+  const [loading, setLoading] = useState(propLoading);
 
+  useEffect(() => {
+    const fetchAgencies = async () => {
+      console.log('Starting to fetch agencies...');
+      setLoading(true);
+      const token = authService.getToken();
+      console.log('Auth token:', token ? 'Present' : 'Not found');
+      const result = await authService.getUsersByRole('AGENCY');
+      console.log('API result:', result);
+      if (result.success && Array.isArray(result.data)) {
+        console.log('Fetched agencies:', result.data);
+        const transformedAgencies = result.data.map(agency => ({
+          id: agency.code || agency.id,
+          name: agency.name,
+          tier: 'Royal Silver', // Default tier since not in API
+          earnings: { thisMonth: 0 }, // Default since not in API
+          hosts: [], // Default empty array
+          totalAgencies: 0 // Default
+        }));
+        console.log('Transformed agencies:', transformedAgencies);
+        setAgencies(transformedAgencies);
+      } else {
+        console.error('Failed to fetch agencies:', result.error);
+        setAgencies([]);
+      }
+      setLoading(false);
+      console.log('Loading set to false');
+    };
 
+    fetchAgencies();
+  }, []);
 
   const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -3,7 +3,7 @@ import { normalizeUserType } from '../utils/roleBasedAccess.js';
 
 class AuthService {
   constructor() {
-    this.token = localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+    this.token = sessionStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
   }
 
   // Login method
@@ -37,12 +37,12 @@ class AuthService {
       
       if (token && typeof token === 'string' && token.split('.').length === 3) {
         this.token = token;
-        localStorage.setItem(TOKEN_CONFIG.STORAGE_KEY, token);
+        sessionStorage.setItem(TOKEN_CONFIG.STORAGE_KEY, token);
         
         // Store user info if available
         if (data.user || data.userInfo || data.profile) {
           const userInfo = data.user || data.userInfo || data.profile;
-          localStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(userInfo));
+          sessionStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(userInfo));
         }
       } else {
         throw new Error('Invalid token received from server');
@@ -66,8 +66,8 @@ class AuthService {
   // Logout method
   logout() {
     this.token = null;
-    localStorage.removeItem(TOKEN_CONFIG.STORAGE_KEY);
-    localStorage.removeItem(TOKEN_CONFIG.USER_INFO_KEY);
+    sessionStorage.removeItem(TOKEN_CONFIG.STORAGE_KEY);
+    sessionStorage.removeItem(TOKEN_CONFIG.USER_INFO_KEY);
   }
 
   // Check if user is authenticated
@@ -77,12 +77,12 @@ class AuthService {
 
   // Get stored token
   getToken() {
-    return this.token || localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+    return this.token || sessionStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
   }
 
   // Get stored user info
   getUserInfo() {
-    const userInfo = localStorage.getItem(TOKEN_CONFIG.USER_INFO_KEY);
+    const userInfo = sessionStorage.getItem(TOKEN_CONFIG.USER_INFO_KEY);
     return userInfo ? JSON.parse(userInfo) : null;
   }
 

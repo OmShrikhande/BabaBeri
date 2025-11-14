@@ -33,10 +33,10 @@ export const ROLE_PERMISSIONS = {
   [USER_TYPES.ADMIN]: {
     // Admin lands on AdminDashboard directly; no sidebar tab for it
     canAccess: (route) => {
-      const allowedRoutes = ['admin-dashboard', 'admin-subadmin-detail', 'create']; // synthetic route, not in sidebar
+      const allowedRoutes = ['admin-dashboard', 'admin-subadmin-detail']; // synthetic route, not in sidebar
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: ['admin-dashboard', 'admin-subadmin-detail', 'create']
+    allowedRoutes: ['admin-dashboard', 'admin-subadmin-detail']
   },
   'sub-admin': {
     // Sub-admin can only access sub-admin related routes
@@ -55,10 +55,10 @@ export const ROLE_PERMISSIONS = {
   'master-agency': {
     // Master agency can access master agency dashboard and agencies
     canAccess: (route) => {
-      const allowedRoutes = ['master-agency-dashboard', 'agencies', 'add-agency'];
+      const allowedRoutes = ['master-agency-dashboard'];
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: ['master-agency-dashboard', 'agencies']
+    allowedRoutes: ['master-agency-dashboard', ]
   },
   'agency': {
     // Agency can access agency dashboard

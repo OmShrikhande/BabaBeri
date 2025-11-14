@@ -29,8 +29,16 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
       try {
         let res;
         if (currentRole === 'super-admin') {
-          // TODO: make code dynamic via UI; using ADM17 as per request for now
-          res = await authService.getAllMasterAgenciesByAdminCode('ADM17');
+          const token = authService.getToken();
+          const response = await fetch('https://proxstream.online/auth/api/alluserByRole?role=MASTER_AGENCY', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          const data = await response.json();
+          res = { success: response.ok, data: data, error: response.ok ? null : 'Failed to fetch master agencies' };
         } else if (currentRole === 'admin') {
           res = await authService.getMasterAgenciesForLoggedInAdmin();
         }
@@ -44,9 +52,9 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                 totalAgency: item.totalAgency || item.agencyCount || 0,
                 myEarning: item.myEarning || item.earning || 0,
                 redeemed: item.redeemed || 0,
-                subAdminName: item.subAdminName || item.adminName || '—',
-                subAdminId: item.subAdminId || item.adminId || 0,
-                currentParent: item.subAdminName || item.adminName || '—'
+                subAdminName: item.owner || item.subAdminName || item.adminName || '—',
+                subAdminId: item.owner ? item.owner : item.subAdminId || item.adminId || 0,
+                currentParent: item.owner || item.subAdminName || item.adminName || '—'
               }))
             : [];
           setApiMasterAgencies(mapped);
@@ -258,7 +266,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                   <span>Master Agency</span>
                   <ArrowUpDown className="w-3 h-3" />
                 </button>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Agency ID</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider"> ID</div>
                 <button
                   onClick={() => handleSort('subAdmin')}
                   className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
@@ -315,7 +323,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                   {/* Sub Admin */}
                   <div className="flex items-center">
                     <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
-                      {masterAgency.subAdminName}
+                      {masterAgency.ownerName || masterAgency.subAdminName || masterAgency.owner ||'—' }
                     </span>
                   </div>
 

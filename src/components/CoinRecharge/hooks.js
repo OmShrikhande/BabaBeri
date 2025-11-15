@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import API_CONFIG, { DEFAULT_HEADERS, TOKEN_CONFIG } from '../../config/api';
 
 // Shared utilities -----------------------------------------------------------
-const getStoredToken = () => localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+const getStoredToken = () => sessionStorage.getItem(TOKEN_CONFIG.STORAGE_KEY) || localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
 const getStoredUserInfo = () => {
   try {
-    return JSON.parse(localStorage.getItem(TOKEN_CONFIG.USER_INFO_KEY) || '{}');
+    const userInfo = sessionStorage.getItem(TOKEN_CONFIG.USER_INFO_KEY) || localStorage.getItem(TOKEN_CONFIG.USER_INFO_KEY) || '{}';
+    return JSON.parse(userInfo);
   } catch (error) {
     console.error('Failed to parse user info from storage:', error);
     return {};
@@ -30,8 +31,16 @@ export const useHostData = ({ addToast }) => {
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [hostSearch, setHostSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [token, setToken] = useState(() => getStoredToken());
 
-  const token = useMemo(() => getStoredToken(), []);
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setToken(getStoredToken());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const headers = useMemo(() => buildAuthHeaders(token), [token]);
   const userInfo = useMemo(() => getStoredUserInfo(), []);
   const userCode = deriveUserCode(userInfo);

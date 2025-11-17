@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
 import { coinsRechargeData, diamondAnalyticsData } from '../data/dashboardData';
 import { Coins, Gem, ChevronDown } from 'lucide-react';
+import { useDiamondAnalytics } from './CoinRecharge/hooks';
+import { getDateRange, getWeeklyDates } from '../utils/dateRange';
+import { transformDiamondData } from '../utils/diamondDataTransform';
 
 const EnhancedChartCard = () => {
   const [selectedType, setSelectedType] = useState('coins');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
+  const [transformedDiamondData, setTransformedDiamondData] = useState({
+    weekly: [],
+    monthly: [],
+    yearly: []
+  });
+
+  const { diamondData, isLoadingDiamonds, loadDiamondData } = useDiamondAnalytics({ 
+    addToast: (type, message) => console.log(`[${type}] ${message}`) 
+  });
 
   const typeOptions = [
     { value: 'coins', label: 'Coins Recharge', icon: Coins, color: '#F59E0B' },
@@ -18,10 +30,36 @@ const EnhancedChartCard = () => {
     { value: 'yearly', label: 'Yearly' }
   ];
 
+  const handleRefresh = () => {
+    if (selectedType === 'diamonds') {
+      if (selectedPeriod === 'weekly') {
+        const weeklyDates = getWeeklyDates();
+        loadDiamondData(selectedPeriod, null, null, weeklyDates);
+      } else if (selectedPeriod === 'monthly' || selectedPeriod === 'yearly') {
+        const { from, to } = getDateRange(selectedPeriod);
+        loadDiamondData(selectedPeriod, from, to);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (selectedType === 'diamonds') {
+      const rawData = diamondData[selectedPeriod] || [];
+      const transformed = transformDiamondData(rawData, selectedPeriod);
+      setTransformedDiamondData(prev => ({
+        ...prev,
+        [selectedPeriod]: transformed
+      }));
+    }
+  }, [diamondData, selectedPeriod, selectedType]);
+
   const getChartData = () => {
     if (selectedType === 'coins') {
       return coinsRechargeData[selectedPeriod];
     } else {
+      if (selectedPeriod === 'weekly' || selectedPeriod === 'monthly' || selectedPeriod === 'yearly') {
+        return transformedDiamondData[selectedPeriod] || [];
+      }
       return diamondAnalyticsData[selectedPeriod];
     }
   };
@@ -160,7 +198,7 @@ const EnhancedChartCard = () => {
           Financial Analytics
         </h2>
         
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 items-center">
           {/* Type Selector Dropdown */}
           <div className="relative">
             <select
@@ -201,6 +239,20 @@ const EnhancedChartCard = () => {
               </button>
             ))}
           </div>
+
+          {/* Refresh Button */}
+          {selectedType === 'diamonds' && (selectedPeriod === 'weekly' || selectedPeriod === 'monthly' || selectedPeriod === 'yearly') && (
+            <button
+              onClick={handleRefresh}
+              disabled={isLoadingDiamonds}
+              className="px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white text-sm font-medium rounded-lg hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <svg className={`w-4 h-4 ${isLoadingDiamonds ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {isLoadingDiamonds ? 'Loading...' : 'Refresh'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -231,7 +283,14 @@ const EnhancedChartCard = () => {
       )}
 
       {/* Chart */}
-      <div className="h-80 w-full">
+      <div className="h-80 w-full relative">
+        {isLoadingDiamonds && selectedType === 'diamonds' && (selectedPeriod === 'weekly' || selectedPeriod === 'monthly' || selectedPeriod === 'yearly') && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm rounded-lg z-10">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#F72585] mb-4"></div>
+            <p className="text-gray-300 font-medium">Fetching diamond analytics...</p>
+            <p className="text-gray-400 text-sm mt-2">This may take a moment</p>
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>

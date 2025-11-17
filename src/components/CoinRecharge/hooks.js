@@ -315,3 +315,122 @@ export const useRechargeHistory = ({ headers, addToast }) => {
     loadHistory
   };
 };
+
+// Diamond Analytics -------------------------------------------------------
+export const useDiamondAnalytics = ({ addToast }) => {
+  const [diamondData, setDiamondData] = useState({
+    weekly: [],
+    monthly: [],
+    yearly: []
+  });
+  const [isLoadingDiamonds, setIsLoadingDiamonds] = useState(false);
+  const [token, setToken] = useState(() => getStoredToken());
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setToken(getStoredToken());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const headers = useMemo(() => buildAuthHeaders(token), [token]);
+
+  const fetchDiamondRangeData = useCallback(async (fromDate, toDate) => {
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/range?from=${fromDate}&to=${toDate}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Unauthorized to fetch diamond analytics');
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error('Fetch diamond range data error:', error);
+      throw error;
+    }
+  }, [token, headers]);
+
+  const fetchDiamondDailyData = useCallback(async (date) => {
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/date/${date}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Unauthorized to fetch diamond analytics');
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        date,
+        entries: Array.isArray(data) ? data : []
+      };
+    } catch (error) {
+      console.error(`Fetch diamond daily data error for ${date}:`, error);
+      return {
+        date,
+        entries: []
+      };
+    }
+  }, [token, headers]);
+
+  const loadDiamondData = useCallback(async (period, fromDate, toDate, weeklyDates) => {
+    setIsLoadingDiamonds(true);
+    try {
+      let rawData = [];
+
+      if (period === 'weekly' && weeklyDates && Array.isArray(weeklyDates)) {
+        const dailyDataPromises = weeklyDates.map(date => fetchDiamondDailyData(date));
+        rawData = await Promise.all(dailyDataPromises);
+      } else {
+        rawData = await fetchDiamondRangeData(fromDate, toDate);
+      }
+
+      setDiamondData(prev => ({
+        ...prev,
+        [period]: rawData
+      }));
+    } catch (error) {
+      console.error('Load diamond data error:', error);
+      addToast?.('error', `Failed to load ${period} diamond analytics`);
+      setDiamondData(prev => ({
+        ...prev,
+        [period]: []
+      }));
+    } finally {
+      setIsLoadingDiamonds(false);
+    }
+  }, [fetchDiamondRangeData, fetchDiamondDailyData, addToast]);
+
+  return {
+    diamondData,
+    isLoadingDiamonds,
+    loadDiamondData
+  };
+};

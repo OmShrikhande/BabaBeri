@@ -4,7 +4,7 @@ import { Plus, Coins } from 'lucide-react';
 const PlansTab = ({ plans, onOpenModal }) => (
   <div>
     <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-semibold">Recharge Plans</h2>
+      <h2 className="text-xl font-semibold"></h2>
       <button
         onClick={onOpenModal}
         className="flex items-center space-x-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] px-4 py-2 rounded-lg hover:glow-pink transition-all duration-300"

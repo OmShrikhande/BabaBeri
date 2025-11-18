@@ -31,14 +31,15 @@ const RoleStagesPage = ({ currentUser }) => {
     setStages(data.stages || []);
   }, [activeRole]);
 
+  const roleMapping = {
+    'admin': 'SUPERADMIN',
+    'host': 'HOST',
+    'master-agency': 'MASTER-AGENCY',
+    'agency': 'AGENCY'
+  };
+
   const getRolePercentage = (role) => {
-    const mapping = {
-      'admin': 'SUPERADMIN',
-      'host': 'HOST',
-      'master-agency': 'MASTER-AGENCY',
-      'agency': 'AGENCY'
-    };
-    const percentFor = mapping[role];
+    const percentFor = roleMapping[role];
     const percentage = percentages.find(p => p.percentfor === percentFor);
     return percentage ? percentage.percent : null;
   };
@@ -176,6 +177,7 @@ const RoleStagesPage = ({ currentUser }) => {
             stages={stages}
             onEdit={(s) => setEditing(s)}
             onDelete={handleDelete}
+            selectedRole={roleMapping[activeRole] || activeRole.toUpperCase()}
           />
         </Section>
 

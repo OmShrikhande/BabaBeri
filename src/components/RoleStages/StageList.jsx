@@ -1,7 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
+import authService from '../../services/authService.js';
+import { normalizeUserType } from '../../utils/roleBasedAccess.js';
 
-const StageList = ({ stages = [], onEdit, onDelete }) => {
+const StageList = ({ onEdit, onDelete, selectedRole }) => {
+  const [stages, setStages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStages = async () => {
+      try {
+        const token = authService.getToken();
+        if (!token) {
+          setError('Not authenticated');
+          setLoading(false);
+          return;
+        }
+
+        const userType = authService.getUserType();
+        if (!normalizeUserType(userType) || normalizeUserType(userType) !== 'super-admin') {
+          setError('Super admin access required');
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch('https://proxstream.online/auth/superadmin/getallpercentage', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch stages: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Map API response to component expected format and sort by percent ascending
+        let mappedStages = data
+          .map(item => ({
+            id: item.id,
+            name: item.percentfor,
+            percentage: item.percent,
+            value: item.percent, // for backward compatibility
+            image: null,
+            description: null
+          }))
+          .sort((a, b) => a.percentage - b.percentage);
+
+        // Filter by selected role if provided
+        if (selectedRole) {
+          mappedStages = mappedStages.filter(stage => stage.name === selectedRole);
+        }
+
+        setStages(mappedStages);
+      } catch (err) {
+        console.error('Error fetching stages:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStages();
+  }, []);
+
+  if (loading) {
+    return <div className="text-gray-400 text-sm">Loading stages...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-400 text-sm">Error: {error}</div>;
+  }
   return (
     <div className="space-y-3">
       {stages.length === 0 && (

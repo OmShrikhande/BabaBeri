@@ -32,7 +32,8 @@ const RoleStagesPage = ({ currentUser }) => {
   }, [activeRole]);
 
   const roleMapping = {
-    'admin': 'SUPERADMIN',
+    'super admin': 'SUPERADMIN',
+    'admin':'SUBADMIN',
     'host': 'HOST',
     'master-agency': 'MASTER-AGENCY',
     'agency': 'AGENCY'

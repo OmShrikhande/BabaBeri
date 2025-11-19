@@ -8,6 +8,9 @@ const StageList = ({ onEdit, onDelete, selectedRole }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Filter stages based on selected role
+  const filteredStages = selectedRole ? stages.filter(stage => stage.name === selectedRole) : stages;
+
   useEffect(() => {
     const fetchStages = async () => {
       try {
@@ -40,7 +43,7 @@ const StageList = ({ onEdit, onDelete, selectedRole }) => {
         const data = await response.json();
 
         // Map API response to component expected format and sort by percent ascending
-        let mappedStages = data
+        const mappedStages = data
           .map(item => ({
             id: item.id,
             name: item.percentfor,
@@ -50,11 +53,6 @@ const StageList = ({ onEdit, onDelete, selectedRole }) => {
             description: null
           }))
           .sort((a, b) => a.percentage - b.percentage);
-
-        // Filter by selected role if provided
-        if (selectedRole) {
-          mappedStages = mappedStages.filter(stage => stage.name === selectedRole);
-        }
 
         setStages(mappedStages);
       } catch (err) {
@@ -77,10 +75,10 @@ const StageList = ({ onEdit, onDelete, selectedRole }) => {
   }
   return (
     <div className="space-y-3">
-      {stages.length === 0 && (
+      {filteredStages.length === 0 && (
         <div className="text-gray-400 text-sm">No stages yet. Add one below.</div>
       )}
-      {stages.map((stage, idx) => (
+      {filteredStages.map((stage, idx) => (
         <div key={stage.id} className="bg-[#0A0A0A] rounded-lg border border-gray-800 p-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-xs text-gray-400">#{idx + 1}</div>

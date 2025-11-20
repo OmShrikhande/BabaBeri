@@ -441,6 +441,63 @@ class AuthService {
     }
   }
 
+  // Get pending hosts
+  async getPendingHosts() {
+    console.log('getPendingHosts - Starting...');
+    const token = this.getToken();
+    console.log('getPendingHosts - Token exists:', !!token);
+    if (!token) {
+      console.log('getPendingHosts - No token found');
+      return { success: false, error: 'Not authenticated. Please login.' };
+    }
+    if (this.isTokenExpired(token)) {
+      console.log('getPendingHosts - Token expired');
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    console.log('getPendingHosts - User role:', role);
+    if (![USER_TYPES.ADMIN, USER_TYPES.SUPER_ADMIN].includes(role)) {
+      console.log('getPendingHosts - Access denied for role:', role);
+      return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can view pending hosts.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/api/alluserByRole?role=HOST`;
+
+    try {
+      console.log('getPendingHosts - Making API call to:', url);
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      console.log('getPendingHosts - Response status:', response.status);
+      console.log('getPendingHosts - Response ok:', response.ok);
+      console.log('getPendingHosts - Response body:', raw.substring(0, 200) + (raw.length > 200 ? '...' : ''));
+
+      if (!response.ok) {
+        console.log('getPendingHosts - API call failed');
+        throw new Error(`Failed to fetch hosts: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+        console.log('getPendingHosts - Parsed data type:', typeof data, Array.isArray(data) ? 'array' : 'object');
+      } catch (parseError) {
+        console.log('getPendingHosts - JSON parse error:', parseError);
+        throw new Error('Invalid response format');
+      }
+
+      // Filter for pending hosts on the client side
+      const pendingHosts = Array.isArray(data) ? data.filter(host => host.status === 'pending' || host.status === 'PENDING') : [];
+      console.log('getPendingHosts - Total hosts:', Array.isArray(data) ? data.length : 'N/A');
+      console.log('getPendingHosts - Pending hosts found:', pendingHosts.length);
+      return { success: true, data: pendingHosts };
+    } catch (error) {
+      console.error('Get pending hosts error:', error);
+      return { success: false, error: error.message || 'Failed to fetch pending hosts.' };
+    }
+  }
+
   // Get sellers (hosts subset)
   async getSellers(options = {}) {
     const token = this.getToken();

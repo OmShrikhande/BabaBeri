@@ -108,10 +108,68 @@ class AuthService {
           }
         }
       }
-  
+
       return null;
     }
-}
+
+    // Make authenticated API requests
+    async makeAuthenticatedRequest(url, options = {}) {
+      const token = this.getToken();
+
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const headers = {
+        ...DEFAULT_HEADERS,
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      };
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers
+        });
+
+        if (response.status === 401) {
+          this.logout();
+          throw new Error('Session expired. Please login again.');
+        }
+
+        return response;
+      } catch (error) {
+        console.error('API request error:', error);
+        throw error;
+      }
+    }
+
+    // Get all plans
+    async getAllPlans() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_PLANS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch plans: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get all plans error:', error);
+        return { success: false, error: error.message || 'Failed to fetch plans.' };
+      }
+    }
+  }
 
 const authService = new AuthService();
 export default authService;

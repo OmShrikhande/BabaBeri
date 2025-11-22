@@ -40,7 +40,9 @@ export const API_CONFIG = {
     // Get diamond credits (Super Admin only)
     COUNT_CREDIT: '/auth/superadmin/count/CREDIT',
     // Get all percentage methods (Super Admin only)
-    GET_ALL_PERCENTAGE_METHOD: '/auth/superadmin/getallpercentageMethod'
+    GET_ALL_PERCENTAGE_METHOD: '/auth/superadmin/getallpercentageMethod',
+    // Get all plans (Super Admin only)
+    GET_ALL_PLANS: '/auth/user/getAllPlans'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

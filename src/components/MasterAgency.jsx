@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
-import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
 import { normalizeUserType } from '../utils/roleBasedAccess';
 import authService from '../services/authService';
@@ -12,8 +11,6 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
-  const [showMovementModal, setShowMovementModal] = useState(false);
-  const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
 
   const [apiMasterAgencies, setApiMasterAgencies] = useState(null); // null = not loaded, [] = loaded empty
   const [loading, setLoading] = useState(false);
@@ -143,27 +140,6 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
       setSortBy(field);
       setSortOrder('asc');
     }
-  };
-
-  const handleMoveEntity = (masterAgency) => {
-    setSelectedMasterAgency(masterAgency);
-    setShowMovementModal(true);
-  };
-
-  const handleEntityMove = async (entityId, targetId) => {
-    // Here you would implement the actual move logic
-    console.log(`Moving master agency ${entityId} to sub-admin ${targetId}`);
-    // For now, just close the modal
-    setShowMovementModal(false);
-    setSelectedMasterAgency(null);
-  };
-
-  const getAvailableSubAdmins = () => {
-    return subAdminsData.map(subAdmin => ({
-      id: subAdmin.id,
-      name: subAdmin.name,
-      count: subAdmin.masterAgenciesCount || 0
-    }));
   };
 
   const formatNumber = (num) => {
@@ -345,9 +321,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                   <div className="flex items-center">
                     {(currentRole === 'super-admin' || currentRole === 'admin') && (
                       <button
-                        onClick={() => handleMoveEntity(masterAgency)}
-                        className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
-                        title="Move to different Sub Admin"
+                        className="text-gray-400 cursor-default p-1 rounded opacity-50"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
@@ -375,22 +349,6 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
           </div>
         </div>
       </div>
-
-      {/* Entity Movement Modal */}
-      {showMovementModal && selectedMasterAgency && (
-        <EntityMovementModal
-          isOpen={showMovementModal}
-          onClose={() => {
-            setShowMovementModal(false);
-            setSelectedMasterAgency(null);
-          }}
-          entityType="masterAgency"
-          entityData={selectedMasterAgency}
-          availableTargets={getAvailableSubAdmins()}
-          onMove={handleEntityMove}
-          currentUserType={currentUser?.userType || 'admin'}
-        />
-      )}
     </div>
   );
 };

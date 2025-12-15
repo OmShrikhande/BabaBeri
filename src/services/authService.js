@@ -988,7 +988,7 @@ class AuthService {
   }
 
   // Create master agency
-  async createMasterAgency({ name, email, password, adminName }) {
+  async createMasterAgency({ name, email, password, code }) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
     if (this.isTokenExpired(token)) {
@@ -1001,7 +1001,7 @@ class AuthService {
     try {
       const response = await this.makeAuthenticatedRequest(url, {
         method: 'POST',
-        body: JSON.stringify({ name, email, password, adminName })
+        body: JSON.stringify({ name, email, password, code })
       });
 
       const raw = await response.text().catch(() => '');
@@ -1072,6 +1072,69 @@ class AuthService {
   // Get all master agencies for dropdown
   async getMasterAgencies() {
     return this.getUsersByRole('MASTER_AGENCY');
+  }
+
+  // Get master agency hierarchy and current owner
+  async getMasterAgencyHierarchy(userId) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/gethierarchy?code=${encodeURIComponent(userId)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch hierarchy: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+      const structuredData = {
+        admin: data.data || data
+      };
+      return { success: true, data: structuredData };
+    } catch (error) {
+      console.error('Get master agency hierarchy error:', error);
+      return { success: false, error: error.message || 'Failed to fetch hierarchy.' };
+    }
+  }
+
+  // Move master agency to new admin owner
+  async moveMasterAgency({ userId, newAdminId }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/changeowner?code=${encodeURIComponent(userId)}&ownercode=${encodeURIComponent(newAdminId)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to move master agency: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: raw };
+      }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Move master agency error:', error);
+      return { success: false, error: error.message || 'Failed to move master agency.' };
+    }
   }
 }
 

@@ -38,7 +38,8 @@ const HostDetails = () => {
           const email = h?.email || h?.mail || '';
           const phone = h?.phone || h?.mobile || h?.contact || '';
           const region = h?.region || h?.country || h?.location || '';
-          return { id: String(id), username: String(username), avatar, status, createdAt, agency, email, phone, region, _raw: h };
+          const code = h?.code || h?.usercode || '—';
+          return { id: String(id), username: String(username), avatar, status, createdAt, agency, email, phone, region, code: code, _raw: h };
         });
         setTotal(mapped.length);
       }
@@ -81,7 +82,9 @@ const HostDetails = () => {
         const email = h?.email || h?.mail || '';
         const phone = h?.phone || h?.mobile || h?.contact || '';
         const region = h?.region || h?.country || h?.location || '';
-        return { id: String(id), username: String(username), avatar, status, createdAt, agency, email, phone, region, _raw: h };
+        const code = h?.code || h?.usercode || '—';
+        console.log('Host data:', { id, username, code, status, agency });
+        return { id: String(id), username: String(username), avatar, status, createdAt, agency, email, phone, region, code, _raw: h };
       });
       setHosts(mapped);
     } catch (e) {
@@ -242,7 +245,7 @@ const HostDetails = () => {
                   />
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate text-white">{h.username}</div>
-                    <div className="text-[11px] text-gray-400 truncate">ID: {h.id}</div>
+                    <div className="text-[11px] text-gray-400 truncate">ID: {h.code}</div>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -321,7 +324,7 @@ const HostDetails = () => {
                 />
                 <div className="min-w-0">
                   <div className="text-2xl font-bold text-white truncate">{selected.username}</div>
-                  <div className="text-xs text-gray-400 truncate">ID: {selected.id}</div>
+                  <div className="text-xs text-gray-400 truncate">ID: {selected.code}</div>
                   <div className="mt-2 text-xs">
                     <span className={`inline-block px-2 py-0.5 rounded-full border text-[10px] ${selected.status === 'blocked' ? 'border-red-700 text-red-300 bg-red-900/10' : selected.status === 'inactive' ? 'border-yellow-700 text-yellow-300 bg-yellow-900/10' : 'border-green-700 text-green-300 bg-green-900/10'}`}>{selected.status || 'active'}</span>
                   </div>

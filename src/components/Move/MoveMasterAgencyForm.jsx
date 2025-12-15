@@ -69,7 +69,7 @@ const MoveMasterAgencyForm = ({ onMoved, disabled = false }) => {
     setError('');
     setSuccess('');
 
-    if (!formData.userId.trim() || !formData.newRole.trim()) {
+    if (!formData.userId.trim() || !formData.newAdminId.trim()) {
       setError('All fields are required.');
       setIsLoading(false);
       return;
@@ -142,14 +142,14 @@ const MoveMasterAgencyForm = ({ onMoved, disabled = false }) => {
               <h3 className="text-sm font-medium text-gray-400 mb-3">Current Hierarchy</h3>
               <div className="flex items-center gap-3">
                 <div className="flex-1 p-3 bg-[#2A2A2A] rounded border border-gray-600">
-                  <p className="text-xs text-gray-400">Current Admin</p>
+                  <p className="text-xs text-gray-400">Current Owner</p>
                   <p className="text-sm text-white mt-1">
                     {isFetching ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : currentAdmin ? (
-                      currentAdmin.name
+                    ) : currentAdmin?.owner ? (
+                      currentAdmin.owner
                     ) : (
-                      'No admin found'
+                      'No owner found'
                     )}
                   </p>
                 </div>
@@ -176,7 +176,7 @@ const MoveMasterAgencyForm = ({ onMoved, disabled = false }) => {
                 >
                   <option value="">Select new admin</option>
                   {admins.map((admin) => (
-                    <option key={admin.id} value={admin.id}>
+                    <option key={admin.code} value={admin.code}>
                       {admin.name}
                     </option>
                   ))}

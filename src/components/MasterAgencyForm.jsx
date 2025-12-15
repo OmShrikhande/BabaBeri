@@ -12,7 +12,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
     name: '',
     email: '',
     password: '',
-    adminName: adminName || ''
+    code: adminName || ''
   });
   const [admins, setAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +64,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
     setSuccess('');
 
     // Basic validation
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim() || !formData.adminName.trim()) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim() || !formData.code.trim()) {
       setError('All fields are required.');
       setIsLoading(false);
       return;
@@ -80,7 +80,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        adminName: formData.adminName
+        code: formData.code
       });
 
       if (result.success) {
@@ -89,7 +89,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
         // Inform parent
         onCreated && onCreated(created);
         // Reset form
-        setFormData({ name: '', email: '', password: '', adminName: adminName || '' });
+        setFormData({ name: '', email: '', password: '', code: adminName || '' });
       } else {
         setError(result.error || 'Failed to create master agency.');
       }
@@ -190,8 +190,8 @@ const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <select
-              name="adminName"
-              value={formData.adminName}
+              name="code"
+              value={formData.code}
               onChange={handleInputChange}
               className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
               required

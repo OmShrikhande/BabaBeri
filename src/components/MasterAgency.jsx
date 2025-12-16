@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus } from 'lucide-react';
+import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus, X, LayoutDashboard, Users, Settings, CreditCard, Bell, FileText, Shield, Diamond, CheckSquare, Building, Crown } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
 import MasterAgencyForm from './MasterAgencyForm';
 import { normalizeUserType } from '../utils/roleBasedAccess';
@@ -11,6 +11,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedAgency, setSelectedAgency] = useState(null);
 
   const [apiMasterAgencies, setApiMasterAgencies] = useState(null); // null = not loaded, [] = loaded empty
   const [loading, setLoading] = useState(false);
@@ -153,6 +154,126 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   };
 
   const [showCreate, setShowCreate] = useState(false);
+
+  if (selectedAgency) {
+    return (
+      <div className="flex-1 bg-[#0F0F11] text-white flex flex-col font-sans overflow-hidden h-full">
+        {/* Header */}
+        <header className="h-16 bg-[#141416] border-b border-[#1A1A1E] flex items-center justify-between px-8 flex-shrink-0">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-semibold text-white tracking-tight">Master Agency</h1>
+            <span className="px-3 py-1 rounded-full bg-[#1A1A1E] border border-[#2B2B30] text-xs text-gray-400">
+              {selectedAgency.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button className="p-2 text-gray-400 hover:text-white transition-colors relative">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F72585] rounded-full" />
+            </button>
+            <button 
+              onClick={() => setSelectedAgency(null)}
+              className="p-2 text-gray-400 hover:text-white hover:bg-[#1A1A1E] rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </header>
+
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto p-8">
+          <div className="flex flex-col gap-8 max-w-[1600px] mx-auto">
+            
+            {/* Main Content Column */}
+            <div className="flex-1 space-y-8 min-w-0">
+              
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { label: 'Total Earnings', value: '$124,500', change: '+12.5%', icon: Diamond },
+                  { label: 'Active Agencies', value: '45', change: '+3', icon: Building },
+                  { label: 'Pending Requests', value: '12', change: '-2', icon: FileText },
+                ].map((stat, i) => (
+                  <div key={i} className="bg-[#1C1C20] rounded-2xl p-5 border border-[#2B2B30] shadow-sm hover:border-[#3A3A40] transition-colors group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-2.5 bg-[#1A1A1E] rounded-xl group-hover:bg-[#25252A] transition-colors">
+                        <stat.icon className="w-5 h-5 text-[#4CC9F0]" />
+                      </div>
+                      <span className={`text-xs font-medium px-2 py-1 rounded-lg ${stat.change.startsWith('+') ? 'bg-green-900/20 text-green-400' : 'bg-red-900/20 text-red-400'}`}>
+                        {stat.change}
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                    <div className="text-xs text-gray-500">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Data Table Section */}
+              <div className="bg-[#161618] rounded-2xl border border-[#1A1A1E] overflow-hidden shadow-lg">
+                <div className="p-6 border-b border-[#2B2B30] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h3 className="text-lg font-medium text-white">Agencies</h3>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Search agencies..." 
+                      className="bg-[#FFFFFF] text-black pl-10 pr-4 py-2 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#B14CFF] w-full sm:w-64 placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#1A1A1E] text-xs uppercase tracking-wider text-gray-400 font-medium">
+                        <th className="p-4 w-16 text-center text-gray-500">Sr. No.</th>
+                        <th className="p-4">Agency Name</th>
+                        <th className="p-4">ID</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4">Total Hosts</th>
+                        <th className="p-4">Earnings</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {[1, 2, 3, 4, 5].map((_, i) => (
+                        <tr key={i} className={`border-b border-[#2B2B30] last:border-0 hover:bg-[#1F1F22] transition-colors ${i % 2 === 0 ? 'bg-[#151518]' : 'bg-[#1A1A1E]'}`}>
+                          <td className="p-4 text-center text-gray-500 font-mono">
+                            {i + 1}
+                          </td>
+                          <td className="p-4 text-white font-medium">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center text-xs font-bold">
+                                A{i+1}
+                              </div>
+                              <span>Agency {i + 1}</span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-gray-400 font-mono">AG-{78290 + i}</td>
+                          <td className="p-4">
+                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-900/20 text-green-400 border border-green-900/30">
+                              Active
+                            </span>
+                          </td>
+                          <td className="p-4 text-gray-300">{12 + i * 3} Hosts</td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2 text-white font-bold">
+                              <Diamond className="w-3.5 h-3.5 text-[#4CC9F0] fill-[#4CC9F0]" />
+                              {1500 + i * 250}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 bg-[#1A1A1A] text-white overflow-y-auto flex flex-col">
@@ -321,7 +442,9 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                   <div className="flex items-center">
                     {(currentRole === 'super-admin' || currentRole === 'admin') && (
                       <button
-                        className="text-gray-400 cursor-default p-1 rounded opacity-50"
+                        onClick={() => setSelectedAgency(masterAgency)}
+                        className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
+                        title="View Details"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>

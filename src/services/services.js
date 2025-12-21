@@ -497,6 +497,35 @@ class AuthService {
       }
     }
 
+    // Get all gifts
+    async getAllGifts() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_GIFTS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch gifts: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get all gifts error:', error);
+        return { success: false, error: error.message || 'Failed to fetch gifts.' };
+      }
+    }
+
   }
 
 const authService = new AuthService();

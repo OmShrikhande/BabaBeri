@@ -64,7 +64,9 @@ export const API_CONFIG = {
     // Delete Tier
     DELETE_TIER: '/auth/superadmin/deletetier',
     // Update Tier
-    UPDATE_TIER: '/auth/superadmin/updatetires'
+    UPDATE_TIER: '/auth/superadmin/updatetires',
+    // Get all gifts
+    GET_ALL_GIFTS: '/auth/superadmin/getallgifts'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

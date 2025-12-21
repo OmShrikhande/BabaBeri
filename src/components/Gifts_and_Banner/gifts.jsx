@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Gift, X, Upload, Loader2, CheckCircle, XCircle, Plus } from 'lucide-react';
+import authService from '../../services/services';
 
 const Toast = ({ message, type, onClose }) => (
   <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${
@@ -19,8 +20,8 @@ const Toast = ({ message, type, onClose }) => (
 
 const GiftCard = ({ gift }) => {
   return (
-    <div className="bg-[#1A1A1A] rounded-xl border border-white/5 overflow-hidden hover:border-[#F72585]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#F72585]/10 group">
-      <div className="relative h-32 bg-black/40 overflow-hidden">
+    <div className="bg-[#1A1A1A] rounded-2xl border border-white/5 overflow-hidden hover:border-[#F72585]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#F72585]/20 hover:-translate-y-1 group">
+      <div className="relative h-40 bg-black/40 overflow-hidden">
         <img 
           src={gift.file} 
           alt="Gift" 
@@ -30,33 +31,28 @@ const GiftCard = ({ gift }) => {
           }}
         />
         {gift.status === 1 && (
-          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-bold">
+          <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-bold shadow-lg">
             Active
           </div>
         )}
       </div>
       
-      <div className="p-3 space-y-2">
-        <div className="flex items-center gap-1.5">
-          <div className="w-1 h-1 rounded-full bg-[#F72585]"></div>
-          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">ID #{gift.id}</span>
-        </div>
-        
-        <div className="space-y-1">
+      <div className="p-4 space-y-3">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Price</span>
-            <span className="text-sm font-black text-white">₹{gift.price.toLocaleString()}</span>
+            <span className="text-lg font-black text-white">₹{gift.price.toLocaleString()}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Coins</span>
-            <span className="text-xs font-bold text-[#F72585]">{gift.coins.toLocaleString()}</span>
+            <span className="text-sm font-bold text-[#F72585]">{gift.coins.toLocaleString()}</span>
           </div>
           
           {gift.validity && (
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400 font-medium">Validity</span>
-              <span className="text-xs font-bold text-[#4CC9F0]">{gift.validity} days</span>
+              <span className="text-sm font-bold text-[#4CC9F0]">{gift.validity} days</span>
             </div>
           )}
         </div>
@@ -247,38 +243,19 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
   const fetchGifts = async () => {
     setIsLoading(true);
     try {
-      const mockGifts = [
-        {
-          id: 3,
-          file: "https://proxstream.online/images/a5104770-0cfa-46a8-a46b-bc06aa8cc27b_m1.jpg",
-          validity: 30,
-          price: 25000.0,
-          coins: 2500,
-          status: 1
-        },
-        {
-          id: 2,
-          file: "https://proxstream.online/images/a5104770-0cfa-46a8-a46b-bc06aa8cc27b_m1.jpg",
-          validity: null,
-          price: 15000.0,
-          coins: 1500,
-          status: 1
-        },
-        {
-          id: 1,
-          file: "https://proxstream.online/images/a5104770-0cfa-46a8-a46b-bc06aa8cc27b_m1.jpg",
-          validity: null,
-          price: 10000.0,
-          coins: 1000,
-          status: 1
-        }
-      ];
+      const response = await authService.getAllGifts();
       
-      const sortedGifts = mockGifts
-        .filter(gift => gift.status === 1)
-        .sort((a, b) => b.id - a.id);
-      
-      setGifts(sortedGifts);
+      if (response.success) {
+        const rawList = Array.isArray(response.data) ? response.data : [];
+        
+        const sortedGifts = rawList
+          .filter(gift => gift.status === 1)
+          .sort((a, b) => b.id - a.id);
+        
+        setGifts(sortedGifts);
+      } else {
+        throw new Error(response.error || 'Failed to fetch gifts');
+      }
     } catch (error) {
       console.error('Error fetching gifts:', error);
       showNotification('Failed to load gifts', 'error');
@@ -333,48 +310,50 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="bg-[#1A1A1A] rounded-xl border border-white/5 overflow-hidden animate-pulse">
-                <div className="h-32 bg-black/40"></div>
-                <div className="p-3 space-y-2">
-                  <div className="h-3 bg-white/5 rounded w-16"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="bg-[#1A1A1A] rounded-2xl border border-white/5 overflow-hidden animate-pulse">
+                <div className="h-40 bg-black/40"></div>
+                <div className="p-4 space-y-3">
                   <div className="h-4 bg-white/5 rounded w-full"></div>
                   <div className="h-3 bg-white/5 rounded w-2/3"></div>
+                  <div className="h-3 bg-white/5 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : gifts.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="inline-flex p-6 rounded-full bg-[#1A1A1A] border border-white/5 mb-6">
-              <Gift className="w-12 h-12 text-gray-600" />
+          <div className="text-center py-24">
+            <div className="inline-flex p-8 rounded-3xl bg-gradient-to-br from-[#1A1A1A] to-[#0F0F0F] border border-white/5 mb-8 shadow-xl">
+              <Gift className="w-16 h-16 text-gray-600" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">No Gifts Available</h3>
-            <p className="text-gray-400 mb-8">Start by creating your first gift item</p>
+            <h3 className="text-2xl font-black text-white mb-3">No Gifts Available</h3>
+            <p className="text-gray-400 text-sm mb-10 max-w-md mx-auto">Start by creating your first gift item to offer rewards to your users</p>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-black text-sm hover:opacity-90 transition-all shadow-xl shadow-[#F72585]/20"
+              className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-black text-sm hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#F72585]/30"
             >
               <Plus className="w-5 h-5" />
               Create Gift
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {gifts.map((gift) => (
               <GiftCard key={gift.id} gift={gift} />
             ))}
           </div>
         )}
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-8 right-8 p-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-2xl shadow-[#F72585]/40 hover:scale-110 active:scale-95 transition-all z-40"
-          title="Add New Gift"
-        >
-          <Plus className="w-7 h-7" />
-        </button>
+        {gifts.length > 0 && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="fixed bottom-8 right-8 p-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-2xl shadow-[#F72585]/40 hover:scale-110 active:scale-95 transition-all z-40 hover:shadow-[#F72585]/60"
+            title="Add New Gift"
+          >
+            <Plus className="w-7 h-7" />
+          </button>
+        )}
 
         <GiftFormModal 
           isOpen={isModalOpen}

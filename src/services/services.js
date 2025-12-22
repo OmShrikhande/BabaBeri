@@ -526,6 +526,44 @@ class AuthService {
       }
     }
 
+    // Save gift
+    async saveGift(formData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_GIFT}`;
+
+      try {
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: formData
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save gift: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Save gift error:', error);
+        return { success: false, error: error.message || 'Failed to save gift.' };
+      }
+    }
+
   }
 
 const authService = new AuthService();

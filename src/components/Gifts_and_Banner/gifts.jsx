@@ -19,11 +19,15 @@ const Toast = ({ message, type, onClose }) => (
 );
 
 const GiftCard = ({ gift }) => {
+  const imageUrl = gift.file || gift.imageurl || gift.image || gift.imageUrl || '';
+  const price = gift.price || 0;
+  const coins = gift.coins || 0;
+  
   return (
     <div className="bg-[#1A1A1A] rounded-2xl border border-white/5 overflow-hidden hover:border-[#F72585]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#F72585]/20 hover:-translate-y-1 group">
       <div className="relative h-40 bg-black/40 overflow-hidden">
         <img 
-          src={gift.file} 
+          src={imageUrl} 
           alt="Gift" 
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           onError={(e) => {
@@ -41,12 +45,12 @@ const GiftCard = ({ gift }) => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Price</span>
-            <span className="text-lg font-black text-white">₹{gift.price.toLocaleString()}</span>
+            <span className="text-lg font-black text-white">₹{price.toLocaleString()}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Coins</span>
-            <span className="text-sm font-bold text-[#F72585]">{gift.coins.toLocaleString()}</span>
+            <span className="text-sm font-bold text-[#F72585]">{coins.toLocaleString()}</span>
           </div>
           
           {gift.validity && (
@@ -63,42 +67,57 @@ const GiftCard = ({ gift }) => {
 
 const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
-    file: '',
     validity: '',
-    price: '',
-    coins: '',
-    status: 1
+    coins: ''
   });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'status' ? parseInt(value) : value
+      [name]: value
     }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadedend = () => {
+        setPreviewUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
-    setFormData({
-      file: '',
-      validity: '',
-      price: '',
-      coins: '',
+    onSubmit({ 
+      ...formData, 
+      file: selectedFile,
+      price: 0,
       status: 1
     });
+    setFormData({
+      validity: '',
+      coins: ''
+    });
+    setSelectedFile(null);
+    setPreviewUrl('');
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#1A1A1A] rounded-3xl border border-white/10 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#1A1A1A] rounded-3xl border border-white/10 max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-[#1A1A1A] border-b border-white/10 px-8 py-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-black text-white tracking-tight">Add New Gift</h2>
-            <p className="text-gray-400 text-sm font-medium mt-1">Configure gift details and pricing</p>
+            <p className="text-gray-400 text-sm font-medium mt-1">Upload image and set gift details</p>
           </div>
           <button 
             onClick={onClose}
@@ -111,84 +130,66 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-3">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-              Image URL
+              Gift Image *
             </label>
             <div className="relative">
               <input
-                type="url"
-                name="file"
-                value={formData.file}
-                onChange={handleChange}
-                placeholder="https://example.com/image.jpg"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="gift-image-upload"
                 required
               />
-              <Upload className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-                Price (₹)
-              </label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                placeholder="10000"
-                step="0.01"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all font-mono"
-                required
-              />
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-                Coins
-              </label>
-              <input
-                type="number"
-                name="coins"
-                value={formData.coins}
-                onChange={handleChange}
-                placeholder="1000"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all font-mono"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-                Validity (Days)
-              </label>
-              <input
-                type="number"
-                name="validity"
-                value={formData.validity}
-                onChange={handleChange}
-                placeholder="30 (Optional)"
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all font-mono"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all appearance-none cursor-pointer"
+              <label 
+                htmlFor="gift-image-upload"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white hover:border-[#F72585] transition-all cursor-pointer flex items-center justify-between"
               >
-                <option value={1}>Active</option>
-                <option value={0}>Inactive</option>
-              </select>
+                <span className={selectedFile ? 'text-white' : 'text-gray-500'}>
+                  {selectedFile ? selectedFile.name : 'Choose an image file...'}
+                </span>
+                <Upload className="w-5 h-5 text-gray-600" />
+              </label>
             </div>
+            {previewUrl && (
+              <div className="relative w-full h-48 bg-black/40 rounded-xl overflow-hidden border border-white/5">
+                <img 
+                  src={previewUrl} 
+                  alt="Preview" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+              Coins *
+            </label>
+            <input
+              type="number"
+              name="coins"
+              value={formData.coins}
+              onChange={handleChange}
+              placeholder="1000"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all font-mono"
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+              Validity (Days) *
+            </label>
+            <input
+              type="number"
+              name="validity"
+              value={formData.validity}
+              onChange={handleChange}
+              placeholder="30"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all font-mono"
+              required
+            />
           </div>
 
           <div className="flex items-center justify-end gap-4 pt-6 border-t border-white/5">
@@ -264,19 +265,34 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
     }
   };
 
-  const handleCreateGift = async (formData) => {
+  const handleCreateGift = async (data) => {
     setIsSubmitting(true);
     try {
-      console.log('Creating gift:', formData);
+      if (!data.file) {
+        throw new Error('Please select an image file');
+      }
+
+      const formData = new FormData();
+      formData.append('file', data.file);
+      formData.append('coins', data.coins);
+      formData.append('price', data.price);
+      formData.append('status', data.status);
+      if (data.validity) {
+        formData.append('validity', data.validity);
+      }
+
+      const response = await authService.saveGift(formData);
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      showNotification('Gift created successfully');
-      setIsModalOpen(false);
-      fetchGifts();
+      if (response.success) {
+        showNotification('Gift created successfully');
+        setIsModalOpen(false);
+        fetchGifts();
+      } else {
+        throw new Error(response.error || 'Failed to create gift');
+      }
     } catch (error) {
       console.error('Error creating gift:', error);
-      showNotification('Failed to create gift', 'error');
+      showNotification(error.message || 'Failed to create gift', 'error');
     } finally {
       setIsSubmitting(false);
     }

@@ -66,7 +66,9 @@ export const API_CONFIG = {
     // Update Tier
     UPDATE_TIER: '/auth/superadmin/updatetires',
     // Get all gifts
-    GET_ALL_GIFTS: '/auth/superadmin/getallgifts'
+    GET_ALL_GIFTS: '/auth/superadmin/getallgifts',
+    // Save gift
+    SAVE_GIFT: '/auth/superadmin/savegifts'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

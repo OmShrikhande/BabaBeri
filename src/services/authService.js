@@ -623,6 +623,8 @@ class AuthService {
     }
 
     const role = normalizeUserType(this.getUserType());
+    console.log('Update Seller Activation - Role:', role, 'Expected:', [USER_TYPES.ADMIN, USER_TYPES.SUPER_ADMIN]);
+    
     if (role !== USER_TYPES.ADMIN && role !== USER_TYPES.SUPER_ADMIN) {
       return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can update seller activation.' };
     }

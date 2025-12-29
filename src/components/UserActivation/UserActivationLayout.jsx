@@ -3,8 +3,8 @@ import UserCodeInput from './components/UserCodeInput';
 import UserBanner from './components/UserBanner';
 import UserDetails from './components/UserDetails';
 import { API_CONFIG, TOKEN_CONFIG } from '../../config/api';
+import authService from '../../services/authService';
 
-const USER_LOOKUP_ENDPOINT = '/auth/api/getByCode';
 const USER_TOGGLE_ENDPOINT = '/auth/superadmin/active-deactive-seller';
 
 const truthyStrings = new Set(['true', '1', 'yes', 'active', 'enabled', 'y']);
@@ -76,14 +76,6 @@ const applyActiveState = (user, active) => {
   return next;
 };
 
-const getStoredToken = () => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  return localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY) || null;
-};
-
 const UserActivationLayout = () => {
   const [userCode, setUserCode] = useState('');
   const [userData, setUserData] = useState(null);
@@ -102,8 +94,7 @@ const UserActivationLayout = () => {
       return;
     }
 
-    const token = getStoredToken();
-    if (!token) {
+    if (!authService.isAuthenticated()) {
       setError('Super admin authentication is required to fetch user data.');
       return;
     }
@@ -115,23 +106,22 @@ const UserActivationLayout = () => {
     setUserData(null);
 
     try {
-      const url = new URL(`${API_CONFIG.BASE_URL}${USER_LOOKUP_ENDPOINT}`);
-      url.searchParams.set('code', trimmedCode);
+      // Try to find the user via getSellers (which searches hosts/sellers)
+      const response = await authService.getSellers({ search: trimmedCode });
 
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+      if (!response.success) {
+        throw new Error(response.error || 'User not found');
       }
 
-      const data = await response.json();
-      const user = data?.user ?? data;
+      const users = response.data?.data || response.data || [];
+      // Find exact match by code if possible, or take the first result
+      const user = Array.isArray(users) 
+        ? users.find(u => 
+            (u.code === trimmedCode) || 
+            (u.userCode === trimmedCode) || 
+            (u.UserCode === trimmedCode)
+          ) || users[0]
+        : users;
 
       if (!user) {
         setError('User not found');
@@ -141,6 +131,21 @@ const UserActivationLayout = () => {
       const normalizedActive = resolveUserActive(user);
       setUserData(applyActiveState(user, normalizedActive));
     } catch (err) {
+      console.error('Fetch user error:', err);
+      // Fallback: Try getUserById if getSellers fails or returns nothing (though getUserById was 403ing)
+      try {
+        const idResponse = await authService.getUserById(trimmedCode);
+        if (idResponse.success && idResponse.data) {
+           const user = idResponse.data;
+           const normalizedActive = resolveUserActive(user);
+           setUserData(applyActiveState(user, normalizedActive));
+           setError(null);
+           return;
+        }
+      } catch (e) {
+        // Ignore fallback error
+      }
+      
       setError(err?.message || 'Something went wrong');
     } finally {
       setLoading(false);
@@ -162,8 +167,7 @@ const UserActivationLayout = () => {
       return;
     }
 
-    const token = getStoredToken();
-    if (!token) {
+    if (!authService.isAuthenticated()) {
       setActionError('Super admin authentication is required to update activation status.');
       return;
     }
@@ -175,37 +179,23 @@ const UserActivationLayout = () => {
     }
 
     const currentActive = resolveUserActive(userData);
-    const url = new URL(`${API_CONFIG.BASE_URL}${USER_TOGGLE_ENDPOINT}`);
-    url.searchParams.set('UserCode', resolvedCode);
+    const targetStatus = currentActive ? 'deactivate' : 'activate';
 
     setActionPending(true);
     setActionError(null);
     setActionMessage(null);
 
     try {
-      const response = await fetch(url.toString(), {
-        method: 'PUT',
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+      const response = await authService.updateSellerActivation({
+        userCode: resolvedCode,
+        status: targetStatus
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update user status');
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update user status');
       }
 
-      const payloadText = await response.text();
-      let payload = null;
-
-      if (payloadText) {
-        try {
-          payload = JSON.parse(payloadText);
-        } catch (parseError) {
-          payload = null;
-        }
-      }
-
+      const payload = response.data;
       const remoteStatus = normalizeBoolean(
         payload?.isseller ??
           payload?.isSeller ??

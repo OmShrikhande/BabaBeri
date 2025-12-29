@@ -24,6 +24,7 @@ import RoleStagesPage from './components/RoleStages/RoleStagesPage';
 import UserActivation from './components/UserActivation';
 import AdminDashboard from './components/AdminDashboard';
 import MasterAgencyDashboard from './components/MasterAgencyDashboard';
+import MasterAgencyCreateAgency from './components/MasterAgencyCreateAgency';
 import AgencyDashboard from './components/AgencyDashboard';
 import authService from './services/authService';
 import Createlayout from './components/Create/Createlayout';
@@ -331,6 +332,12 @@ function App() {
         return <AdminDashboard />;
       case 'master-agency-dashboard':
         return <MasterAgencyDashboard />;
+      case 'create-agency':
+        return (
+          <div className="p-6">
+            <MasterAgencyCreateAgency />
+          </div>
+        );
       case 'agency-dashboard':
         return <AgencyDashboard />;
       case 'host-verification':

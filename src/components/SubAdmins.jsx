@@ -95,7 +95,7 @@ const SubAdmins = ({ onNavigateToDetail }) => {
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current diamond</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">overall diamond</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">total coins</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Action</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider"></div>
               </div>
             </div>
 

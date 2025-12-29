@@ -55,10 +55,10 @@ export const ROLE_PERMISSIONS = {
   'master-agency': {
     // Master agency can access master agency dashboard and agencies
     canAccess: (route) => {
-      const allowedRoutes = ['master-agency-dashboard'];
+      const allowedRoutes = ['master-agency-dashboard', 'create-agency'];
       return allowedRoutes.includes(route);
     },
-    allowedRoutes: ['master-agency-dashboard', ]
+    allowedRoutes: ['master-agency-dashboard', 'create-agency']
   },
   'agency': {
     // Agency can access agency dashboard
@@ -85,8 +85,8 @@ export const getFilteredNavigationItems = (navigationItems, userType) => {
   // If user has access to all routes, return all navigation items
   if (permissions.allowedRoutes === 'all') {
     // Only Super Admin should see Role Stages in sidebar per requirement
-    const withRoleStages = navigationItems;
-    return withRoleStages;
+    // Filter out specific pages that shouldn't be shown to Super Admin
+    return navigationItems.filter(item => item.id !== 'create-agency' && item.id !== 'master-agency-dashboard');
   }
 
   // Filter navigation items based on allowed routes

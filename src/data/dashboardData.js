@@ -1,13 +1,13 @@
 // Dashboard mock data
 export const metricsData = {
-  totalSubAdmins: 156,
-  totalMasterAgencies: 45,
-  agencies: 287,
-  hosts: 1234,
-  overallCoins: 2450000,
-  liveUsers: 5678,
-  voiceRooms: 89,
-  totalDiamonds: 125000
+  totalSubAdmins: 0,
+  totalMasterAgencies: 0,
+  agencies: 0,
+  hosts: 0,
+  overallCoins: 0,
+  liveUsers: 0,
+  voiceRooms: 0,
+  totalDiamonds: 0
 };
 
 // Financial metrics data
@@ -20,19 +20,19 @@ export const financialMetricsData = {
   },
   totalProfit: {
     value: 2340000,
-    formatted: '2.34M',
+    formatted: '0',
     change: '+8.2%',
     trend: 'up'
   },
   totalLoss: {
     value: 156000,
-    formatted: '156K',
+    formatted: '0',
     change: '-3.1%',
     trend: 'down'
   },
   totalDiamondCashout: {
     value: 1890000,
-    formatted: '1.89M',
+    formatted: '0',
     change: '+15.7%',
     trend: 'up'
   }
@@ -122,6 +122,8 @@ export const supporterCardsData = {
 
 export const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+  { id: 'master-agency-dashboard', label: 'Progress', icon: 'LayoutDashboard' },
+  { id: 'create-agency', label: 'Create Agency', icon: 'UserRoundPlus' },
   // Quick-create action for the UI
   { id: 'create', label: 'Move and Create', icon: 'UserRoundPlus' },
   { id: 'sub-admins', label: 'Admin', icon: 'Users' },

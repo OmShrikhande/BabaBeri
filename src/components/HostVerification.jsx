@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import HostTable from './HostTable';
 import Pagination from './Pagination';
-import authService from '../services/authService';
+import authService from '../services/services';
 
 const HostVerification = () => {
   console.log('🔍 HostVerification component rendered at:', new Date().toISOString());
@@ -26,10 +26,10 @@ const HostVerification = () => {
         setError(null);
 
         // Check if user is authenticated first
-        console.log('HostVerification - Checking authentication...');
-        console.log('HostVerification - isAuthenticated:', authService.isAuthenticated());
-        console.log('HostVerification - token exists:', !!authService.getToken());
-        console.log('HostVerification - user type:', authService.getUserType());
+        // console.log('HostVerification - Checking authentication...');
+        // console.log('HostVerification - isAuthenticated:', authService.isAuthenticated());
+        // console.log('HostVerification - token exists:', !!authService.getToken());
+        // console.log('HostVerification - user type:', authService.getUserType());
 
         if (!authService.isAuthenticated()) {
           setError('Please login as a super admin to access this feature');
@@ -37,25 +37,25 @@ const HostVerification = () => {
           return;
         }
 
-        console.log('HostVerification - Calling getPendingHosts...');
+        // console.log('HostVerification - Calling getPendingHosts...');
         const result = await authService.getPendingHosts();
-        console.log('HostVerification - getPendingHosts result:', result);
+        // console.log('HostVerification - getPendingHosts result:', result);
 
         if (result.success) {
-          console.log('HostVerification - Success! Hosts loaded:', result.data?.length || 0);
+          // console.log('HostVerification - Success! Hosts loaded:', result.data?.length || 0);
           setHosts(result.data || []);
           setFilteredHosts(result.data || []);
         } else {
-          console.log('HostVerification - API call failed with error:', result.error);
-          console.log('HostVerification - Full result:', result);
+          // console.log('HostVerification - API call failed with error:', result.error);
+          // console.log('HostVerification - Full result:', result);
           setError(result.error || 'Failed to fetch pending hosts');
           setHosts([]);
           setFilteredHosts([]);
         }
       } catch (err) {
-        console.error('HostVerification - Error in fetchPendingHosts:', err);
-        console.error('HostVerification - Error message:', err.message);
-        console.error('HostVerification - Error stack:', err.stack);
+        // console.error('HostVerification - Error in fetchPendingHosts:', err);
+        // console.error('HostVerification - Error message:', err.message);
+        // console.error('HostVerification - Error stack:', err.stack);
         setError(`Failed to fetch pending hosts: ${err.message}`);
         setHosts([]);
         setFilteredHosts([]);
@@ -168,14 +168,12 @@ const HostVerification = () => {
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center p-6">
                   <div className="text-red-400 text-lg mb-2">⚠️ Error loading hosts</div>
-                  <p className="text-gray-500 text-sm mb-4">{error}</p>
+                  {/* <p className="text-gray-500 text-sm mb-4">{error}</p> */}
                   <div className="bg-gray-800/50 rounded-lg p-4 text-left max-w-md">
                     <div className="text-xs text-gray-400 mb-2">Debug Information:</div>
                     <div className="text-xs text-gray-300 space-y-1">
-                      <div>• Check browser console (F12) for detailed logs</div>
                       <div>• Verify you're logged in as super admin</div>
-                      <div>• Check network tab for API request details</div>
-                    </div>
+                  </div>
                   </div>
                   <button
                     onClick={() => window.location.reload()}

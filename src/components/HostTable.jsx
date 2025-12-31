@@ -17,30 +17,29 @@ const HostTable = ({ hosts, onStatusChange }) => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Table Header - Desktop */}
       <div className="hidden lg:block flex-shrink-0">
-        <div className="grid grid-cols-12 gap-4 py-3 px-4 border-b border-gray-700 bg-gray-800/30 rounded-t-xl">
-          <div className="col-span-4">
+        <div className="grid grid-cols-12 gap-4 py-3 px-4 border-b border-gray-700 bg-gray-800/30 rounded-t-xl ">
+          <div className="col-span-4 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
               Host Name
             </h3>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
               Host ID
             </h3>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
               Status
             </h3>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
-              Join Date
+              Date of Birth
             </h3>
           </div>
-          <div className="col-span-2">
+          <div className="col-span-2 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
               Action
             </h3>

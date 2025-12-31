@@ -88,22 +88,22 @@ const TableRow = ({ host, onStatusChange, onView }) => {
         </div>
 
         {/* Host ID */}
-        <div className="col-span-2 flex items-center">
-          <span className="text-gray-300 font-mono text-sm">#{host.hostId}</span>
+        <div className="col-span-2 flex items-center justify-center">
+          <span className="text-gray-300 font-mono text-sm text-center">#{host.hostId}</span>
         </div>
 
         {/* Status */}
-        <div className="col-span-2 flex items-center">
+        <div className="col-span-2 flex items-center justify-center">
           <StatusBadge status={host.status} />
         </div>
 
         {/* Join Date */}
-        <div className="col-span-2 flex items-center">
-          <span className="text-gray-400 text-sm">{formatDate(host.joinDate)}</span>
+        <div className="col-span-2 flex items-center justify-center">
+          <span className="text-gray-400 text-sm text-center">{formatDate(host.joinDate)}</span>
         </div>
 
         {/* Actions */}
-        <div className="col-span-2 flex items-center">
+        <div className="col-span-2 flex items-center justify-center">
           {renderActionButtons()}
         </div>
       </div>

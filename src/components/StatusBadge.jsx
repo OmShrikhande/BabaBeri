@@ -33,7 +33,7 @@ const StatusBadge = ({ status }) => {
         };
       default:
         return {
-          text: 'Unknown',
+          text: 'Pending',
           bgColor: 'bg-gray-700/20',
           textColor: 'text-gray-400',
           borderColor: 'border-gray-700/50',

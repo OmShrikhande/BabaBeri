@@ -112,6 +112,56 @@ class AuthService {
       return null;
     }
 
+    // Check if token is expired
+    isTokenExpired(token = null) {
+      const decoded = this.decodeToken(token);
+      if (!decoded || !decoded.exp) return true;
+      
+      const currentTime = Date.now() / 1000;
+      return decoded.exp < currentTime;
+    }
+
+    // Decode JWT token (basic implementation)
+    decodeToken(token = null) {
+      const tokenToUse = token || this.getToken();
+      
+      if (!tokenToUse) return null;
+
+      try {
+        const base64Url = tokenToUse.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+      } catch (error) {
+        console.error('Error decoding token:', error);
+        return null;
+      }
+    }
+
+    // Get user type from token or stored info
+    getUserType() {
+      const userInfo = this.getUserInfo();
+      if (userInfo) {
+        // Normalize most common keys from backend profile
+        const role = userInfo.userType || userInfo.role || userInfo.type || userInfo.accountType || userInfo.position;
+        const normalized = normalizeUserType(role);
+        if (normalized) return normalized;
+      }
+
+      const decoded = this.decodeToken();
+      if (decoded) {
+        // Try different possible fields for user type
+        const role = decoded.userType || decoded.role || decoded.type || decoded.accountType || decoded.position;
+        const normalized = normalizeUserType(role);
+        return normalized || 'admin';
+      }
+
+      return 'admin'; // Default fallback
+    }
+
     // Make authenticated API requests
     async makeAuthenticatedRequest(url, options = {}) {
       const token = this.getToken();
@@ -141,6 +191,59 @@ class AuthService {
       } catch (error) {
         console.error('API request error:', error);
         throw error;
+      }
+    }
+
+    // Get pending hosts (live users with pending form)
+    async getPendingHosts() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PENDING_LIVE_USERS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch pending hosts: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+
+        // Return the data directly if it's an array, or wrap it if it's inside a property
+        // The component expects { success: true, data: [...] }
+        const rawList = Array.isArray(data) ? data : (data.data || data.users || []);
+        
+        // Map API response to component expected format
+        const hostsList = rawList.map(item => {
+          let avatarUrl = item.avatar || item.profilePic || item.image || item.photo || item.document1Path || '';
+          // Handle relative paths
+          if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.startsWith('/')) {
+            avatarUrl = `${API_CONFIG.BASE_URL}${avatarUrl}`;
+          }
+
+          return {
+            ...item,
+            id: item.id || item._id,
+            name: item.name || item.username || item.fullName || 'Unknown',
+            email: item.email || '',
+            hostId: item.usercode || 'noname',
+            status: (item.status || 'pending').toLowerCase(), // Normalize status to lowercase
+            joinDate: item.joinDate || item.createdAt || item.registeredAt || item.dateOfBirth || new Date().toISOString(),
+            avatar: avatarUrl
+          };
+        });
+        
+        return { success: true, data: hostsList };
+      } catch (error) {
+        console.error('Get pending hosts error:', error);
+        return { success: false, error: error.message || 'Failed to fetch pending hosts.' };
       }
     }
 

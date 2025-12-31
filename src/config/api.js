@@ -42,7 +42,9 @@ export const API_CONFIG = {
     // Get all percentage methods (Super Admin only)
     GET_ALL_PERCENTAGE_METHOD: '/auth/superadmin/getallpercentageMethod',
     // Get all plans (Super Admin only)
-    GET_ALL_PLANS: '/auth/user/getAllPlans'
+    GET_ALL_PLANS: '/auth/user/getAllPlans',
+    // Get pending live users
+    PENDING_LIVE_USERS: '/api/liveusers/list'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

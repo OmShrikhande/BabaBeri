@@ -233,10 +233,11 @@ class AuthService {
             id: item.id || item._id,
             name: item.name || item.username || item.fullName || 'Unknown',
             email: item.email || '',
-            hostId: item.usercode || 'noname',
+            hostId: item.usercode || '0000',
             status: (item.status || 'pending').toLowerCase(), // Normalize status to lowercase
             joinDate: item.joinDate || item.createdAt || item.registeredAt || item.dateOfBirth || new Date().toISOString(),
-            avatar: avatarUrl
+            avatar: avatarUrl,
+            nationality: item.nationality|| 'pak'
           };
         });
         
@@ -244,6 +245,35 @@ class AuthService {
       } catch (error) {
         console.error('Get pending hosts error:', error);
         return { success: false, error: error.message || 'Failed to fetch pending hosts.' };
+      }
+    }
+
+    // Get host details by host code
+    async getHostDetails(hostId) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_LIVE_FORM_STATUS}?code=${hostId}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+
+        if (!response.ok) {
+           throw new Error(`Failed to fetch host details: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get host details error:', error);
+        return { success: false, error: error.message || 'Failed to fetch host details.' };
       }
     }
 

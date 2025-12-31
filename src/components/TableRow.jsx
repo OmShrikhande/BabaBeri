@@ -3,11 +3,13 @@ import { Check, X, Minus, Eye } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
 const TableRow = ({ host, onStatusChange, onView }) => {
-  const handleApprove = () => {
+  const handleApprove = (e) => {
+    e.stopPropagation();
     onStatusChange(host.id, 'accepted');
   };
 
-  const handleReject = () => {
+  const handleReject = (e) => {
+    e.stopPropagation();
     onStatusChange(host.id, 'rejected');
   };
 
@@ -64,7 +66,10 @@ const TableRow = ({ host, onStatusChange, onView }) => {
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-4 py-3 px-4 hover:bg-gray-800/30 transition-colors duration-200 compact-row">
+      <div 
+        onClick={() => onView && onView(host)}
+        className="hidden lg:grid lg:grid-cols-10 lg:gap-3 py-3 px-4 hover:bg-gray-800/30 transition-colors duration-200 compact-row cursor-pointer"
+      >
         {/* Host Name with Avatar */}
         <div className="col-span-4 flex items-center gap-3 min-w-0">
           <div className="relative flex-shrink-0">
@@ -97,9 +102,9 @@ const TableRow = ({ host, onStatusChange, onView }) => {
           <StatusBadge status={host.status} />
         </div>
 
-        {/* Join Date */}
+        {/* Nationality */}
         <div className="col-span-2 flex items-center justify-center">
-          <span className="text-gray-400 text-sm text-center">{formatDate(host.joinDate)}</span>
+          <span className="text-gray-400 text-sm text-center">{host.nationality}</span>
         </div>
 
         {/* Actions */}
@@ -109,7 +114,10 @@ const TableRow = ({ host, onStatusChange, onView }) => {
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden py-3 px-4 hover:bg-gray-800/30 transition-colors duration-200 compact-row">
+      <div 
+        onClick={() => onView && onView(host)}
+        className="lg:hidden py-3 px-4 hover:bg-gray-800/30 transition-colors duration-200 compact-row cursor-pointer"
+      >
         <div className="flex items-start gap-3">
           {/* Avatar */}
           <div className="relative flex-shrink-0">

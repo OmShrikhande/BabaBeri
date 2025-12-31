@@ -1,7 +1,7 @@
 import React from 'react';
 import TableRow from './TableRow';
 
-const HostTable = ({ hosts, onStatusChange }) => {
+const HostTable = ({ hosts, onStatusChange, onRowClick }) => {
   if (!hosts || hosts.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -18,7 +18,7 @@ const HostTable = ({ hosts, onStatusChange }) => {
   return (
     <div className="h-full flex flex-col">
       <div className="hidden lg:block flex-shrink-0">
-        <div className="grid grid-cols-12 gap-4 py-3 px-4 border-b border-gray-700 bg-gray-800/30 rounded-t-xl ">
+        <div className="grid grid-cols-10 gap-3 py-3 px-4 border-b border-gray-700 bg-gray-800/30 rounded-t-xl ">
           <div className="col-span-4 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
               Host Name
@@ -36,14 +36,14 @@ const HostTable = ({ hosts, onStatusChange }) => {
           </div>
           <div className="col-span-2 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
-              Date of Birth
+              Nationality
             </h3>
           </div>
-          <div className="col-span-2 text-center">
+          {/* <div className="col-span-2 text-center">
             <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wide">
               Action
             </h3>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -55,6 +55,7 @@ const HostTable = ({ hosts, onStatusChange }) => {
               key={host.id}
               host={host}
               onStatusChange={onStatusChange}
+              onView={onRowClick}
             />
           ))}
         </div>

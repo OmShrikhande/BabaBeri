@@ -44,7 +44,9 @@ export const API_CONFIG = {
     // Get all plans (Super Admin only)
     GET_ALL_PLANS: '/auth/user/getAllPlans',
     // Get pending live users
-    PENDING_LIVE_USERS: '/api/liveusers/list'
+    PENDING_LIVE_USERS: '/api/liveusers/list',
+    // Get host details
+    GET_LIVE_FORM_STATUS: '/api/liveusers/getLiveFormStatus'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

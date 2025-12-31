@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import HostTable from './HostTable';
 import Pagination from './Pagination';
 import authService from '../services/services';
+import { API_CONFIG } from '../config/api';
 
 const HostVerification = () => {
   console.log('🔍 HostVerification component rendered at:', new Date().toISOString());
@@ -14,6 +15,12 @@ const HostVerification = () => {
   const [itemsPerPage, setItemsPerPage] = useState(8);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Sidebar state
+  const [selectedHost, setSelectedHost] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sidebarLoading, setSidebarLoading] = useState(false);
+  const [sidebarError, setSidebarError] = useState(null);
 
   // Fetch pending hosts data
   useEffect(() => {
@@ -115,9 +122,35 @@ const HostVerification = () => {
     setFilteredHosts(prevHosts => updateHost(prevHosts));
   };
 
+  const handleRowClick = async (host) => {
+    setIsSidebarOpen(true);
+    setSidebarLoading(true);
+    setSidebarError(null);
+    setSelectedHost(null);
+    
+    try {
+      const result = await authService.getHostDetails(host.hostId);
+      
+      if (result.success) {
+        setSelectedHost(result.data);
+      } else {
+        setSidebarError(result.error || 'Failed to fetch host details');
+      }
+    } catch (err) {
+      setSidebarError(err.message || 'An error occurred fetching host details');
+    } finally {
+      setSidebarLoading(false);
+    }
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   try {
     return (
-    <main className="flex-1 flex flex-col bg-gradient-to-b from-[#0d0d0d] to-[#121212] overflow-y-auto">
+    <div className="flex-1 flex flex-col h-full relative overflow-hidden">
+    <main className="flex-1 flex flex-col bg-gradient-to-b from-[#0d0d0d] to-[#121212] overflow-y-auto w-full">
       {/* Header Section */}
       <div className="flex-shrink-0 p-4 lg:p-6 border-b border-gray-800">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -187,6 +220,7 @@ const HostVerification = () => {
               <HostTable
                 hosts={currentHosts}
                 onStatusChange={handleStatusChange}
+                onRowClick={handleRowClick}
               />
             )}
           </div>
@@ -207,6 +241,169 @@ const HostVerification = () => {
         )}
       </div>
     </main>
+    
+    {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity"
+            onClick={closeSidebar}
+        />
+      )}
+
+      {/* Right Sidebar */}
+      <div className={`fixed inset-y-0 right-0 w-full sm:w-[400px] bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform duration-300 z-50 overflow-y-auto ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">Host Details</h2>
+                <button 
+                    onClick={closeSidebar}
+                    className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
+
+            {sidebarLoading ? (
+                 <div className="flex flex-col items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F72585] mb-4"></div>
+                    <p className="text-gray-400">Loading details...</p>
+                 </div>
+            ) : sidebarError ? (
+                 <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-red-400">
+                    <p>{sidebarError}</p>
+                 </div>
+            ) : selectedHost ? (
+                <div className="space-y-6">
+                    {/* Basic Info */}
+                    <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Personal Info</h3>
+                        
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs text-gray-500 block">Full Name</label>
+                                <p className="text-gray-200">{selectedHost.name}</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-gray-500 block">Nationality</label>
+                                    <p className="text-gray-200">{selectedHost.nationality}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-gray-500 block">Date of Birth</label>
+                                    <p className="text-gray-200">{selectedHost.dateOfBirth}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Contact Info</h3>
+                        
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs text-gray-500 block">Email</label>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-gray-200 break-all">{selectedHost.email}</p>
+                                    {selectedHost.emailstatus && (
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${selectedHost.emailstatus === 'VERIFIED' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                            {selectedHost.emailstatus}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label className="text-xs text-gray-500 block">WhatsApp</label>
+                                <p className="text-gray-200">{selectedHost.whatsappNumber}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                     {/* System Info */}
+                    <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">System Info</h3>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-xs text-gray-500 block">User Code</label>
+                                <code className="text-[#F72585] font-mono">{selectedHost.usercode}</code>
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-500 block">Agency Code</label>
+                                <code className="text-[#7209B7] font-mono">{selectedHost.agencycode}</code>
+                            </div>
+                             <div>
+                                <label className="text-xs text-gray-500 block">Status</label>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${selectedHost.status === 'APPROVED' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                    {selectedHost.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Documents */}
+                     <div className="space-y-4">
+                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Documents</h3>
+                        
+                        {selectedHost.aadhaarNumber && (
+                             <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50 mb-3">
+                                <label className="text-xs text-gray-500 block">Aadhaar Number</label>
+                                <p className="text-gray-200 font-mono tracking-wider">{selectedHost.aadhaarNumber}</p>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-4">
+                            {selectedHost.document1Path && (
+                                <div>
+                                    <label className="text-xs text-gray-500 block mb-2">Document 1</label>
+                                    <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden border border-gray-700 group">
+                                        <img 
+                                            src={selectedHost.document1Path.startsWith('http') ? selectedHost.document1Path : `${API_CONFIG.BASE_URL}${selectedHost.document1Path}`} 
+                                            alt="Document 1" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <a 
+                                            href={selectedHost.document1Path.startsWith('http') ? selectedHost.document1Path : `${API_CONFIG.BASE_URL}${selectedHost.document1Path}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <span className="text-white text-sm font-medium">View Full Size</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {selectedHost.document2Path && (
+                                <div>
+                                    <label className="text-xs text-gray-500 block mb-2">Document 2</label>
+                                    <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden border border-gray-700 group">
+                                        <img 
+                                            src={selectedHost.document2Path.startsWith('http') ? selectedHost.document2Path : `${API_CONFIG.BASE_URL}${selectedHost.document2Path}`} 
+                                            alt="Document 2" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                         <a 
+                                            href={selectedHost.document2Path.startsWith('http') ? selectedHost.document2Path : `${API_CONFIG.BASE_URL}${selectedHost.document2Path}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <span className="text-white text-sm font-medium">View Full Size</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                </div>
+            ) : null}
+        </div>
+      </div>
+    </div>
   );
   } catch (error) {
     console.error('💥 HostVerification component error:', error);

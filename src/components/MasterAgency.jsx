@@ -308,7 +308,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
           <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
             <div className="p-6 border-b border-gray-800">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">All Master Agencies</h2>
+                <h2 className="text-xl font-bold text-white">List of Master Agencies</h2>
                 <div className="flex items-center space-x-4">
                   {/* Search Bar */}
                   <div className="relative">

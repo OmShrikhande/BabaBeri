@@ -46,7 +46,9 @@ export const API_CONFIG = {
     // Get pending live users
     PENDING_LIVE_USERS: '/api/liveusers/list',
     // Get host details
-    GET_LIVE_FORM_STATUS: '/api/liveusers/getLiveFormStatus'
+    GET_LIVE_FORM_STATUS: '/api/liveusers/getLiveFormStatus',
+    // Approve/Reject live form
+    APPROVE_REJECT_LIVE_FORM: '/auth/superadmin/approve-reject-live-form'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

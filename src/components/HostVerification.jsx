@@ -111,15 +111,38 @@ const HostVerification = () => {
     setSearchTerm(e.target.value);
   };
 
-  const handleStatusChange = (hostId, newStatus) => {
-    // Update both the original data and filtered data
-    const updateHost = (hosts) =>
-      hosts.map(host =>
-        host.id === hostId ? { ...host, status: newStatus } : host
-      );
+  const handleStatusChange = async (hostId, newStatus) => {
+    const hostToUpdate = hosts.find(h => h.id === hostId);
+    if (!hostToUpdate) return;
 
-    setHosts(prevHosts => updateHost(prevHosts));
-    setFilteredHosts(prevHosts => updateHost(prevHosts));
+    // Map UI status to API status
+    // Use APPROVED and REJECT as per API requirement
+    const apiStatus = newStatus === 'accepted' ? 'APPROVED' : 'REJECT';
+
+    try {
+      const result = await authService.approveRejectHost(hostToUpdate.hostId, apiStatus);
+
+      if (result.success) {
+        // Update both the original data and filtered data
+        const updateHost = (hosts) =>
+          hosts.map(host =>
+            host.id === hostId ? { ...host, status: newStatus } : host
+          );
+
+        setHosts(prevHosts => updateHost(prevHosts));
+        setFilteredHosts(prevHosts => updateHost(prevHosts));
+      } else {
+        // Show error (using alert for now as we don't have a toast system visible)
+        window.alert(result.error || 'Failed to update host status');
+      }
+    } catch (err) {
+      console.error('Error updating status:', err);
+      window.alert('An error occurred while updating status');
+    }
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
   };
 
   const handleRowClick = async (host) => {
@@ -143,8 +166,18 @@ const HostVerification = () => {
     }
   };
 
-  const closeSidebar = () => {
-    setIsSidebarOpen(false);
+  const handleAccept = () => {
+    if (selectedHost) {
+      handleStatusChange(selectedHost.id, 'accepted');
+      closeSidebar();
+    }
+  };
+
+  const handleReject = () => {
+    if (selectedHost) {
+      handleStatusChange(selectedHost.id, 'rejected');
+      closeSidebar();
+    }
   };
 
   try {
@@ -251,8 +284,8 @@ const HostVerification = () => {
       )}
 
       {/* Right Sidebar */}
-      <div className={`fixed inset-y-0 right-0 w-full sm:w-[400px] bg-gray-900 border-l border-gray-800 shadow-2xl transform transition-transform duration-300 z-50 overflow-y-auto ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="p-6">
+      <div className={`fixed inset-0 bg-gray-900 z-50 overflow-y-auto ${isSidebarOpen ? 'block' : 'hidden'}`}>
+        <div className="p-6 max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">Host Details</h2>
                 <button 
@@ -397,6 +430,22 @@ const HostVerification = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 mt-6">
+                      <button
+                        onClick={handleReject}
+                        className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                      >
+                        Reject
+                      </button>
+                      <button
+                        onClick={handleAccept}
+                        className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                      >
+                        Accept
+                      </button>
                     </div>
 
                 </div>

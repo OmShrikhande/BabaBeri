@@ -233,8 +233,8 @@ class AuthService {
             id: item.id || item._id,
             name: item.name || item.username || item.fullName || 'Unknown',
             email: item.email || '',
-            hostId: item.usercode || '0000',
-            status: item.status, // Normalize status to lowercase
+            hostId: String(item.usercode || '0000'),
+            status: item.status?.toLowerCase(), // Normalize status to lowercase
             joinDate: item.joinDate || item.createdAt || item.registeredAt || item.dateOfBirth || new Date().toISOString(),
             avatar: avatarUrl,
             nationality: item.nationality|| 'Unknown'
@@ -270,6 +270,10 @@ class AuthService {
           throw new Error('Invalid response format');
         }
 
+        if (data && !data.usercode) {
+          data.usercode = hostId;
+        }
+
         return { success: true, data: data };
       } catch (error) {
         console.error('Get host details error:', error);
@@ -279,14 +283,18 @@ class AuthService {
 
     // Approve or Reject Host
     async approveRejectHost(hostId, status) {
+      console.log('Services: approveRejectHost called', { hostId, status });
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };
 
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_REJECT_LIVE_FORM}?usercode=${hostId}&status=${status}`;
+      console.log('Services: Making request to', url);
 
       try {
         const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+        console.log('Services: Response status:', response.status);
         const raw = await response.text().catch(() => '');
+        console.log('Services: Response body:', raw);
 
         if (!response.ok) {
            throw new Error(`Failed to update host status: ${response.status} ${response.statusText}\n${raw}`);

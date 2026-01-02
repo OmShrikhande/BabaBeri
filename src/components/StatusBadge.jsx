@@ -14,6 +14,8 @@ const StatusBadge = ({ status }) => {
           glowClass: 'shadow-yellow-500/25'
         };
       case 'accepted':
+      case 'approved':
+      case 'active':
         return {
           text: 'Accepted',
           bgColor: 'bg-green-700/20',
@@ -23,6 +25,7 @@ const StatusBadge = ({ status }) => {
           glowClass: 'shadow-green-500/25'
         };
       case 'rejected':
+      case 'reject':
         return {
           text: 'Rejected',
           bgColor: 'bg-red-700/20',

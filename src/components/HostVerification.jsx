@@ -77,8 +77,9 @@ const HostVerification = () => {
   // Filter hosts based on mode
   useEffect(() => {
     const filtered = hosts.filter(host => {
-      if (mode === 'pending') return host.status === 'pending' || host.status === 'PENDING';
-      if (mode === 'rejected') return host.status === 'rejected' || host.status === 'REJECTED';
+      const status = host.status;
+      if (mode === 'pending') return status === 'pending';
+      if (mode === 'rejected') return status === 'rejected';
       return true;
     });
     setFilteredHosts(filtered);
@@ -118,7 +119,7 @@ const HostVerification = () => {
         // Update both the original data and filtered data
         const updateHost = (hosts) =>
           hosts.map(host =>
-            host.hostId === usercode ? { ...host, status: newStatus } : host
+            host.hostId === usercode ? { ...host, status: newStatus === 'accepted' ? 'approved' : 'rejected' } : host
           );
 
         setHosts(prevHosts => updateHost(prevHosts));
@@ -159,16 +160,24 @@ const HostVerification = () => {
   };
 
   const handleAccept = () => {
+    console.log('handleAccept clicked. selectedHost:', selectedHost);
     if (selectedHost) {
+      console.log('Calling handleStatusChange for accept');
       handleStatusChange(selectedHost.usercode, 'accepted');
       closeSidebar();
+    } else {
+      console.error('No selectedHost found when handling accept');
     }
   };
 
   const handleReject = () => {
+    console.log('handleReject clicked. selectedHost:', selectedHost);
     if (selectedHost) {
+      console.log('Calling handleStatusChange for reject');
       handleStatusChange(selectedHost.usercode, 'rejected');
       closeSidebar();
+    } else {
+      console.error('No selectedHost found when handling reject');
     }
   };
 
@@ -356,7 +365,7 @@ const HostVerification = () => {
                             </div>
                              <div>
                                 <label className="text-xs text-gray-500 block">Status</label>
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${selectedHost.status === 'APPROVED' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${selectedHost.status?.toLowerCase() === 'approved' ? 'bg-green-500/20 text-green-400' : selectedHost.status?.toLowerCase() === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                                     {selectedHost.status}
                                 </span>
                             </div>

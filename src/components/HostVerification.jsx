@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import HostTable from './HostTable';
 import Pagination from './Pagination';
 import authService from '../services/services';
@@ -8,7 +8,7 @@ import { API_CONFIG } from '../config/api';
 const HostVerification = () => {
   console.log('🔍 HostVerification component rendered at:', new Date().toISOString());
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [mode, setMode] = useState('pending');
   const [hosts, setHosts] = useState([]);
   const [filteredHosts, setFilteredHosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -74,21 +74,17 @@ const HostVerification = () => {
     fetchPendingHosts();
   }, []);
 
-  // Filter hosts based on search term
+  // Filter hosts based on mode
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredHosts(hosts);
-    } else {
-      const filtered = hosts.filter(host =>
-        host.hostId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        host.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        host.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredHosts(filtered);
-    }
+    const filtered = hosts.filter(host => {
+      if (mode === 'pending') return host.status === 'pending' || host.status === 'PENDING';
+      if (mode === 'rejected') return host.status === 'rejected' || host.status === 'REJECTED';
+      return true;
+    });
+    setFilteredHosts(filtered);
     // Reset to first page when filtering
     setCurrentPage(1);
-  }, [searchTerm, hosts]);
+  }, [mode, hosts]);
 
   // Calculate pagination
   const totalItems = filteredHosts.length;
@@ -107,30 +103,26 @@ const HostVerification = () => {
     setCurrentPage(1); // Reset to first page
   };
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
   const handleStatusChange = async (hostId, newStatus) => {
-    const hostToUpdate = hosts.find(h => h.id === hostId);
-    if (!hostToUpdate) return;
+    // hostId here is actually the usercode from selectedHost
+    const usercode = hostId;
 
     // Map UI status to API status
     // Use APPROVED and REJECT as per API requirement
     const apiStatus = newStatus === 'accepted' ? 'APPROVED' : 'REJECT';
 
     try {
-      const result = await authService.approveRejectHost(hostToUpdate.hostId, apiStatus);
+      const result = await authService.approveRejectHost(usercode, apiStatus);
 
       if (result.success) {
         // Update both the original data and filtered data
         const updateHost = (hosts) =>
           hosts.map(host =>
-            host.id === hostId ? { ...host, status: newStatus } : host
+            host.hostId === usercode ? { ...host, status: newStatus } : host
           );
 
         setHosts(prevHosts => updateHost(prevHosts));
-        setFilteredHosts(prevHosts => updateHost(prevHosts));
+        setFilteredHosts(prevFilteredHosts => updateHost(prevFilteredHosts));
       } else {
         // Show error (using alert for now as we don't have a toast system visible)
         window.alert(result.error || 'Failed to update host status');
@@ -168,14 +160,22 @@ const HostVerification = () => {
 
   const handleAccept = () => {
     if (selectedHost) {
-      handleStatusChange(selectedHost.id, 'accepted');
+      handleStatusChange(selectedHost.usercode, 'accepted');
       closeSidebar();
     }
   };
 
   const handleReject = () => {
     if (selectedHost) {
-      handleStatusChange(selectedHost.id, 'rejected');
+      handleStatusChange(selectedHost.usercode, 'rejected');
+      closeSidebar();
+    }
+  };
+
+  const handleClearForm = () => {
+    if (selectedHost) {
+      // Placeholder for clear form functionality
+      window.alert('Clear Form functionality not implemented yet');
       closeSidebar();
     }
   };
@@ -189,32 +189,19 @@ const HostVerification = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-              Host Verification
+              {mode === 'pending' ? 'Host Verification' : 'Rejected Hosts'}
             </h1>
             <p className="text-gray-400 text-sm">
-              Review and manage host verification requests ({totalItems} total)
+              {mode === 'pending' ? 'Review and manage host verification requests' : 'View rejected host requests'} ({totalItems} total)
             </p>
           </div>
           
-          {/* Search Bar */}
-          <div className="relative w-full sm:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
-            </div>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              placeholder="Search by Host ID, name, or email..."
-              className="
-                block w-full pl-10 pr-3 py-2 border border-gray-700 rounded-lg 
-                bg-gray-800/50 text-gray-200 placeholder-gray-400 text-sm
-                focus:outline-none focus:ring-2 focus:ring-[#F72585] focus:border-transparent
-                transition-all duration-200
-              "
-              aria-label="Search hosts"
-            />
-          </div>
+          <button
+            onClick={() => setMode(mode === 'pending' ? 'rejected' : 'pending')}
+            className="px-4 py-2 bg-[#F72585] text-white rounded-lg hover:bg-[#F72585]/80 transition-colors"
+          >
+            {mode === 'pending' ? 'View Rejected Hosts' : 'View Pending Hosts'}
+          </button>
         </div>
       </div>
 
@@ -433,20 +420,31 @@ const HostVerification = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-4 mt-6">
-                      <button
-                        onClick={handleReject}
-                        className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                      >
-                        Reject
-                      </button>
-                      <button
-                        onClick={handleAccept}
-                        className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                      >
-                        Accept
-                      </button>
-                    </div>
+                    {mode === 'pending' ? (
+                      <div className="flex gap-4 mt-6">
+                        <button
+                          onClick={handleReject}
+                          className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={handleAccept}
+                          className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                        >
+                          Accept
+                        </button>
+                      </div>
+                    ) : mode === 'rejected' ? (
+                      <div className="flex justify-center mt-6">
+                        <button
+                          onClick={handleClearForm}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          Clear Form
+                        </button>
+                      </div>
+                    ) : null}
 
                 </div>
             ) : null}

@@ -22,10 +22,10 @@ const TableRow = ({ host, onStatusChange, onView }) => {
   };
 
   const renderActionButtons = () => {
-    if (host.status === 'pending') {
+    if (host.status === 'pending' || host.status === 'PENDING') {
       return (
         <div className="flex items-center gap-1">
-          <button
+          {/* <button
             onClick={handleApprove}
             className="
               p-1.5 rounded-md bg-green-700 hover:bg-green-600 text-white 
@@ -37,8 +37,8 @@ const TableRow = ({ host, onStatusChange, onView }) => {
             title="Approve host"
           >
             <Check className="w-3.5 h-3.5" />
-          </button>
-          <button
+          </button> */}
+          {/* <button
             onClick={handleReject}
             className="
               p-1.5 rounded-md bg-red-700 hover:bg-red-600 text-white 
@@ -50,7 +50,7 @@ const TableRow = ({ host, onStatusChange, onView }) => {
             title="Reject host"
           >
             <X className="w-3.5 h-3.5" />
-          </button>
+          </button> */}
         </div>
       );
     }

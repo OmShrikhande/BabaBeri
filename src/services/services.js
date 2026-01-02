@@ -234,10 +234,10 @@ class AuthService {
             name: item.name || item.username || item.fullName || 'Unknown',
             email: item.email || '',
             hostId: item.usercode || '0000',
-            status: (item.status || 'pending').toLowerCase(), // Normalize status to lowercase
+            status: item.status, // Normalize status to lowercase
             joinDate: item.joinDate || item.createdAt || item.registeredAt || item.dateOfBirth || new Date().toISOString(),
             avatar: avatarUrl,
-            nationality: item.nationality|| 'pak'
+            nationality: item.nationality|| 'Unknown'
           };
         });
         

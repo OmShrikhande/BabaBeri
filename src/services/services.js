@@ -234,7 +234,7 @@ class AuthService {
             name: item.name || item.username || item.fullName || 'Unknown',
             email: item.email || '',
             hostId: String(item.usercode || '0000'),
-            status: item.status?.toLowerCase(), // Normalize status to lowercase
+            status: item.status?.toLowerCase() === 'reject' ? 'rejected' : item.status?.toLowerCase(), // Normalize status to lowercase
             joinDate: item.joinDate || item.createdAt || item.registeredAt || item.dateOfBirth || new Date().toISOString(),
             avatar: avatarUrl,
             nationality: item.nationality|| 'Unknown'

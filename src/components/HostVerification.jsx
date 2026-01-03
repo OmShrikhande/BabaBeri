@@ -365,7 +365,7 @@ const HostVerification = () => {
                             </div>
                              <div>
                                 <label className="text-xs text-gray-500 block">Status</label>
-                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${selectedHost.status?.toLowerCase() === 'approved' ? 'bg-green-500/20 text-green-400' : selectedHost.status?.toLowerCase() === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${selectedHost.status?.toLowerCase() === 'approved' ? 'bg-green-500/20 text-green-400' : (selectedHost.status?.toLowerCase() === 'rejected' || selectedHost.status?.toLowerCase() === 'reject') ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                                     {selectedHost.status}
                                 </span>
                             </div>

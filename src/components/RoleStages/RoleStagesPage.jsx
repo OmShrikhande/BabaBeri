@@ -156,7 +156,12 @@ const RoleStagesPage = () => {
       };
 
       console.log('Submitting Tier Data:', payload);
-      const result = await authService.saveTiers(payload);
+      let result;
+      if (editingStage) {
+        result = await authService.updateTier(editingStage.id, payload);
+      } else {
+        result = await authService.saveTiers(payload);
+      }
       
       if (result.success) {
         showNotification(editingStage ? 'Stage updated successfully' : 'Stage created successfully');

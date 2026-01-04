@@ -435,6 +435,39 @@ class AuthService {
       }
     }
 
+    // Update Tier
+    async updateTier(id, tierData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_TIER}/${id}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'PUT',
+          body: JSON.stringify(tierData)
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update tier: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Update tier error:', error);
+        return { success: false, error: error.message || 'Failed to update tier.' };
+      }
+    }
+
     // Get pending cashout list
     async getPendingCashoutList() {
       const token = this.getToken();

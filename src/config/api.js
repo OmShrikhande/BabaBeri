@@ -62,7 +62,9 @@ export const API_CONFIG = {
     // Get all goals (Tiers)
     GET_ALL_GOALS: '/auth/api/getallgoals',
     // Delete Tier
-    DELETE_TIER: '/auth/superadmin/deletetier'
+    DELETE_TIER: '/auth/superadmin/deletetier',
+    // Update Tier
+    UPDATE_TIER: '/auth/superadmin/updatetires'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

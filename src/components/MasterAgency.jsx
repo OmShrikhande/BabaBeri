@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus, X, LayoutDashboard, Users, Settings, CreditCard, Bell, FileText, Shield, Diamond, CheckSquare, Building, Crown } from 'lucide-react';
-import { subAdminsData } from '../data/subAdminsData';
+// import { subAdminsData } from '../data/subAdminsData';
 import MasterAgencyForm from './MasterAgencyForm';
 import { normalizeUserType } from '../utils/roleBasedAccess';
 import authService from '../services/authService';
@@ -12,6 +12,35 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedAgency, setSelectedAgency] = useState(null);
+
+  const [agenciesList, setAgenciesList] = useState([]);
+  const [agenciesLoading, setAgenciesLoading] = useState(false);
+  const [agenciesError, setAgenciesError] = useState(null);
+
+  useEffect(() => {
+    if (selectedAgency && selectedAgency.agencyId) {
+      setAgenciesLoading(true);
+      setAgenciesError(null);
+      // Fetch agencies under the master agency. Assuming role 'AGENCY' for children.
+      authService.getAllSubUserByCode(selectedAgency.agencyId, 'AGENCY')
+        .then(res => {
+          if (res.success) {
+            // Ensure data is array
+            setAgenciesList(Array.isArray(res.data) ? res.data : []);
+          } else {
+            setAgenciesError(res.error || 'Failed to load agencies');
+            setAgenciesList([]);
+          }
+        })
+        .catch(err => {
+          setAgenciesError(err.message || 'Error loading agencies');
+          setAgenciesList([]);
+        })
+        .finally(() => setAgenciesLoading(false));
+    } else {
+      setAgenciesList([]);
+    }
+  }, [selectedAgency]);
 
   const [apiMasterAgencies, setApiMasterAgencies] = useState(null); // null = not loaded, [] = loaded empty
   const [loading, setLoading] = useState(false);
@@ -74,26 +103,8 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
     return () => { ignore = true; };
   }, [currentRole]);
 
-  // Build from static fallback
-  const getAllMasterAgenciesFallback = () => {
-    const allMasterAgencies = [];
-    subAdminsData.forEach(subAdmin => {
-      if (subAdmin.masterAgencies) {
-        subAdmin.masterAgencies.forEach(masterAgency => {
-          allMasterAgencies.push({
-            ...masterAgency,
-            subAdminName: subAdmin.name,
-            subAdminId: subAdmin.id,
-            currentParent: subAdmin.name
-          });
-        });
-      }
-    });
-    return allMasterAgencies;
-  };
-
   // Prefer API data when present
-  const masterAgencies = (apiMasterAgencies ?? getAllMasterAgenciesFallback());
+  const masterAgencies = (apiMasterAgencies ?? []);
 
   const filteredMasterAgencies = masterAgencies.filter(agency =>
     (agency.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -270,44 +281,64 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
 
                 {/* Table Body */}
                 <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
-                  {[1, 2, 3, 4, 5].map((_, index) => (
+                  {agenciesLoading && (
+                    <div className="p-8 text-center text-gray-400">Loading agencies...</div>
+                  )}
+                  {agenciesError && (
+                    <div className="p-8 text-center text-red-400">Error: {agenciesError}</div>
+                  )}
+                  {!agenciesLoading && !agenciesError && agenciesList.length === 0 && (
+                    <div className="p-8 text-center text-gray-400">No agencies found for this master agency.</div>
+                  )}
+                  {!agenciesLoading && !agenciesError && agenciesList.map((agency, index) => (
                     <div 
-                      key={index} 
+                      key={agency.id || index} 
                       className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group"
-                      style={{ animationDelay: `${index * 50}ms` }}
                     >
                       {/* Agency Name */}
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors flex items-center justify-center text-xs font-bold text-white">
-                           A{index + 1}
+                           {agency.profilePic ? (
+                             <img src={agency.profilePic} alt="" className="w-full h-full rounded-full object-cover" />
+                           ) : (
+                             `A${index + 1}`
+                           )}
                         </div>
                         <div>
                           <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer">
-                            Agency {index + 1}
+                            {agency.name || agency.username || 'Agency Name'}
                           </div>
                         </div>
                       </div>
 
                       {/* Agency ID */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">AG-{78290 + index}</span>
+                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">
+                          {agency.agencyId || agency.code || agency.usercode || 'N/A'}
+                        </span>
                       </div>
 
                       {/* Total Hosts */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{12 + index * 3}</span>
+                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">
+                          {agency.totalHosts || agency.hostCount || 0}
+                        </span>
                       </div>
 
                       {/* My Earning */}
                       <div className="flex items-center space-x-1">
                         <Diamond className="w-4 h-4 text-[#4CC9F0]" />
-                        <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">{formatNumber(1500 + index * 250)}</span>
+                        <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">
+                          {formatNumber(agency.myEarning || agency.earning || 0)}
+                        </span>
                       </div>
 
                       {/* Redeemed */}
                       <div className="flex items-center space-x-1">
                         <Diamond className="w-4 h-4 text-[#4CC9F0]" />
-                        <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">0</span>
+                        <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">
+                          {formatNumber(agency.redeemed || 0)}
+                        </span>
                       </div>
 
                       {/* Actions */}

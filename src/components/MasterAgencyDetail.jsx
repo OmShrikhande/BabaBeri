@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical } from 'lucide-react';
-import { subAdminsData, agenciesData, royalTiers } from '../data/subAdminsData';
+import { subAdminsData, royalTiers } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
+import authService from '../services/authService';
 
 const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAgencyHost, currentUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -12,6 +13,53 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
 
   const subAdmin = subAdminsData.find(sa => sa.id === subAdminId);
   const masterAgency = subAdmin?.masterAgencies?.find(ma => ma.id === masterAgencyId);
+
+  const [apiAgencies, setApiAgencies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+    const fetchAgencies = async () => {
+        if (!masterAgency?.agencyId) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const code = String(masterAgency.agencyId).replace(/^#/, '');
+            const res = await authService.getAllSubUserByCode(code);
+            if (!ignore) {
+                if (res.success && res.data) {
+                    const dataList = Array.isArray(res.data) ? res.data : (res.data.data || []);
+                    const mapped = dataList.map((item, idx) => ({
+                        id: item.id || item._id || idx,
+                        name: item.name || item.username || 'Agency',
+                        agencyId: item.usercode || item.code || item.agencyId || 'N/A',
+                        totalHosts: item.totalHosts || item.hostsCount || 0,
+                        myEarning: item.earning || item.myEarning || 0,
+                        redeemed: item.redeemed || 0,
+                        ...item
+                    }));
+                    setApiAgencies(mapped);
+                } else {
+                    if (!res.success) setError(res.error || 'Failed to fetch agencies');
+                    setApiAgencies([]);
+                }
+            }
+        } catch (err) {
+            if (!ignore) {
+                setError(err.message || 'An error occurred');
+                setApiAgencies([]);
+            }
+        } finally {
+            if (!ignore) setLoading(false);
+        }
+    };
+
+    if (masterAgency) {
+        fetchAgencies();
+    }
+    return () => { ignore = true; };
+  }, [masterAgency]);
 
   if (!subAdmin || !masterAgency) {
     return (
@@ -29,9 +77,9 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
     );
   }
 
-  const filteredAgencies = agenciesData.filter(agency =>
-    agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agency.agencyId.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAgencies = apiAgencies.filter(agency =>
+    (agency.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    String(agency.agencyId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleMoveEntity = (agency) => {
@@ -308,8 +356,13 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
               ))}
             </div>
 
-            {/* Empty State */}
-            {filteredAgencies.length === 0 && (
+            {/* Loading / Empty State */}
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-12 h-12 border-4 border-[#F72585] border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <h3 className="text-xl font-bold text-white">Loading Agencies...</h3>
+                </div>
+            ) : filteredAgencies.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-full flex items-center justify-center mb-6 border-2 border-gray-600">
                   <Search className="w-10 h-10 text-gray-400" />
@@ -322,7 +375,7 @@ const MasterAgencyDetail = ({ subAdminId, masterAgencyId, onBack, onNavigateToAg
                   }
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

@@ -389,7 +389,7 @@ class AuthService {
   }
 
   // Get all sub users by code
-  async getAllSubUserByCode(code) {
+  async getAllSubUserByCode(code, role = 'MASTER_AGENCY') {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
     if (this.isTokenExpired(token)) {
@@ -397,7 +397,7 @@ class AuthService {
       return { success: false, error: 'Session expired. Please login again.' };
     }
 
-    const url = `${API_CONFIG.BASE_URL}/auth/api/geAllsubUserByCode?code=${encodeURIComponent(code)}&role=MASTER_AGENCY`;
+    const url = `${API_CONFIG.BASE_URL}/auth/api/geAllsubUserByCode?code=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`;
 
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });

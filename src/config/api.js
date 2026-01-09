@@ -30,6 +30,8 @@ export const API_CONFIG = {
     SAVE_DIAMOND: '/auth/superadmin/saveDiamond',
     // Get all pending cashout list (Super Admin only)
     GET_ALL_PENDING_CASHOUT: '/auth/superadmin/allpendingcashout',
+    // Get pending cashout list (Alternative)
+    GET_PENDING_CASHOUT_LIST: '/auth/superadmin/getPendingcashoutList',
     // Get cashout history (Super Admin only)
     GET_CASHOUT_HISTORY: '/auth/superadmin/cashouthistory',
     SUPERADMIN_BALANCE: '/auth/superadmin/balance',

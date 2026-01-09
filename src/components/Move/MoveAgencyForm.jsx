@@ -69,7 +69,7 @@ const MoveAgencyForm = ({ onMoved, disabled = false }) => {
     setError('');
     setSuccess('');
 
-    if (!formData.userId.trim() || !formData.newRole.trim()) {
+    if (!formData.userId.trim() || !formData.newMasterAgencyId.trim()) {
       setError('All fields are required.');
       setIsLoading(false);
       return;
@@ -188,9 +188,9 @@ const MoveAgencyForm = ({ onMoved, disabled = false }) => {
                   disabled={isLoading || disabled || isFetching}
                 >
                   <option value="">Select new master agency</option>
-                  {masterAgencies.map((masterAgency) => (
-                    <option key={masterAgency.id} value={masterAgency.id}>
-                      {masterAgency.name}
+                  {masterAgencies.map((masterAgency, idx) => (
+                    <option key={masterAgency.id || masterAgency._id || idx} value={masterAgency.code || masterAgency.userCode || masterAgency.id}>
+                      {masterAgency.name || masterAgency.username || masterAgency.masterAgencyName || 'Master Agency'}
                     </option>
                   ))}
                 </select>

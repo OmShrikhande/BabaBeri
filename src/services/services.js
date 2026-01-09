@@ -339,6 +339,35 @@ class AuthService {
         return { success: false, error: error.message || 'Failed to fetch plans.' };
       }
     }
+    // Get pending cashout list
+    async getPendingCashoutList() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_PENDING_CASHOUT_LIST}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch cashout requests: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get pending cashout list error:', error);
+        return { success: false, error: error.message || 'Failed to fetch cashout requests.' };
+      }
+    }
+
   }
 
 const authService = new AuthService();

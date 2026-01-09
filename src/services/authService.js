@@ -832,6 +832,41 @@ class AuthService {
     }
   }
 
+  // Get pending cashout list (New API)
+  async getPendingCashoutList() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can view pending cashout requests.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_PENDING_CASHOUT_LIST}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch pending cashout requests: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+      return { success: true, data: data };
+    } catch (error) {
+      console.error('Get pending cashout list error:', error);
+      return { success: false, error: error.message || 'Failed to fetch pending cashout requests.' };
+    }
+  }
+
   async getDiamondWalletSummary() {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
@@ -1136,6 +1171,48 @@ class AuthService {
     } catch (error) {
       console.error('Move master agency error:', error);
       return { success: false, error: error.message || 'Failed to move master agency.' };
+    }
+  }
+
+  // Get agency hierarchy
+  async getAgencyHierarchy(userId) {
+    const res = await this.getUserById(userId);
+    if (!res.success) return res;
+    
+    const user = res.data;
+    return {
+      success: true,
+      data: {
+        admin: { name: user.adminName || '—' },
+        masterAgency: { name: user.masterAgencyName || user.owner || '—' }
+      }
+    };
+  }
+
+  // Move agency to new master agency
+  async moveAgency({ userId, newMasterAgencyId }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    
+    // Using the same endpoint as moveMasterAgency: /auth/superadmin/changeowner
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/changeowner?code=${encodeURIComponent(userId)}&ownercode=${encodeURIComponent(newMasterAgencyId)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to move agency: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: raw };
+      }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Move agency error:', error);
+      return { success: false, error: error.message || 'Failed to move agency.' };
     }
   }
 }

@@ -23,7 +23,7 @@ export const useCashoutRequests = (addToast) => {
     setLoadingRequests(true);
     setError(null);
     try {
-      const response = await authService.getAllPendingCashout();
+      const response = await authService.getPendingCashoutList();
       
       if (response.success) {
         const data = response.data || [];

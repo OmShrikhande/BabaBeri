@@ -126,59 +126,60 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
         {loading ? (
           <CardSkeleton count={4} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Total Agencies</p>
-                  <p className="text-2xl font-bold text-white">{agencies.length}</p>
-                </div>
-              </div>
-            </div>
+          // <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
+          //     <div className="flex items-center space-x-3">
+          //       <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+          //         <Building2 className="w-6 h-6 text-white" />
+          //       </div>
+          //       <div>
+          //         <p className="text-gray-400 text-sm">Total Agencies</p>
+          //         <p className="text-2xl font-bold text-white">{agencies.length}</p>
+          //       </div>
+          //     </div>
+          //   </div>
             
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Active Agencies</p>
-                  <p className="text-2xl font-bold text-white">{agencies.length}</p>
-                </div>
-              </div>
-            </div>
+          //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
+          //     <div className="flex items-center space-x-3">
+          //       <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+          //         <Eye className="w-6 h-6 text-white" />
+          //       </div>
+          //       <div>
+          //         <p className="text-gray-400 text-sm">Active Agencies</p>
+          //         <p className="text-2xl font-bold text-white">{agencies.length}</p>
+          //       </div>
+          //     </div>
+          //   </div>
             
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">$</span>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Total Earnings</p>
-                  <p className="text-2xl font-bold text-white">
-                    ${agencies.reduce((sum, agency) => sum + agency.earnings.thisMonth, 0).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
+          //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
+          //     <div className="flex items-center space-x-3">
+          //       <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
+          //         <span className="text-white font-bold text-lg">$</span>
+          //       </div>
+          //       <div>
+          //         <p className="text-gray-400 text-sm">Total Earnings</p>
+          //         <p className="text-2xl font-bold text-white">
+          //           ${agencies.reduce((sum, agency) => sum + agency.earnings.thisMonth, 0).toLocaleString()}
+          //         </p>
+          //       </div>
+          //     </div>
+          //   </div>
             
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">♦</span>
-                </div>
-                <div>
-                  <p className="text-gray-400 text-sm">Total Hosts</p>
-                  <p className="text-2xl font-bold text-white">
-                    {agencies.reduce((sum, agency) => sum + agency.hosts.length, 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
+          //     <div className="flex items-center space-x-3">
+          //       <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+          //         <span className="text-white font-bold text-lg">♦</span>
+          //       </div>
+          //       <div>
+          //         <p className="text-gray-400 text-sm">Total Hosts</p>
+          //         <p className="text-2xl font-bold text-white">
+          //           {agencies.reduce((sum, agency) => sum + agency.hosts.length, 0)}
+          //         </p>
+          //       </div>
+          //     </div>
+          //   </div>
+          // </div>
+          <p>   </p>
         )}
 
         {/* Agencies Table */}
@@ -187,10 +188,10 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
         ) : (
           <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl overflow-hidden">
             <div className="p-6 border-b border-gray-800">
-              <h2 className="text-xl font-semibold text-white">All Agencies</h2>
-              <p className="text-gray-400 text-sm mt-1">
+              <h2 className="text-xl font-semibold text-white">List of Agencies</h2>
+              {/* <p className="text-gray-400 text-sm mt-1">
                 Manage and monitor all registered agencies
-              </p>
+              </p> */}
             </div>
             
             <div className="overflow-x-auto">

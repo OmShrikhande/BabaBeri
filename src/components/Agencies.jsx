@@ -199,10 +199,18 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
                 <thead className="bg-[#1A1A1A]">
                   <tr>
                     <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency Name</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency ID</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Total Hosts</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Tier</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">This Month</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency code</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency</th>
+                    <th className="text-left py-4 px-15 text-gray-400 font-medium text-sm">Master Agency code</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host count</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Overall diamonds</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Stage</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Slab</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">active cashout host</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeem</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">My Earning</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Availble coins</th>
+                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Joining date</th>
                     <th className="text-right py-4 px-6 text-gray-400 font-medium text-sm">Actions</th>
                   </tr>
                 </thead>
@@ -248,9 +256,9 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
+                      {/* <td className="py-4 px-6 text-right">
+                        <div className="flex items-center justify-end space-x-2"> */}
+                          {/* <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleViewAgency(agency.id);
@@ -259,8 +267,8 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
                             title="View Agency Details"
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin' || currentUser?.userType === 'sub-admin' || !currentUser?.userType) && (
+                          </button> */}
+                          {/* {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin' || currentUser?.userType === 'sub-admin' || !currentUser?.userType) && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -271,8 +279,8 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
-                          )}
-                          <button
+                          )} */}
+                          {/* <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteAgency(agency.id, agency.name);
@@ -281,10 +289,10 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
                             title="Delete Agency"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                          </button> */}
+                        {/* </div>
+                      </td>*/}
+                    </tr> 
                   ))}
                 </tbody>
               </table>

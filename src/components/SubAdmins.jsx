@@ -90,11 +90,12 @@ const SubAdmins = ({ onNavigateToDetail }) => {
             <div className="bg-[#0A0A0A] border-b border-gray-800">
               <div className="grid grid-cols-8 gap-4 px-2 py-2">
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin Name</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin ID</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin Code</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Master Agencies</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">overall diamond</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Current slab</div>
                 {/* <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current diamond</div> */}
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">overall diamond</div>
+                
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">available coins</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Joining date</div>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider ">Action</div>

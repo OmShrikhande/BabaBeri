@@ -442,7 +442,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
 
             {/* Table Header */}
             <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-6 gap-4 px-4 py-4">
+              <div className="grid grid-cols-13 gap-4 px-4 py-4">
                 <button
                   onClick={() => handleSort('name')}
                   className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
@@ -450,12 +450,19 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                   <span>Master Agency</span>
                   <ArrowUpDown className="w-3 h-3" />
                 </button>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider"> ID</div>
+                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">MA Code</div>
                 <button
                   onClick={() => handleSort('subAdmin')}
                   className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                 >
-                  <span>Admin</span>
+                  <span>Admin Name</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('subAdmin')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>Admin Code</span>
                   <ArrowUpDown className="w-3 h-3" />
                 </button>
                 <button
@@ -469,7 +476,49 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                   onClick={() => handleSort('myEarning')}
                   className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                 >
-                  <span>Earnings</span>
+                  <span>over all diamonds</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('myEarning')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>current stage</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('myEarning')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>current slab</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('myEarning')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>Redeem</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('myEarning')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>My Earning</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('myEarning')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>Available coins</span>
+                  <ArrowUpDown className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleSort('myEarning')}
+                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                >
+                  <span>joining date</span>
                   <ArrowUpDown className="w-3 h-3" />
                 </button>
                 <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>

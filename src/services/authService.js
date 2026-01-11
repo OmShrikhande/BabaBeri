@@ -1071,7 +1071,7 @@ class AuthService {
 
     const params = new URLSearchParams({
       hostcode: userId,
-      agencyname: `${name} w Agency`,
+      agencyname: `${name}`,
       macode: masterAgencyCode
     });
 

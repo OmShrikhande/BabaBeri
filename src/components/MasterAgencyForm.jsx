@@ -199,7 +199,7 @@ const MasterAgencyForm = ({ onCreated, disabled = false, adminName = '' }) => {
             >
               <option value="">Select an admin</option>
               {admins.map((admin, index) => (
-                <option key={index} value={admin.name || admin.userName || `Admin ${index}`}>
+                <option key={index} value={admin.userCode || admin.code}>
                   {admin.name || admin.userName || `Admin ${index}`}
                 </option>
               ))}

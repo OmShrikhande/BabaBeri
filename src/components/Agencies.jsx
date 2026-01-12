@@ -304,6 +304,8 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
                           <span className="text-gray-300 text-sm">{agency.joiningdate|| '--'}</span>
                         </td>
 
+
+
                         {/* Actions */}
                         <td className="py-4 px-6 text-right">
                           <div className="flex items-center justify-end space-x-2">

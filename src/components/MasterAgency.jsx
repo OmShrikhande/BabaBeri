@@ -440,154 +440,156 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
               </div>
             </div>
 
-            {/* Table Header */}
-            <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-13 gap-4 px-4 py-4">
-                <button
-                  onClick={() => handleSort('name')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>Master Agency</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">MA Code</div>
-                <button
-                  onClick={() => handleSort('subAdmin')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>Admin Name</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('subAdmin')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>Admin Code</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('totalAgency')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>Total Agencies</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>over all diamonds</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>current stage</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>current slab</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>Redeem</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>My Earning</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>Available coins</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => handleSort('myEarning')}
-                  className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
-                >
-                  <span>joining date</span>
-                  <ArrowUpDown className="w-3 h-3" />
-                </button>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
-              </div>
-            </div>
-
-            {/* Table Body */}
-            <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
-              {sortedMasterAgencies.map((masterAgency, index) => (
-                <div 
-                  key={`${masterAgency.subAdminId}-${masterAgency.id}`} 
-                  className="grid grid-cols-6 gap-4 px-4 py-5 hover:bg-[#222222] transition-all duration-200 group"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  {/* Master Agency Name */}
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
-                    <div>
-                      <div 
-                        className="text-white font-bold text-sm group-hover:text-[#F72585] transition-colors cursor-pointer"
-                        onClick={() => onNavigateToDetail && onNavigateToDetail(masterAgency.subAdminId, masterAgency.id)}
-                      >
-                        {masterAgency.name}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Agency ID */}
-                  <div className="flex items-center">
-                    <span className="text-gray-300 font-mono text-sm group-hover:text-white transition-colors">
-                      {masterAgency.agencyId}
-                    </span>
-                  </div>
-
-                  {/* Sub Admin */}
-                  <div className="flex items-center">
-                    <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
-                      {masterAgency.ownerName || masterAgency.subAdminName || masterAgency.owner ||'—' }
-                    </span>
-                  </div>
-
-                  {/* Total Agencies */}
-                  <div className="flex items-center">
-                    <span className="text-gray-300 font-medium text-sm group-hover:text-white transition-colors">
-                      {masterAgency.totalAgency}
-                    </span>
-                  </div>
-
-                  {/* Earnings */}
-                  <div className="flex items-center">
-                    <span className="text-gray-300 font-bold text-sm group-hover:text-white transition-colors">
-                      {formatNumber(masterAgency.myEarning)}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center">
-                    {(currentRole === 'super-admin' || currentRole === 'admin') && (
-                      <button
-                        onClick={() => setSelectedAgency(masterAgency)}
-                        className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
-                        title="View Details"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    )}
+            {/* Table Container with Scroll */}
+            <div className="overflow-x-auto">
+              <div className="min-w-[2000px]">
+                {/* Table Header */}
+                <div className="bg-[#0A0A0A] border-b border-gray-800">
+                  <div className="grid grid-cols-13 gap-4 px-4 py-4">
+                    <button
+                      onClick={() => handleSort('name')}
+                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <span>Master Agency</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">MA Code</div>
+                    <button
+                      onClick={() => handleSort('subAdmin')}
+                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <span>Admin Name</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Admin Code</div>
+                    <button
+                      onClick={() => handleSort('totalAgency')}
+                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <span>Total Agencies</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">over all diamonds</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current stage</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current slab</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeem</div>
+                    <button
+                      onClick={() => handleSort('myEarning')}
+                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                    >
+                      <span>My Earning</span>
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Available coins</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">joining date</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
                   </div>
                 </div>
-              ))}
+
+                {/* Table Body */}
+                <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
+                  {sortedMasterAgencies.map((masterAgency, index) => (
+                    <div 
+                      key={`${masterAgency.subAdminId}-${masterAgency.id}`} 
+                      className="grid grid-cols-13 gap-4 px-4 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {/* Master Agency Name */}
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
+                        <div>
+                          <div 
+                            className="text-white font-bold text-sm group-hover:text-[#F72585] transition-colors cursor-pointer"
+                            onClick={() => onNavigateToDetail && onNavigateToDetail(masterAgency.subAdminId, masterAgency.id)}
+                          >
+                            {masterAgency.name}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Agency ID */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-mono text-sm group-hover:text-white transition-colors">
+                          {masterAgency.agencyId}
+                        </span>
+                      </div>
+
+                      {/* Sub Admin Name */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                          {masterAgency.ownerName || masterAgency.subAdminName || masterAgency.owner ||'—' }
+                        </span>
+                      </div>
+
+                      {/* Sub Admin Code */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-mono text-sm group-hover:text-white transition-colors">
+                          {masterAgency.subAdminId || '--'}
+                        </span>
+                      </div>
+
+                      {/* Total Agencies */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-medium text-sm group-hover:text-white transition-colors">
+                          {masterAgency.totalAgency}
+                        </span>
+                      </div>
+
+                      {/* Over all diamonds (Placeholder) */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                      </div>
+
+                      {/* Current Stage (Placeholder) */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                      </div>
+
+                      {/* Current Slab (Placeholder) */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                      </div>
+
+                      {/* Redeemed */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-bold text-sm group-hover:text-white transition-colors">
+                          {formatNumber(masterAgency.redeemed || 0)}
+                        </span>
+                      </div>
+
+                      {/* My Earning */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 font-bold text-sm group-hover:text-white transition-colors">
+                          {formatNumber(masterAgency.myEarning)}
+                        </span>
+                      </div>
+
+                      {/* Available Coins (Placeholder) */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                      </div>
+
+                      {/* Joining Date (Placeholder) */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center">
+                        {(currentRole === 'super-admin' || currentRole === 'admin') && (
+                          <button
+                            onClick={() => setSelectedAgency(masterAgency)}
+                            className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
+                            title="View Details"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {/* Empty State */}

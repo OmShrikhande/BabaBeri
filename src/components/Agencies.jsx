@@ -195,107 +195,127 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead className="bg-[#1A1A1A]">
-                  <tr>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency Name</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency code</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency</th>
-                    <th className="text-left py-4 px-15 text-gray-400 font-medium text-sm">Master Agency code</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host count</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Overall diamonds</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Stage</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Slab</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">active cashout host</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeem</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">My Earning</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Availble coins</th>
-                    <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Joining date</th>
-                    <th className="text-right py-4 px-6 text-gray-400 font-medium text-sm">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-800">
-                  {filteredAgencies.map((agency) => (
-                    <tr 
-                      key={agency.id}
-                      className="hover:bg-[#1A1A1A] transition-colors cursor-pointer group"
-                      onClick={() => handleViewAgency(agency.id)}
-                    >
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                            {agency.name.charAt(0)}
+              <div className="min-w-[2000px]">
+                <table className="w-full">
+                  <thead className="bg-[#1A1A1A]">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm min-w-[250px]">Agency Name</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency code</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency code</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host count</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Overall diamonds</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Stage</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Slab</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">active cashout host</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeem</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">My Earning</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Availble coins</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Joining date</th>
+                      <th className="text-right py-4 px-6 text-gray-400 font-medium text-sm">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {filteredAgencies.map((agency) => (
+                      <tr 
+                        key={agency.id}
+                        className="hover:bg-[#1A1A1A] transition-colors cursor-pointer group"
+                        onClick={() => handleViewAgency(agency.id)}
+                      >
+                        {/* Agency Name */}
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                              {agency.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">{agency.name}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-white font-medium">{agency.name}</p>
-                            <p className="text-gray-400 text-sm">{agency.hosts.length} hosts</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-gray-300 font-mono text-sm">{agency.id}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="text-[#FFD700] font-semibold">{agency.totalAgencies}</span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          agency.tier === 'Royal Platinum' 
-                            ? 'bg-purple-100 text-purple-800' 
-                            : agency.tier === 'Royal Gold' 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {agency.tier}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center space-x-1">
+                        </td>
+
+                        {/* Agency Code */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 font-mono text-sm">{agency.id}</span>
+                        </td>
+
+                        {/* Master Agency */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Master Agency Code */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 font-mono text-sm">--</span>
+                        </td>
+
+                        {/* Host Count */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{agency.hosts.length || 0}</span>
+                        </td>
+
+                        {/* Overall Diamonds */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Current Stage */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Current Slab */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Active Cashout Host */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Redeem */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* My Earning */}
+                        <td className="py-4 px-6">
                           <span className="text-green-400 font-semibold">
-                            ${agency.earnings.thisMonth.toLocaleString()}
+                            ${(agency.earnings?.thisMonth || 0).toLocaleString()}
                           </span>
-                        </div>
-                      </td>
-                      {/* <td className="py-4 px-6 text-right">
-                        <div className="flex items-center justify-end space-x-2"> */}
-                          {/* <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewAgency(agency.id);
-                            }}
-                            className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
-                            title="View Agency Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button> */}
-                          {/* {(currentUser?.userType === 'admin' || currentUser?.userType === 'super-admin' || currentUser?.userType === 'sub-admin' || !currentUser?.userType) && (
+                        </td>
+
+                        {/* Available Coins */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Joining Date */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end space-x-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleMoveEntity(agency);
+                                handleViewAgency(agency.id);
                               }}
-                              className="p-2 text-[#F72585] hover:text-[#F72585]/80 hover:bg-[#F72585]/10 rounded-lg transition-all"
-                              title="Move Agency"
+                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
+                              title="View Agency Details"
                             >
-                              <MoreVertical className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </button>
-                          )} */}
-                          {/* <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteAgency(agency.id, agency.name);
-                            }}
-                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all"
-                            title="Delete Agency"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button> */}
-                        {/* </div>
-                      </td>*/}
-                    </tr> 
-                  ))}
-                </tbody>
-              </table>
+                          </div>
+                        </td>
+                      </tr> 
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             
             {filteredAgencies.length === 0 && !loading && (

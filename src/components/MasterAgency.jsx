@@ -454,7 +454,7 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                       onClick={() => handleSort('name')}
                       className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                     >
-                      <span>Master Agency</span>
+                      <span>MA Name</span>
                       <ArrowUpDown className="w-3 h-3" />
                     </button>
                     <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">MA Code</div>
@@ -462,10 +462,10 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                       onClick={() => handleSort('subAdmin')}
                       className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                     >
-                      <span>Admin Name</span>
+                      <span>AD Name</span>
                       <ArrowUpDown className="w-3 h-3" />
                     </button>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Admin Code</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">AD Code</div>
                     <button
                       onClick={() => handleSort('totalAgency')}
                       className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"

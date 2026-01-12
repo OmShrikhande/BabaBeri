@@ -90,84 +90,90 @@ const SubAdmins = ({ onNavigateToDetail }) => {
             <h2 className="text-xl font-bold text-white">List of Sub-Admins</h2>
             </div>   */}
 
-            {/* Table Header */}
-            <div className="bg-[#0A0A0A] border-b border-gray-800">
-              <div className="grid grid-cols-8 gap-4 px-2 py-2">
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin Name</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin Code</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Master Agencies</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">overall diamond</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Current slab</div>
-                {/* <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current diamond</div> */}
-                
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">available coins</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Joining date</div>
-                <div className="text-gray-400 font-bold text-sm uppercase tracking-wider ">Action</div>
-              </div>
-            </div>
-
-            {/* Table Body */}
-            <div className="divide-y divide-gray-800 flex-1 overflow-y-auto">
-              {listLoading && (
-                <div className="px-6 py-8 text-gray-400 text-center">Loading admins...</div>
-              )}
-              {!listLoading && listError && (
-                <div className="px-6 py-8 text-red-400 text-center">{listError}</div>
-              )}
-              {!listLoading && !listError && subAdmins.map((subAdmin, index) => (
-                <div 
-                  key={subAdmin.id} 
-                  className="grid grid-cols-8 gap-5 px-2 py-4 hover:bg-[#222222] transition-all duration-200 group"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  {/* Sub-Admin Name */}
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
-                    <div>
-                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">{subAdmin.name}</div>
-                    </div>
-                  </div>
-
-                  {/* Sub-Admin ID */}
-                  <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{subAdmin.adminId}</span>
-                  </div>
-
-                  {/* Master Agencies */}
-                  <div className=" align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.masterAgenciesCount || "-"}</span>
-                  </div>
-                  {/* Current slab */}
-                  <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.diamond }</span>
-                  </div>
-                  {/* overall diamonds */}
-                  <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.slab}</span>
-                  </div>
-                  {/* available Coins */}
-                  <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.coins }</span>
-                  </div>
-                  {/* joining date */}
-                  <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.jod || "N/A"}</span>
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="align-items-center text-center">
-                    <button
-                      onClick={() => handleViewSubAdmin(subAdmin)}
-                      className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center hover:opacity-90 hover:shadow-lg transform hover:scale-110 transition-all duration-200 glow-pink"
-                      aria-label="View sub-admin details"
-                      title="View details"
-                    >
-                      <ChevronRight className="w-5 h-5 text-white" />
-                    </button>
+            {/* Table Container with Scroll */}
+            <div className="overflow-x-auto flex-1 h-full">
+              <div className="min-w-[1200px] h-full flex flex-col">
+                {/* Table Header */}
+                <div className="bg-[#0A0A0A] border-b border-gray-800 flex-shrink-0">
+                  <div className="grid grid-cols-8 gap-4 px-2 py-2">
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin Name</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Admin Code</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Master Agencies</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">overall diamond</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Current slab</div>
+                    {/* <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current diamond</div> */}
+                    
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">available coins</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider align-items-center text-center">Joining date</div>
+                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider text-center">Action</div>
                   </div>
                 </div>
-                
-              ))}
+
+                {/* Table Body */}
+                <div className="divide-y divide-gray-800 flex-1 overflow-y-auto">
+                  {listLoading && (
+                    <div className="px-6 py-8 text-gray-400 text-center">Loading admins...</div>
+                  )}
+                  {!listLoading && listError && (
+                    <div className="px-6 py-8 text-red-400 text-center">{listError}</div>
+                  )}
+                  {!listLoading && !listError && subAdmins.map((subAdmin, index) => (
+                    <div 
+                      key={subAdmin.id} 
+                      className="grid grid-cols-8 gap-5 px-2 py-4 hover:bg-[#222222] transition-all duration-200 group"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      {/* Sub-Admin Name */}
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
+                        <div>
+                          <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">{subAdmin.name}</div>
+                        </div>
+                      </div>
+
+                      {/* Sub-Admin ID */}
+                      <div className="flex items-center justify-center">
+                        <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">{subAdmin.adminId}</span>
+                      </div>
+
+                      {/* Master Agencies */}
+                      <div className="flex items-center justify-center">
+                        <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.masterAgenciesCount || "-"}</span>
+                      </div>
+                      {/* Current slab */}
+                      <div className="flex items-center justify-center">
+                        <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.diamond }</span>
+                      </div>
+                      {/* overall diamonds */}
+                      <div className="flex items-center justify-center">
+                        <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.slab}</span>
+                      </div>
+                      {/* available Coins */}
+                      <div className="flex items-center justify-center">
+                        <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.coins }</span>
+                      </div>
+                      {/* joining date */}
+                      <div className="flex items-center justify-center">
+                        <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.jod || "N/A"}</span>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex items-center justify-center">
+                        <button
+                          onClick={() => handleViewSubAdmin(subAdmin)}
+                          className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center hover:opacity-90 hover:shadow-lg transform hover:scale-110 transition-all duration-200 glow-pink"
+                          aria-label="View sub-admin details"
+                          title="View details"
+                        >
+                          <ChevronRight className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                </div>
+              </div>
+            </div>
 
               {/* <div 
                  
@@ -229,7 +235,7 @@ const SubAdmins = ({ onNavigateToDetail }) => {
           </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 

@@ -81,7 +81,11 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                 redeemed: item.redeemed || 0,
                 subAdminName: item.owner || item.subAdminName || item.adminName || '—',
                 subAdminId: item.owner ? item.owner : item.subAdminId || item.adminId || 0,
-                currentParent: item.owner || item.subAdminName || item.adminName || '—'
+                currentParent: item.owner || item.subAdminName || item.adminName || '—',
+                coins: item.coins || item.coinBalance || 0,
+                profilePic: item.profilePic || '',
+                createdAt: new Date(item.createdAt),
+                updatedAt: new Date(item.updatedAt),
               }))
             : [];
           setApiMasterAgencies(mapped);
@@ -565,8 +569,8 @@ const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
                       </div>
 
                       {/* Available Coins (Placeholder) */}
-                      <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                      <div className="flex items-center ">
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">  {formatNumber(masterAgency.coins)}</span>
                       </div>
 
                       {/* Joining Date (Placeholder) */}

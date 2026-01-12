@@ -25,6 +25,10 @@ const SubAdmins = ({ onNavigateToDetail }) => {
               name: u?.name || u?.username || u?.fullname || u?.email || `Admin ${idx + 1}`,
               adminId: u?.code || u?.usercode || u?.adminCode || u?.adminId || u?.userid || '',
               masterAgenciesCount: u?.masterAgenciesCount || u?.masteragencycount || u?.count || 0,
+              coins: u?.coins !== undefined ? u.coins : 0,
+              diamond: u?.diamond !== undefined ? u.diamond : 0,
+              slab: u?.slab || '-',
+              jod: u?.joiningDate || u?.createdAt || u?.created_at || 'N/A',
               api: u,
             }));
             setSubAdmins(mapped);
@@ -131,19 +135,19 @@ const SubAdmins = ({ onNavigateToDetail }) => {
 
                   {/* Master Agencies */}
                   <div className=" align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.masterAgenciesCount || 0}</span>
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.masterAgenciesCount || "-"}</span>
                   </div>
                   {/* Current slab */}
                   <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.slab || "-"}</span>
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.diamond }</span>
                   </div>
                   {/* overall diamonds */}
                   <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.diamond || 0}</span>
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.slab}</span>
                   </div>
                   {/* available Coins */}
                   <div className="align-items-center text-center">
-                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.coins || 0}</span>
+                    <span className="text-gray-300 font-bold text-lg group-hover:text-white transition-colors">{subAdmin.coins }</span>
                   </div>
                   {/* joining date */}
                   <div className="align-items-center text-center">

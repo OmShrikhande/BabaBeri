@@ -3,6 +3,7 @@ import { Search, Trash2, Eye, Building2, Filter, MoreVertical } from 'lucide-rea
 import { CardSkeleton, TableSkeleton } from './LoadingSkeleton';
 import EntityMovementModal from './EntityMovementModal';
 import authService from '../services/authService';
+import { a } from 'framer-motion/client';
 
 const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = [], loading: propLoading = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,12 +24,19 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
       if (result.success && Array.isArray(result.data)) {
         console.log('Fetched agencies:', result.data);
         const transformedAgencies = result.data.map(agency => ({
-          id: agency.code || agency.id,
           name: agency.name,
-          tier: 'Royal Silver', // Default tier since not in API
-          earnings: { thisMonth: 0 }, // Default since not in API
-          hosts: [], // Default empty array
-          totalAgencies: 0 // Default
+          id: agency.code || agency.id,
+          owner: agency.ownername || '-', // Default owner since not in API
+          ownerId: agency.owner || null, // Default since not in API
+          hosts: agency.hosts || "-", // Default empty array
+          overalldiamonds: agency.totaldiamonds || 0, // Default overall diamonds since not in API
+          stage: agency.stage || "Unknown", // Default stage since not in API
+          currentslab: agency.currentSlab || "Unknown", // Default current slab since not in API
+          activehost: agency.activecashouthost || "-", // Default active cashout host since not in API
+          redeem: agency.redeem || "--", // Default redeem since not in API
+          earnings: agency.earning, // Default since not in API
+          coins: agency.coins || 0, // Default coins since not in API
+          joiningDate: agency.joiningdate || new Date(), // Default joining date since not in API
         }));
         console.log('Transformed agencies:', transformedAgencies);
         setAgencies(transformedAgencies);
@@ -241,12 +249,12 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
 
                         {/* Master Agency */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.owner || '--'}</span>
                         </td>
 
                         {/* Master Agency Code */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 font-mono text-sm">--</span>
+                          <span className="text-gray-300 font-mono text-sm">{agency.ownerId}</span>
                         </td>
 
                         {/* Host Count */}
@@ -256,44 +264,44 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
 
                         {/* Overall Diamonds */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.totaldiamonds || 0}</span>
                         </td>
 
                         {/* Current Stage */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.stage || '--'}</span>
                         </td>
 
                         {/* Current Slab */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.currentSlab || '- / -'}</span>
                         </td>
 
                         {/* Active Cashout Host */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.activehost || '--'}</span>
                         </td>
 
                         {/* Redeem */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.redeem || '--'}</span>
                         </td>
 
                         {/* My Earning */}
                         <td className="py-4 px-6">
-                          <span className="text-green-400 font-semibold">
-                            ${(agency.earnings?.thisMonth || 0).toLocaleString()}
+                          <span className="text-gray-300 font-semibold">
+                            {agency.redeem || '--'}
                           </span>
                         </td>
 
                         {/* Available Coins */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.coins || '-'}</span>
                         </td>
 
                         {/* Joining Date */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">--</span>
+                          <span className="text-gray-300 text-sm">{agency.joiningdate|| '--'}</span>
                         </td>
 
                         {/* Actions */}

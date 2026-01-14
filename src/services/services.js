@@ -564,6 +564,71 @@ class AuthService {
       }
     }
 
+    async getAllBanners() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_BANNERS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch banners: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get all banners error:', error);
+        return { success: false, error: error.message || 'Failed to fetch banners.' };
+      }
+    }
+
+    async saveBanner(formData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_BANNER}`;
+
+      try {
+        const headers = {
+          'Authorization': `Bearer ${token}`
+        };
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: formData
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save banner: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Save banner error:', error);
+        return { success: false, error: error.message || 'Failed to save banner.' };
+      }
+    }
+
   }
 
 const authService = new AuthService();

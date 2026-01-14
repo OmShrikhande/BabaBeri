@@ -68,7 +68,11 @@ export const API_CONFIG = {
     // Get all gifts
     GET_ALL_GIFTS: '/auth/superadmin/getallgifts',
     // Save gift
-    SAVE_GIFT: '/auth/superadmin/savegifts'
+    SAVE_GIFT: '/auth/superadmin/savegifts',
+    // Get all banners
+    GET_ALL_BANNERS: '/auth/superadmin/getallbanners',
+    // Save banner
+    SAVE_BANNER: '/auth/superadmin/savebanner'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

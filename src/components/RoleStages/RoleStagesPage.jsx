@@ -304,7 +304,7 @@ const RoleStagesPage = () => {
                               className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all font-mono"
                               required
                             />
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-600 uppercase">Amount</div>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-600 uppercase"></div>
                           </div>
                         </div>
                       </div>

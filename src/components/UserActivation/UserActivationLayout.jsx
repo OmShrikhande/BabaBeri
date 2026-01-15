@@ -106,22 +106,13 @@ const UserActivationLayout = () => {
     setUserData(null);
 
     try {
-      // Try to find the user via getSellers (which searches hosts/sellers)
-      const response = await authService.getSellers({ search: trimmedCode });
+      const response = await authService.getUserByCode(trimmedCode);
 
       if (!response.success) {
         throw new Error(response.error || 'User not found');
       }
 
-      const users = response.data?.data || response.data || [];
-      // Find exact match by code if possible, or take the first result
-      const user = Array.isArray(users) 
-        ? users.find(u => 
-            (u.code === trimmedCode) || 
-            (u.userCode === trimmedCode) || 
-            (u.UserCode === trimmedCode)
-          ) || users[0]
-        : users;
+      const user = response.data?.data || response.data;
 
       if (!user) {
         setError('User not found');
@@ -132,20 +123,6 @@ const UserActivationLayout = () => {
       setUserData(applyActiveState(user, normalizedActive));
     } catch (err) {
       console.error('Fetch user error:', err);
-      // Fallback: Try getUserById if getSellers fails or returns nothing (though getUserById was 403ing)
-      try {
-        const idResponse = await authService.getUserById(trimmedCode);
-        if (idResponse.success && idResponse.data) {
-           const user = idResponse.data;
-           const normalizedActive = resolveUserActive(user);
-           setUserData(applyActiveState(user, normalizedActive));
-           setError(null);
-           return;
-        }
-      } catch (e) {
-        // Ignore fallback error
-      }
-      
       setError(err?.message || 'Something went wrong');
     } finally {
       setLoading(false);

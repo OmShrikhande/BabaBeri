@@ -145,7 +145,7 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white hover:border-[#F72585] transition-all cursor-pointer flex items-center justify-between"
               >
                 <span className={selectedFile ? 'text-white' : 'text-gray-500'}>
-                  {selectedFile ? selectedFile.name : 'Choose an image file...'}
+                  {selectedFile ? selectedFile.name : 'Choose a file'}
                 </span>
                 <Upload className="w-5 h-5 text-gray-600" />
               </label>

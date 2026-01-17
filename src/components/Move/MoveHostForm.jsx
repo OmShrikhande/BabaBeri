@@ -69,7 +69,7 @@ const MoveHostForm = ({ onMoved, disabled = false }) => {
     setError('');
     setSuccess('');
 
-    if (!formData.userId.trim() || !formData.newRole.trim()) {
+    if (!formData.userId.trim() || !formData.newAgencyId.trim()) {
       setError('All fields are required.');
       setIsLoading(false);
       return;
@@ -138,7 +138,7 @@ const MoveHostForm = ({ onMoved, disabled = false }) => {
 
         {formData.userId && (
           <div className="space-y-6">
-            <div className="p-4 bg-[#1A1A1A] rounded-lg border border-gray-700">
+            {/* <div className="p-4 bg-[#1A1A1A] rounded-lg border border-gray-700">
               <h3 className="text-sm font-medium text-gray-400 mb-3">Current Hierarchy</h3>
               <div className="space-y-3">
                 <div className="p-3 bg-[#2A2A2A] rounded border border-gray-600">
@@ -180,7 +180,7 @@ const MoveHostForm = ({ onMoved, disabled = false }) => {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-4">
               <div className="flex-1 h-px bg-gray-700"></div>
@@ -202,8 +202,8 @@ const MoveHostForm = ({ onMoved, disabled = false }) => {
                 >
                   <option value="">Select new agency</option>
                   {agencies.map((agency) => (
-                    <option key={agency.id} value={agency.id}>
-                      {agency.name}
+                    <option key={agency.id} value={agency.userCode || agency.code || agency.id}>
+                      {agency.name} ({agency.userCode || agency.code || agency.id})
                     </option>
                   ))}
                 </select>

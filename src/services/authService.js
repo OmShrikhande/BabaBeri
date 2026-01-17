@@ -1215,6 +1215,53 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to move agency.' };
     }
   }
+
+  // Get host hierarchy
+  async getHostHierarchy(userId) {
+    const res = await this.getUserById(userId);
+    if (!res.success) return res;
+    
+    const user = res.data;
+    return {
+      success: true,
+      data: {
+        admin: { name: user.adminName || '—' },
+        masterAgency: { name: user.masterAgencyName || '—' },
+        agency: { name: user.agencyName || user.owner || '—' }
+      }
+    };
+  }
+
+  // Move host to new agency
+  async moveHost({ userId, newAgencyId }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHANGE_OWNER}?code=${encodeURIComponent(userId)}&ownercode=${encodeURIComponent(newAgencyId)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to move host: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: raw };
+      }
+      return { success: true, data };
+    } catch (error) {
+      console.error('Move host error:', error);
+      return { success: false, error: error.message || 'Failed to move host.' };
+    }
+  }
+
+  // Get all agencies
+  async getAgencies() {
+    return this.getUsersByRole('AGENCY');
+  }
 }
 
 // Export singleton instance

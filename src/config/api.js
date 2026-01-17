@@ -50,7 +50,9 @@ export const API_CONFIG = {
     // Get host details
     GET_LIVE_FORM_STATUS: '/api/liveusers/getLiveFormStatus',
     // Approve/Reject live form
-    APPROVE_REJECT_LIVE_FORM: '/auth/superadmin/approve-reject-live-form'
+    APPROVE_REJECT_LIVE_FORM: '/auth/superadmin/approve-reject-live-form',
+    // Change owner (Move host)
+    CHANGE_OWNER: '/auth/superadmin/changeowner'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

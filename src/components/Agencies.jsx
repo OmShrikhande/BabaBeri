@@ -3,6 +3,7 @@ import { Search, Trash2, Eye, Building2, Filter, MoreVertical } from 'lucide-rea
 import { CardSkeleton, TableSkeleton } from './LoadingSkeleton';
 import EntityMovementModal from './EntityMovementModal';
 import authService from '../services/authService';
+import AgencyDetail from './AgencyDetail';
 import { a } from 'framer-motion/client';
 
 const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = [], loading: propLoading = false }) => {
@@ -12,6 +13,7 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [agencies, setAgencies] = useState(propAgencies);
   const [loading, setLoading] = useState(propLoading);
+  const [viewingAgencyId, setViewingAgencyId] = useState(null);
 
   useEffect(() => {
     const fetchAgencies = async () => {
@@ -59,9 +61,7 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
   });
 
   const handleViewAgency = (agencyId) => {
-    if (onNavigateToDetail) {
-      onNavigateToDetail(agencyId);
-    }
+    setViewingAgencyId(agencyId);
   };
 
   const handleDeleteAgency = (agencyId, agencyName) => {
@@ -88,6 +88,15 @@ const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = []
     setShowMovementModal(false);
     setSelectedAgency(null);
   };
+
+  if (viewingAgencyId) {
+    return (
+      <AgencyDetail 
+        agencyId={viewingAgencyId} 
+        onBack={() => setViewingAgencyId(null)} 
+      />
+    );
+  }
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">

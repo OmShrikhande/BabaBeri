@@ -1,276 +1,229 @@
-import React from 'react';
-import { ArrowLeft, Diamond, TrendingUp, DollarSign, Award } from 'lucide-react';
-import { agenciesData, achievementTiers } from '../data/agencyData';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Search, Filter, Eye, User, Building2 } from 'lucide-react';
+import { TableSkeleton } from './LoadingSkeleton';
+import authService from '../services/authService';
 
 const AgencyDetail = ({ agencyId, onBack }) => {
-  const agency = agenciesData.find(a => a.id === agencyId);
+  const [hosts, setHosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // We can fetch the agency details separately if needed, but for now we focus on the list of hosts
+  // as per the requirement.
 
-  if (!agency) {
-    return (
-      <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
-        <div className="max-w-7xl mx-auto">
-          <button
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors mb-6"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Agencies</span>
-          </button>
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">Agency not found</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
+  useEffect(() => {
+    const fetchHosts = async () => {
+      setLoading(true);
+      try {
+        console.log(`Fetching hosts for agency: ${agencyId}`);
+        const result = await authService.getAllSubUserByCode(agencyId, 'HOST');
+        console.log('Hosts API result:', result);
+        
+        if (result.success && Array.isArray(result.data)) {
+            const transformedHosts = result.data.map(host => ({
+                name: host.name,
+                id: host.code || host.usercode || host.id,
+                owner: host.ownername || '-', // Agency Name
+                ownerId: host.owner || agencyId, // Agency Code
+                hosts: [], // Hosts don't have hosts
+                overalldiamonds: host.totaldiamonds || 0,
+                stage: host.stage || "Unknown",
+                currentslab: host.currentSlab || "Unknown",
+                activehost: host.activecashouthost || "-",
+                redeem: host.redeem || "--",
+                earnings: host.earning,
+                coins: host.coins || 0,
+                joiningDate: host.joiningdate || host.createdAt || new Date(),
+            }));
+            setHosts(transformedHosts);
+        } else {
+            console.error('Failed to fetch hosts:', result.error);
+            setHosts([]);
+        }
+      } catch (error) {
+        console.error("Error fetching hosts:", error);
+        setHosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const progressPercentage = (agency.goals.moneyEarned / agency.goals.moneyTarget) * 100;
-  const goalsRemaining = agency.goals.total - agency.goals.current;
+    fetchHosts();
+  }, [agencyId]);
+
+  const filteredHosts = hosts.filter(host => {
+     const matchesSearch = host.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           host.id?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+     return matchesSearch;
+  });
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Agencies</span>
-            </button>
-            <div className="w-px h-6 bg-gray-700"></div>
-            <h1 className="text-3xl font-bold text-white">{agency.name}</h1>
-          </div>
-        </div>
-
-        {/* Progress Section */}
-        <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-8 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Progress Overview</h2>
-            <div className="text-right">
-              <p className="text-2xl font-bold text-white">
-                ${agency.goals.moneyEarned.toLocaleString()} / ${agency.goals.moneyTarget.toLocaleString()}
-              </p>
-              <p className="text-gray-400 text-sm">
-                {goalsRemaining > 0 ? `${goalsRemaining} Goals Remaining` : 'All Goals Completed!'}
-              </p>
-            </div>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="relative">
-            <div className="w-full bg-gray-700 rounded-full h-4">
-              <div 
-                className="bg-gradient-to-r from-[#7209B7] to-[#F72585] h-4 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-              ></div>
-            </div>
-            <div className="flex justify-between mt-2">
-              <span className="text-gray-400 text-sm">$0</span>
-              <span className="text-gray-400 text-sm">${agency.goals.moneyTarget.toLocaleString()}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Earnings */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Earnings Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Last Month's Earnings</p>
-                    <p className="text-xl font-bold text-white">
-                      ${agency.earnings.lastMonth.toLocaleString()}
-                    </p>
-                  </div>
+       <div className="max-w-7xl mx-auto">
+         {/* Header with Back Button */}
+         <div className="flex flex-col space-y-6 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 mb-8">
+            <div className="flex items-center space-x-3">
+                <button onClick={onBack} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors mr-2">
+                   <ArrowLeft className="w-6 h-6" />
+                </button>
+                <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex items-center text-green-400">
-                  <Diamond className="w-4 h-4 mr-1" />
-                  <span className="text-sm">+12% from prev month</span>
-                </div>
-              </div>
-
-              <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                    <DollarSign className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">This Month's Earnings</p>
-                    <p className="text-xl font-bold text-white">
-                      ${agency.earnings.thisMonth.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center text-green-400">
-                  <Diamond className="w-4 h-4 mr-1" />
-                  <span className="text-sm">+18% growth</span>
-                </div>
-              </div>
-
-              <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <Diamond className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Redeem Diamonds</p>
-                    <p className="text-xl font-bold text-white">
-                      {agency.earnings.redeemDiamonds.toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center text-yellow-400">
-                  <Diamond className="w-4 h-4 mr-1" />
-                  <span className="text-sm">Available to redeem</span>
-                </div>
-              </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Agency Details (Hosts)</h1>
             </div>
 
-            {/* Hosts Table */}
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl overflow-hidden">
-              <div className="p-6 border-b border-gray-800">
-                <h2 className="text-xl font-semibold text-white">List of Hosts</h2>
-                <p className="text-gray-400 text-sm mt-1">
-                  Total hosts: {agency.hosts.length}
-                </p>
-              </div>
-              
-              <div className="overflow-x-auto">
+            {/* Search Bar */}
+            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search hosts by name or ID..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full sm:w-80 pl-10 pr-4 py-2 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585]"
+                  />
+                </div>
+            </div>
+         </div>
+
+         {/* Hosts Table - Using the same structure as Agencies table */}
+          {loading ? (
+          <TableSkeleton rows={10} columns={6} showHeader={true} />
+        ) : (
+          <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl overflow-hidden">
+            <div className="p-6 border-b border-gray-800">
+              <h2 className="text-xl font-semibold text-white">List of Hosts for Agency: {agencyId}</h2>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <div className="min-w-[2000px]">
                 <table className="w-full">
                   <thead className="bg-[#1A1A1A]">
                     <tr>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host Name</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host ID</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Earnings</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeemed</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm min-w-[250px]">Host Name</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host code</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency code</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host count</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Overall diamonds</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Stage</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Slab</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">active cashout host</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeem</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">My Earning</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Availble coins</th>
+                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Joining date</th>
+                      {/* <th className="text-right py-4 px-6 text-gray-400 font-medium text-sm">Actions</th> */}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {agency.hosts.map((host) => (
-                      <tr key={host.id} className="hover:bg-[#1A1A1A] transition-colors">
+                    {filteredHosts.map((host) => (
+                      <tr 
+                        key={host.id}
+                        className="hover:bg-[#1A1A1A] transition-colors"
+                      >
+                        {/* Host Name */}
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                              {host.name.charAt(0)}
+                            <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                              {host.name?.charAt(0) || 'H'}
                             </div>
-                            <span className="text-white font-medium">{host.name}</span>
+                            <div>
+                              <p className="text-white font-medium">{host.name}</p>
+                            </div>
                           </div>
                         </td>
+
+                        {/* Host Code */}
                         <td className="py-4 px-6">
                           <span className="text-gray-300 font-mono text-sm">{host.id}</span>
                         </td>
+
+                        {/* Master Agency (Owner) */}
                         <td className="py-4 px-6">
-                          <div className="flex items-center space-x-1">
-                            <Diamond className="w-4 h-4 text-purple-400" />
-                            <span className="text-white font-semibold">{host.earnings}</span>
-                          </div>
+                          <span className="text-gray-300 text-sm">{host.owner || '--'}</span>
                         </td>
+
+                        {/* Master Agency Code */}
                         <td className="py-4 px-6">
-                          <div className="flex items-center space-x-1">
-                            <Diamond className="w-4 h-4 text-green-400" />
-                            <span className="text-white font-semibold">{host.redeemed}</span>
-                          </div>
+                          <span className="text-gray-300 font-mono text-sm">{host.ownerId}</span>
                         </td>
-                      </tr>
+
+                        {/* Host Count (N/A for Host) */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">--</span>
+                        </td>
+
+                        {/* Overall Diamonds */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{host.overalldiamonds}</span>
+                        </td>
+
+                        {/* Current Stage */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{host.stage}</span>
+                        </td>
+
+                        {/* Current Slab */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{host.currentslab}</span>
+                        </td>
+
+                        {/* Active Cashout Host */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{host.activehost}</span>
+                        </td>
+
+                        {/* Redeem */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{host.redeem}</span>
+                        </td>
+
+                        {/* My Earning */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 font-semibold">{host.redeem}</span>
+                        </td>
+
+                        {/* Available Coins */}
+                        <td className="py-4 px-6">
+                          <span className="text-gray-300 text-sm">{host.coins}</span>
+                        </td>
+
+                        {/* Joining Date */}
+                        <td className="py-4 px-6">
+                           <span className="text-gray-300 text-sm">
+                            {host.joiningDate && typeof host.joiningDate === 'string' 
+                                ? new Date(host.joiningDate).toLocaleDateString() 
+                                : String(host.joiningDate)}
+                           </span>
+                        </td>
+
+                        {/* Actions - Removed actions as typically you might not view sub-details of a host from here, or we can add later */}
+                        {/* <td className="py-4 px-6 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td> */}
+                      </tr> 
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
-          </div>
-
-          {/* Right Column - Achievement Tiers */}
-          <div className="space-y-6">
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-6">Achievement Tiers</h2>
-              
-              <div className="space-y-4">
-                {achievementTiers.map((tier) => {
-                  const isCurrentTier = agency.tier === tier.name;
-                  
-                  return (
-                    <div 
-                      key={tier.id}
-                      className={`relative p-4 rounded-lg border transition-all ${
-                        isCurrentTier 
-                          ? 'border-[#F72585] bg-gradient-to-r from-[#F72585]/10 to-[#7209B7]/10' 
-                          : 'border-gray-700 bg-[#1A1A1A]'
-                      }`}
-                    >
-                      {isCurrentTier && (
-                        <div className="absolute top-2 right-2">
-                          <Award className="w-5 h-5 text-[#F72585]" />
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className={`font-semibold ${isCurrentTier ? 'text-white' : 'text-gray-300'}`}>
-                          {tier.name}
-                        </h3>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mb-3">
-                        <span className={`text-2xl font-bold ${isCurrentTier ? 'text-[#FFD700]' : 'text-gray-400'}`}>
-                          {tier.revenueShare}%
-                        </span>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          isCurrentTier ? 'bg-[#FFD700] text-black' : 'bg-gray-700 text-gray-300'
-                        }`}>
-                          Revenue Share
-                        </span>
-                      </div>
-                      
-                      <p className="text-xs text-gray-400">
-                        {tier.requirements}
-                      </p>
-                      
-                      {isCurrentTier && (
-                        <div className="mt-3 pt-3 border-t border-gray-700">
-                          <p className="text-xs text-[#F72585] font-medium">Current Tier</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
             
-            {/* Agency Info */}
-            <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Agency Information</h2>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Agency ID:</span>
-                  <span className="text-white font-mono">{agency.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Hosts:</span>
-                  <span className="text-white">{agency.hosts.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Current Tier:</span>
-                  <span className="text-white">{agency.tier}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Revenue Share:</span>
-                  <span className="text-[#FFD700] font-semibold">{agency.revenueShare}%</span>
-                </div>
+            {filteredHosts.length === 0 && !loading && (
+              <div className="py-12 text-center">
+                <p className="text-gray-400">No hosts found matching your search.</p>
               </div>
-            </div>
+            )}
           </div>
-        </div>
-      </div>
+        )}
+       </div>
     </main>
-  );
-};
+  )
+}
 
 export default AgencyDetail;

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X } from 'lucide-react';
+import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X, Shield, Crown, Lock, Coins, TrendingUp, User } from 'lucide-react';
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
@@ -65,6 +65,23 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
     }
     return subAdmin?.masterAgencies ?? [];
   }, [subUsers, subAdmin]);
+
+  // Calculate stats first, since goalsCompleted depends on it
+  const stats = {
+    totalDiamonds: selectedEarnings.earnings || 0,
+    totalCoins: subAdmin.coins || 0,
+    totalRedeem: selectedEarnings.redeemDiamonds || 0,
+    hostCount: effectiveMasterAgencies.length || 0
+  };
+
+  const goals = {
+    diamondTarget: 100000,
+    hostTarget: 20
+  };
+
+  const goalsCompleted = 
+    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) + 
+    (stats.hostCount >= goals.hostTarget ? 1 : 0);
 
 
 
@@ -155,83 +172,156 @@ const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentU
       {/* Main Content */}
       <div className="flex-1 overflow-auto table-scroll-container">
         <div className="p-6 space-y-6">
-          {/* Goals Section */}
-          <div className="space-y-6">
-              {/* Goals Remaining */}
-              <div className="bg-[#121212] p-6 rounded-xl border border-gray-800">
-                <div className="mb-4">
-                  <div className="text-gray-400 text-sm mb-1">Sub-admins / {subAdmin.name}</div>
-                  <h2 className="text-2xl font-bold text-white">1 Goals Remaining</h2>
-                  <div className="text-gray-400 mt-1">${subAdmin.goalsRemaining?.current || 1180} / $10000</div>
-                </div>
-                
-                {/* Progress Bar */}
-                <div className="relative">
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-[#F72585] to-[#7209B7] h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${subAdmin.goalsRemaining?.percentage || 11.8}%` }}
-                    ></div>
-                  </div>
-                  <div className="absolute right-0 -top-1">
-                    <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                  </div>
-                </div>
-                
-                <p className="text-gray-400 text-sm mt-4">
-                  Complete the remaining goal to 5%. Increase your revenue share by completing these goals.
-                </p>
-              </div>
-
-              {/* Earnings Cards */}
-              <div className="grid grid-cols-3 gap-4">
-                {/* Calendar/Picker Card */}
-                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <Diamond className="w-5 h-5 text-[#4CC9F0]" />
-                      <span className="text-gray-400 text-sm">
-                        {selectedPeriod === 'Monthly' ? "Select Month" : "Select Day"}
-                      </span>
+          <div className="flex flex-col lg:flex-row gap-6 mb-10">
+            {/* Left Column: Goals + Stats */}
+            <div className="w-full lg:w-[65%] flex flex-col gap-8">
+                {/* Goals Section */}
+                <div className="w-full border border-gray-800 rounded-xl p-5">
+                    <h2 className="text-xl font-bold text-white mb-6">{goalsCompleted}/2 Goals Remaining</h2>
+                    
+                    {/* Diamond Goal */}
+                    <div className="mb-6">
+                        <div className="flex items-center text-white mb-2">
+                        <Diamond className="w-4 h-4 mr-2 text-blue-400" />
+                        <span className="font-medium">{stats.totalDiamonds} / {goals.diamondTarget}</span>
+                        </div>
+                        <div className="flex items-center">
+                        <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                            <div 
+                                className="h-full bg-pink-500 rounded-full transition-all duration-500" 
+                                style={{width: `${Math.min((stats.totalDiamonds/goals.diamondTarget)*100, 100)}%`}}
+                            ></div>
+                        </div>
+                        <div className={`w-5 h-5 border ${stats.totalDiamonds >= goals.diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                            {stats.totalDiamonds >= goals.diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                        </div>
+                        </div>
                     </div>
-                  </div>
-                  {/* Use native inputs to avoid adding deps */}
-                  {selectedPeriod === 'Monthly' ? (
-                    <input
-                      type="month"
-                      value={selectedValue}
-                      onChange={(e) => setSelectedValue(e.target.value)}
-                      className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg text-white px-3 py-2 focus:outline-none focus:border-[#F72585]"
-                    />
-                  ) : (
-                    <input
-                      type="date"
-                      value={selectedValue.length === 7 ? `${selectedValue}-01` : selectedValue}
-                      onChange={(e) => setSelectedValue(e.target.value)}
-                      className="w-full bg-[#2A2A2A] border border-gray-700 rounded-lg text-white px-3 py-2 focus:outline-none focus:border-[#F72585]"
-                    />
-                  )}
+
+                    {/* Host Goal */}
+                    <div className="mb-6">
+                        <div className="flex items-center text-white mb-2">
+                        <User className="w-4 h-4 mr-2 text-purple-400" />
+                        <span className="font-medium">{stats.hostCount} / {goals.hostTarget}</span>
+                        </div>
+                        <div className="flex items-center">
+                        <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                            <div 
+                                className="h-full bg-pink-500 rounded-full transition-all duration-500" 
+                                style={{width: `${Math.min((stats.hostCount/goals.hostTarget)*100, 100)}%`}}
+                            ></div>
+                        </div>
+                        <div className={`w-5 h-5 border ${stats.hostCount >= goals.hostTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                            {stats.hostCount >= goals.hostTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                        </div>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Earnings for selected period */}
-                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Diamond className="w-5 h-5 text-[#4CC9F0]" />
-                    <span className="text-gray-400 text-sm">This {selectedPeriod === 'Monthly' ? 'Month' : 'Day'}'s Earnings</span>
-                  </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(selectedEarnings.earnings)}</div>
-                </div>
+                {/* Stats & Filter Section */}
+                <div className="w-full">
+                    {/* Date Filter */}
+                    <div className="mb-6">
+                        <div className="relative inline-block">
+                             {/* Use native inputs to avoid adding deps */}
+                            {selectedPeriod === 'Monthly' ? (
+                                <input
+                                type="month"
+                                value={selectedValue}
+                                onChange={(e) => setSelectedValue(e.target.value)}
+                                className="appearance-none bg-[#2A2A2A] text-white pl-4 pr-10 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-[#F72585] cursor-pointer hover:border-gray-600 transition-colors"
+                                />
+                            ) : (
+                                <input
+                                type="date"
+                                value={selectedValue.length === 7 ? `${selectedValue}-01` : selectedValue}
+                                onChange={(e) => setSelectedValue(e.target.value)}
+                                className="appearance-none bg-[#2A2A2A] text-white pl-4 pr-10 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-[#F72585] cursor-pointer hover:border-gray-600 transition-colors"
+                                />
+                            )}
+                        </div>
+                    </div>
 
-                {/* Redeem Diamonds for selected period */}
-                <div className="bg-[#121212] p-4 rounded-xl border border-gray-800">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Diamond className="w-5 h-5 text-[#4CC9F0]" />
-                    <span className="text-gray-400 text-sm">Redeem Diamonds</span>
-                  </div>
-                  <div className="text-white text-xl font-bold">{formatNumber(selectedEarnings.redeemDiamonds)}</div>
+                    {/* Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Redeem Card */}
+                        <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                            <p className="text-gray-400 text-sm mb-2">Redeemed Diamonds</p>
+                            <div className="flex items-center">
+                                <Diamond className="w-5 h-5 text-blue-400 mr-2" />
+                                <span className="text-xl font-bold text-white">{stats.totalRedeem.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Coins Card */}
+                        <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                            <p className="text-gray-400 text-sm mb-2">Total Coins</p>
+                            <div className="flex items-center">
+                                <Coins className="w-5 h-5 text-yellow-400 mr-2" />
+                                <span className="text-xl font-bold text-white">{stats.totalCoins.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Growth Card */}
+                        <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                            <p className="text-gray-400 text-sm mb-2">Growth</p>
+                            <div className="flex items-center">
+                                <TrendingUp className="w-5 h-5 text-green-400 mr-2" />
+                                <span className="text-xl font-bold text-white">+12.5%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
+
+            {/* Right Column: Royal Tiers */}
+            <div className="w-full lg:w-[35%] flex flex-col gap-4">
+                 {/* Royal Silver */}
+                 <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
+                    <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-b from-gray-700 to-gray-900 border border-gray-600 flex items-center justify-center">
+                             <Shield className="w-6 h-6 text-gray-300 fill-gray-300/20" />
+                        </div>
+                        <div>
+                            <h3 className="text-white font-bold text-lg">Royal Silver</h3>
+                            <p className="text-gray-400 text-xs">10.0% revenue share</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Royal Gold */}
+                <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
+                     <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-b from-yellow-600 to-yellow-900 border border-yellow-700 flex items-center justify-center">
+                             <Crown className="w-6 h-6 text-yellow-400 fill-yellow-400/20" />
+                        </div>
+                        <div>
+                            <h3 className="text-white font-bold text-lg">Royal Gold</h3>
+                            <p className="text-gray-400 text-xs">10.0% revenue share</p>
+                        </div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center border border-gray-700">
+                        <Lock className="w-4 h-4 text-gray-500" />
+                    </div>
+                </div>
+
+                {/* Royal Platinum */}
+                <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
+                     <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-b from-slate-600 to-slate-800 border border-slate-600 flex items-center justify-center">
+                             <Shield className="w-6 h-6 text-slate-300 fill-slate-300/20" />
+                        </div>
+                        <div>
+                            <h3 className="text-white font-bold text-lg">Royal Platinum</h3>
+                            <p className="text-gray-400 text-xs">10.0% revenue share</p>
+                        </div>
+                    </div>
+                     <div className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center border border-gray-700">
+                        <Lock className="w-4 h-4 text-gray-500" />
+                    </div>
+                </div>
+            </div>
+         </div>
           </div>
 
           {/* Master Agencies List */}

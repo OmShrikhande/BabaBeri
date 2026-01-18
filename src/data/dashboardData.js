@@ -130,7 +130,7 @@ export const navigationItems = [
   { id: 'master-agency', label: 'Master Agency', icon: 'Building' },
   { id: 'agencies', label: 'Agencies', icon: 'Building2' },
   { id: 'host-verification', label: 'Host Verification', icon: 'Shield' },
-  { id: 'users-details', label: 'Host Details', icon: 'UserCheck' },
+  { id: 'users-details', label: 'Verified Host', icon: 'UserCheck' },
   { id: 'live-monitoring', label: 'Live Monitoring', icon: 'Eye' },
   // { id: 'vs-monitoring', label: 'VS Monitoring', icon: 'Sword' }, // New entry
   // { id: 'party-monitoring', label: 'Party Monitoring', icon: 'Mic' }, // New entry

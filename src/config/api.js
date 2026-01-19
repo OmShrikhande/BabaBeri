@@ -70,7 +70,7 @@ export const API_CONFIG = {
     // Save gift
     SAVE_GIFT: '/auth/superadmin/savegifts',
     // Get all banners
-    GET_ALL_BANNERS: '/auth/superadmin/getallbanners',
+    GET_ALL_BANNERS: '/auth/superadmin/getallebanners',
     // Save banner
     SAVE_BANNER: '/auth/superadmin/savebanner'
   },

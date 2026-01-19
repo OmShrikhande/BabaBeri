@@ -391,15 +391,6 @@ const BannersPage = ({ onBack }) => {
                 ? 'Start by creating your first banner to promote content' 
                 : 'No inactive banners at the moment'}
             </p>
-            {activeTab === 'active' && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-black text-sm hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#F72585]/30"
-              >
-                <Plus className="w-5 h-5" />
-                Create Banner
-              </button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -409,15 +400,13 @@ const BannersPage = ({ onBack }) => {
           </div>
         )}
 
-        {filteredBanners.length > 0 && (
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="fixed bottom-8 right-8 p-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-2xl shadow-[#F72585]/40 hover:scale-110 active:scale-95 transition-all z-40 hover:shadow-[#F72585]/60"
-            title="Add New Banner"
-          >
-            <Plus className="w-7 h-7" />
-          </button>
-        )}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="fixed bottom-8 right-8 p-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-2xl shadow-[#F72585]/40 hover:scale-110 active:scale-95 transition-all z-40 hover:shadow-[#F72585]/60"
+          title="Add New Banner"
+        >
+          <Plus className="w-7 h-7" />
+        </button>
 
         <BannerFormModal 
           isOpen={isModalOpen}

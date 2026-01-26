@@ -1,17 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Coins, Edit } from 'lucide-react';
+import authService from '../../services/authService';
 
 const CoinRechargeHeader = () => {
   const [inrValue, setInrValue] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
 
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await authService.getRateList(2);
+        if (response.success && response.data) {
+          setInrValue(response.data.rate);
+        }
+      } catch (error) {
+        console.error('Error fetching coin rate:', error);
+      }
+    };
+    fetchRate();
+  }, []);
+
   const handleEdit = () => {
     setIsEditing(!isEditing);
   };
 
+  const saveRate = async () => {
+    try {
+      const response = await authService.changeRate(2, inrValue);
+      if (response.success) {
+        setIsEditing(false);
+      } else {
+        console.error('Failed to update rate:', response.error);
+        // Optionally revert or show error
+      }
+    } catch (error) {
+      console.error('Error updating coin rate:', error);
+    }
+  };
+
   const handleSave = (e) => {
     if (e.key === 'Enter') {
-      setIsEditing(false);
+      saveRate();
     }
   };
 
@@ -33,6 +62,7 @@ const CoinRechargeHeader = () => {
             value={inrValue}
             onChange={(e) => setInrValue(Number(e.target.value))}
             onKeyDown={handleSave}
+            onBlur={saveRate}
             className="text-white font-bold text-lg bg-transparent border-none outline-none w-16"
             autoFocus
           />

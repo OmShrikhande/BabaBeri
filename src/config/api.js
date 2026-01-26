@@ -52,7 +52,11 @@ export const API_CONFIG = {
     // Approve/Reject live form
     APPROVE_REJECT_LIVE_FORM: '/auth/superadmin/approve-reject-live-form',
     // Change owner (Move host)
-    CHANGE_OWNER: '/auth/superadmin/changeowner'
+    CHANGE_OWNER: '/auth/superadmin/changeowner',
+    // Get rate list (Super Admin only)
+    GET_RATE_LIST: '/auth/superadmin/getratelist',
+    // Change rate (Super Admin only)
+    CHANGE_RATE: '/auth/superadmin/changrate'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

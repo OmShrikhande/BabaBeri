@@ -1262,6 +1262,57 @@ class AuthService {
   async getAgencies() {
     return this.getUsersByRole('AGENCY');
   }
+
+  // Get rate list by id
+  async getRateList(id) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_RATE_LIST}?id=${id}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || `Failed to fetch rate list: ${response.status}`);
+      }
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get rate list error:', error);
+      return { success: false, error: error.message || 'Failed to fetch rate list.' };
+    }
+  }
+
+  // Change rate by id
+  async changeRate(id, rate) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHANGE_RATE}?id=${id}&rate=${rate}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = { message: raw };
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || `Failed to change rate: ${response.status}`);
+      }
+      
+      return { success: true, data };
+    } catch (error) {
+      console.error('Change rate error:', error);
+      return { success: false, error: error.message || 'Failed to change rate.' };
+    }
+  }
 }
 
 // Export singleton instance

@@ -28,6 +28,7 @@ import MasterAgencyCreateAgency from './components/MasterAgencyCreateAgency';
 import AgencyDashboard from './components/AgencyDashboard';
 import authService from './services/authService';
 import Createlayout from './components/Create/Createlayout';
+import GiftsAndBannersLayout from './components/Gifts_and_Banner';
 import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
 
 const getPathForUserType = (userType) => {
@@ -408,6 +409,8 @@ function App() {
       case 'users-details':
       case 'user-details':
         return <HostDetails />;
+      case 'gifts-banners':
+        return <GiftsAndBannersLayout />;
       case 'auth-test':
         return <AuthTest />;
     case 'create':

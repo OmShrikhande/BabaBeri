@@ -1,7 +1,7 @@
 import React from 'react';
-import { Target, Gem, Wallet, Edit2, Shield, Award, Crown } from 'lucide-react';
+import { Target, Gem, Wallet, Edit2, Trash2, Shield, Award, Crown } from 'lucide-react';
 
-const RoleStagesList = ({ stages, onEdit }) => {
+const RoleStagesList = ({ stages, onEdit, onDelete }) => {
   const roles = ['ADMIN', 'MASTER_AGENCY', 'AGENCY', 'HOST'];
   const levels = ['Silver', 'Gold', 'Platinum'];
 
@@ -89,13 +89,22 @@ const RoleStagesList = ({ stages, onEdit }) => {
                           </span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => onEdit(stage)}
-                        className={`p-2.5 rounded-xl transition-all duration-300 ${styles.button}`}
-                        title="Edit Stage"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => onEdit(stage)}
+                          className={`p-2.5 rounded-xl transition-all duration-300 ${styles.button}`}
+                          title="Edit Stage"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => onDelete(stage)}
+                          className="p-2.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all duration-300"
+                          title="Delete Stage"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="space-y-4">

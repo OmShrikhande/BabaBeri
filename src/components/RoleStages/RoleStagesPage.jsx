@@ -1,13 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, ArrowLeft, Save, Loader2, Shield, Target } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Loader2, Shield, Target, CheckCircle, XCircle, X } from 'lucide-react';
 import authService from '../../services/services';
 import RoleStagesList from './RoleStagesList';
+
+const Toast = ({ message, type, onClose }) => (
+  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${
+    type === 'success' 
+      ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md' 
+      : type === 'info'
+      ? 'bg-[#0F172A]/90 border-blue-500/50 text-blue-400 backdrop-blur-md'
+      : 'bg-[#0F172A]/90 border-red-500/50 text-red-400 backdrop-blur-md'
+  }`}>
+    {type === 'success' ? <CheckCircle className="w-5 h-5" /> : type === 'info' ? <Shield className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+    <p className="text-sm font-bold tracking-wide">{message}</p>
+    <button onClick={onClose} className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors">
+      <X className="w-4 h-4" />
+    </button>
+  </div>
+);
 
 const RoleStagesPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [stages, setStages] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [stageToDelete, setStageToDelete] = useState(null);
+  const [toast, setToast] = useState(null);
   const [formData, setFormData] = useState({
     name: 'Silver',
     goalFor: 'AGENCY',
@@ -20,6 +39,11 @@ const RoleStagesPage = () => {
   useEffect(() => {
     fetchStages();
   }, []);
+
+  const showNotification = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchStages = async () => {
     setIsLoading(true);
@@ -46,6 +70,52 @@ const RoleStagesPage = () => {
       }))
     });
     setIsCreating(true);
+  };
+
+  const handleDelete = (stage) => {
+    setStageToDelete(stage);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!stageToDelete) return;
+    
+    setIsLoading(true);
+    try {
+      const payload = {
+        name: stageToDelete.name,
+        goalFor: stageToDelete.goalFor,
+        goals: stageToDelete.goals.map(g => ({
+          goalType: g.goalType,
+          minValue: g.minValue
+        }))
+      };
+
+      const result = await authService.deleteTier(stageToDelete.id, payload);
+      
+      if (result.success) {
+        showNotification('Stage deleted successfully');
+        setShowDeleteConfirm(false);
+        setStageToDelete(null);
+        await fetchStages();
+      } else {
+        // Handle 403/400 that are effectively "already gone" or actual errors
+        const errorMsg = result.error || '';
+        if (errorMsg.includes('403') || errorMsg.includes('400')) {
+          showNotification('Stage already removed or unavailable', 'info');
+          setShowDeleteConfirm(false);
+          setStageToDelete(null);
+          await fetchStages();
+        } else {
+          showNotification(errorMsg || 'Failed to delete stage', 'error');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting stage:', error);
+      showNotification('An error occurred while deleting', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -89,7 +159,7 @@ const RoleStagesPage = () => {
       const result = await authService.saveTiers(payload);
       
       if (result.success) {
-        alert(editingStage ? 'Role stage updated successfully!' : 'Role stage created successfully!');
+        showNotification(editingStage ? 'Stage updated successfully' : 'Stage created successfully');
         setIsCreating(false);
         setEditingStage(null);
         fetchStages(); // Refresh list
@@ -103,11 +173,11 @@ const RoleStagesPage = () => {
           ]
         });
       } else {
-        alert('Failed to save role stage: ' + result.error);
+        showNotification(result.error || 'Failed to save role stage', 'error');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('An error occurred while saving.');
+      showNotification('An error occurred while saving', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -337,6 +407,13 @@ const RoleStagesPage = () => {
 
   return (
     <div className="p-6">
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Role Stages</h1>
@@ -357,7 +434,7 @@ const RoleStagesPage = () => {
           <p className="text-gray-400">Loading role stages...</p>
         </div>
       ) : stages.length > 0 ? (
-        <RoleStagesList stages={stages} onEdit={handleEdit} />
+        <RoleStagesList stages={stages} onEdit={handleEdit} onDelete={handleDelete} />
       ) : (
         <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-8 text-center">
           <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500">
@@ -371,6 +448,49 @@ const RoleStagesPage = () => {
           >
             Create your first stage &rarr;
           </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => !isLoading && setShowDeleteConfirm(false)}
+          ></div>
+          <div className="relative bg-[#1A1A1A] border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+                <Trash2 className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-2">Confirm Deletion</h3>
+              <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                Are you sure you want to delete the <span className="text-white font-bold">{stageToDelete?.name}</span> stage for <span className="text-white font-bold">{stageToDelete?.goalFor}</span>? This action cannot be undone.
+              </p>
+              
+              <div className="flex gap-4 w-full">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isLoading}
+                  className="flex-1 px-6 py-3 rounded-xl bg-white/5 text-gray-400 font-bold hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={isLoading}
+                  className="flex-1 px-6 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                  {isLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -401,6 +401,40 @@ class AuthService {
       }
     }
 
+    // Delete Tier
+    async deleteTier(id, tierData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DELETE_TIER}/${id}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'DELETE',
+          body: JSON.stringify(tierData)
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        // Some APIs return 400 but actually succeed (as seen in "Tier (goal) deleted successful")
+        if (!response.ok && !raw.toLowerCase().includes('deleted successful')) {
+          throw new Error(`Failed to delete tier: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Delete tier error:', error);
+        return { success: false, error: error.message || 'Failed to delete tier.' };
+      }
+    }
+
     // Get pending cashout list
     async getPendingCashoutList() {
       const token = this.getToken();

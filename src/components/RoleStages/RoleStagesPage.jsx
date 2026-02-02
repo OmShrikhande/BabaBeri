@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Loader2, Shield, Target } from 'lucide-react';
 import authService from '../../services/services';
 import RoleStagesList from './RoleStagesList';
 
@@ -114,154 +114,223 @@ const RoleStagesPage = () => {
   };
 
   if (isCreating) {
+    const existingStagesForRole = stages.filter(s => s.goalFor === formData.goalFor);
+
     return (
-      <div className="p-6">
-        <div className="mb-6 flex items-center gap-4">
-          <button 
-            onClick={() => {
-              setIsCreating(false);
-              setEditingStage(null);
-            }}
-            className="p-2 rounded-lg bg-[#1A1A1A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {editingStage ? 'Edit Role Stage' : 'Create New Role Stage'}
-            </h1>
-            <p className="text-gray-400 text-sm">
-              {editingStage ? 'Modify existing stage goals' : 'Define a new stage and its goals'}
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
-          {/* Basic Info Section */}
-          <div className="bg-[#1A1A1A] rounded-xl p-6 border border-white/5 space-y-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">Stage Name</label>
-                <select
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full bg-black/90 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#F72585] transition-colors appearance-none"
-                >
-                  <option value="Silver">Silver</option>
-                  <option value="Gold">Gold</option>
-                  <option value="Platinum">Platinum</option>
-                  </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-400">Goal For Role</label>
-                <select
-                  name="goalFor"
-                  value={formData.goalFor}
-                  onChange={handleInputChange}
-                  className="w-full bg-black/90 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#F72585] transition-colors appearance-none"
-                >
-                  <option value="AGENCY">Agency</option>
-                  <option value="HOST">Host</option>
-                  <option value="MASTER_AGENCY">Master Agency</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Goals Section */}
-          <div className="bg-[#1A1A1A] rounded-xl p-6 border border-white/5 space-y-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Stage Goals</h2>
-              {/* <button
-                type="button"
-                onClick={addGoal}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F72585]/10 text-[#F72585] hover:bg-[#F72585]/20 text-sm font-medium transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Goal
-              </button> */}
-            </div>
-
-            <div className="space-y-4">
-              {formData.goals.map((goal, index) => (
-                <div key={index} className="flex items-start gap-4 bg-black/20 p-4 rounded-lg border border-white/5 group hover:border-white/10 transition-colors">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-500">Goal Type</label>
-                      <select
-                        value={goal.goalType}
-                        onChange={(e) => handleGoalChange(index, 'goalType', e.target.value)}
-                        className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#F72585] transition-colors"
-                      >
-                        <option value="DIAMOND">Diamond</option>
-                        <option value="CASHOUT">Cashout</option>
-                        {/* <option value="COIN">Coin</option> */}
-                      </select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium text-gray-500">Min Value</label>
-                      <input
-                        type="number"
-                        value={goal.minValue}
-                        onChange={(e) => handleGoalChange(index, 'minValue', Number(e.target.value))}
-                        placeholder="0"
-                        className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#F72585] transition-colors"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => removeGoal(index)}
-                    className="mt-6 p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Remove Goal"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-              
-              {formData.goals.length === 0 && (
-                <div className="text-center py-8 text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-lg">
-                  No goals defined. Click "Add Goal" to start.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-start gap-4 pt-4 border-t border-white/10">
-            <button
-              type="button"
+      <div className="p-6 max-w-[1600px] mx-auto">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
               onClick={() => {
                 setIsCreating(false);
                 setEditingStage(null);
               }}
-              className="px-6 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 font-medium transition-colors"
-              disabled={isLoading}
+              className="p-2.5 rounded-xl bg-[#1A1A1A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition-all border border-white/5"
             >
-              Cancel
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-[#F72585]/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              {isLoading ? (editingStage ? 'Updating...' : 'Creating...') : (editingStage ? 'Update Stage' : 'Create Stage')}
-            </button>
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight">
+                {editingStage ? 'Modify Stage' : 'New Role Stage'}
+              </h1>
+              <p className="text-gray-400 text-sm font-medium">
+                {editingStage ? 'Update goals for this achievement tier' : 'Configure a new performance milestone'}
+              </p>
+            </div>
           </div>
-        </form> 
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+          {/* Form Section */}
+          <div className="xl:col-span-7 space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#F72585]/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
+                
+                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-[#F72585] rounded-full"></span>
+                  Configuration Details
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Stage Name</label>
+                    <div className="relative">
+                      <select
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all appearance-none cursor-pointer hover:border-white/20"
+                      >
+                        <option value="Silver">Silver</option>
+                        <option value="Gold">Gold</option>
+                        <option value="Platinum">Platinum</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                        <Plus className="w-4 h-4 rotate-45" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Target Role</label>
+                    <div className="relative">
+                      <select
+                        name="goalFor"
+                        value={formData.goalFor}
+                        onChange={handleInputChange}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all appearance-none cursor-pointer hover:border-white/20"
+                      >
+                        <option value="AGENCY">Agency</option>
+                        <option value="HOST">Host</option>
+                        <option value="MASTER_AGENCY">Master Agency</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                        <Plus className="w-4 h-4 rotate-45" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-white/5 shadow-2xl">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-[#7209B7] rounded-full"></span>
+                    Target Goals
+                  </h2>
+                </div>
+
+                <div className="space-y-4">
+                  {formData.goals.map((goal, index) => (
+                    <div key={index} className="flex items-center gap-6 bg-black/30 p-5 rounded-2xl border border-white/5 group transition-all hover:border-white/10">
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Metric Type</label>
+                          <select
+                            value={goal.goalType}
+                            onChange={(e) => handleGoalChange(index, 'goalType', e.target.value)}
+                            className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all"
+                          >
+                            <option value="DIAMOND">Diamond</option>
+                            <option value="CASHOUT">Cashout</option>
+                          </select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Minimum Value</label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={goal.minValue}
+                              onChange={(e) => handleGoalChange(index, 'minValue', e.target.value)}
+                              placeholder="0"
+                              className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all font-mono"
+                              required
+                            />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-600 uppercase">Amount</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeGoal(index)}
+                        className="p-3 rounded-xl text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        title="Remove Metric"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {formData.goals.length === 0 && (
+                    <div className="text-center py-12 text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.02]">
+                      No metrics defined. Add a goal to continue.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreating(false);
+                    setEditingStage(null);
+                  }}
+                  className="px-8 py-4 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 font-bold text-sm transition-all"
+                  disabled={isLoading}
+                >
+                  Discard Changes
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex items-center gap-3 px-10 py-4 rounded-xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-black text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-[#F72585]/20 disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Save className="w-5 h-5" />
+                  )}
+                  {isLoading ? 'Processing...' : editingStage ? 'Update Tier' : 'Create Tier'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Preview Section */}
+          <div className="xl:col-span-5 space-y-6">
+            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-white/5 h-full min-h-[500px]">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-white font-black tracking-tight">Active {formData.goalFor} Stages</h3>
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Existing Configuration</p>
+                </div>
+                <div className="p-2 rounded-lg bg-white/5">
+                  <Shield className="w-5 h-5 text-[#F72585]" />
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {existingStagesForRole.length > 0 ? (
+                  existingStagesForRole.map((stage) => (
+                    <div key={stage.id} className="relative group overflow-hidden rounded-2xl border border-white/5 bg-black/20 p-5 hover:border-white/10 transition-all">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${
+                            stage.name === 'Platinum' ? 'bg-blue-400' : 
+                            stage.name === 'Gold' ? 'bg-yellow-500' : 'bg-slate-400'
+                          }`}></div>
+                          <span className="text-white font-bold">{stage.name}</span>
+                        </div>
+                        <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">ID: {stage.id}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        {stage.goals.map((g, i) => (
+                          <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/5">
+                            <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">{g.goalType}</p>
+                            <p className="text-white font-black">{g.minValue.toLocaleString()}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/5">
+                      <Plus className="w-8 h-8 text-gray-700" />
+                    </div>
+                    <p className="text-gray-400 font-bold text-sm">No existing stages found</p>
+                    <p className="text-gray-600 text-xs mt-2">New stages created for {formData.goalFor} will appear here.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

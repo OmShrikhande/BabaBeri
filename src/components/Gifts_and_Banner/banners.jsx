@@ -21,6 +21,7 @@ const Toast = ({ message, type, onClose }) => (
 const BannerCard = ({ banner }) => {
   const imageUrl = banner.image || '';
   const btnName = banner.btnName || 'Click Here';
+  const externalLink = banner.externalLink || '#';
   const expiryDate = banner.expiryTime ? new Date(banner.expiryTime) : null;
   const isExpired = expiryDate && expiryDate < new Date();
   
@@ -33,14 +34,24 @@ const BannerCard = ({ banner }) => {
   return (
     <div className="bg-[#1A1A1A] rounded-2xl border border-white/5 overflow-hidden hover:border-[#F72585]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#F72585]/20 hover:-translate-y-1 group">
       <div className="relative h-48 bg-black/40 overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt="Banner" 
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          onError={(e) => {
-            e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200"%3E%3Crect width="400" height="200" fill="%231A1A1A"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23666" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
-          }}
-        />
+        {imageUrl.match(/\.(mp4|webm|ogg)$/i) ? (
+          <video 
+            src={imageUrl} 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            muted
+            loop
+            autoPlay
+          />
+        ) : (
+          <img 
+            src={imageUrl} 
+            alt="Banner" 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            onError={(e) => {
+              e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200"%3E%3Crect width="400" height="200" fill="%231A1A1A"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23666" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
+            }}
+          />
+        )}
         {banner.status === 1 && !isExpired && (
           <div className="absolute top-3 right-3 px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-bold shadow-lg">
             Active
@@ -66,6 +77,13 @@ const BannerCard = ({ banner }) => {
           </div>
           
           <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-400 font-medium">Link</span>
+            <span className="text-xs font-bold text-[#4CC9F0] truncate max-w-[200px]" title={externalLink}>
+              {externalLink}
+            </span>
+          </div>
+          
+          <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Expiry Date</span>
             <span className={`text-xs font-bold ${isExpired ? 'text-red-400' : 'text-[#4CC9F0]'}`}>
               {formatDate(expiryDate)}
@@ -85,10 +103,12 @@ const BannerCard = ({ banner }) => {
 const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
     btnName: '',
-    expiryTime: ''
+    externalLink: '',
+    expiryDays: ''
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [fileType, setFileType] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,9 +119,10 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; 
     if (file) {
       setSelectedFile(file);
+      setFileType(file.type);
       const reader = new FileReader();
       reader.onloadedend = () => {
         setPreviewUrl(reader.result);
@@ -119,10 +140,12 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     });
     setFormData({
       btnName: '',
-      expiryTime: ''
+      externalLink: '',
+      expiryDays: ''
     });
     setSelectedFile(null);
     setPreviewUrl('');
+    setFileType('');
   };
 
   if (!isOpen) return null;
@@ -146,12 +169,12 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-3">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-              Banner Image *
+              Banner Media (Image/Video/GIF) *
             </label>
             <div className="relative">
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*,.gif"
                 onChange={handleFileChange}
                 className="hidden"
                 id="banner-image-upload"
@@ -162,18 +185,26 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white hover:border-[#F72585] transition-all cursor-pointer flex items-center justify-between"
               >
                 <span className={selectedFile ? 'text-white' : 'text-gray-500'}>
-                  {selectedFile ? selectedFile.name : 'Choose an image file...'}
+                  {selectedFile ? selectedFile.name : 'Choose a media file...'}
                 </span>
                 <Upload className="w-5 h-5 text-gray-600" />
               </label>
             </div>
             {previewUrl && (
               <div className="relative w-full h-48 bg-black/40 rounded-xl overflow-hidden border border-white/5">
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
-                  className="w-full h-full object-cover"
-                />
+                {fileType.startsWith('video/') ? (
+                  <video 
+                    src={previewUrl} 
+                    className="w-full h-full object-cover"
+                    controls
+                  />
+                ) : (
+                  <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </div>
             )}
           </div>
@@ -195,13 +226,30 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
           <div className="space-y-3">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-              Expiry Date & Time *
+              External Link *
             </label>
             <input
-              type="datetime-local"
-              name="expiryTime"
-              value={formData.expiryTime}
+              type="url"
+              name="externalLink"
+              value={formData.externalLink}
               onChange={handleChange}
+              placeholder="https://proxstream.online/movie"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all"
+              required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+              Expiry Days *
+            </label>
+            <input
+              type="number"
+              name="expiryDays"
+              value={formData.expiryDays}
+              onChange={handleChange}
+              placeholder="7"
+              min="1"
               className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all"
               required
             />
@@ -265,10 +313,13 @@ const BannersPage = ({ onBack }) => {
   const fetchBanners = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching banners...');
       const response = await authService.getAllBanners();
+      console.log('Fetch banners response:', response);
       
       if (response.success) {
         const rawList = Array.isArray(response.data) ? response.data : [];
+        console.log('Banner count:', rawList.length);
         
         const sortedBanners = rawList.sort((a, b) => b.id - a.id);
         
@@ -296,21 +347,30 @@ const BannersPage = ({ onBack }) => {
     setIsSubmitting(true);
     try {
       if (!data.file) {
-        throw new Error('Please select an image file');
+        throw new Error('Please select a media file');
       }
 
       const formData = new FormData();
-      formData.append('file', data.file);
-      formData.append('btnName', data.btnName);
-      formData.append('expiryTime', new Date(data.expiryTime).toISOString());
-      formData.append('status', data.status);
+      formData.append('image', data.file);
+      formData.append('btnName', data.btnName.trim());
+      formData.append('externalLink', data.externalLink.trim());
+      formData.append('expiryDays', String(data.expiryDays));
+
+      console.log('Sending banner data:', {
+        fileName: data.file.name,
+        fileType: data.file.type,
+        fileSize: data.file.size,
+        btnName: data.btnName,
+        externalLink: data.externalLink,
+        expiryDays: data.expiryDays
+      });
 
       const response = await authService.saveBanner(formData);
       
       if (response.success) {
         showNotification('Banner created successfully');
         setIsModalOpen(false);
-        fetchBanners();
+        await fetchBanners();
       } else {
         throw new Error(response.error || 'Failed to create banner');
       }
@@ -340,6 +400,14 @@ const BannersPage = ({ onBack }) => {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-bold text-sm hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-[#F72585]/20"
+            >
+              <Plus className="w-5 h-5" />
+              Add Banner
+            </button>
+            
             <div className="flex items-center gap-2 p-1 rounded-xl bg-[#1A1A1A] border border-white/5">
               <button
                 onClick={() => setActiveTab('active')}
@@ -399,14 +467,6 @@ const BannersPage = ({ onBack }) => {
             ))}
           </div>
         )}
-
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-8 right-8 p-5 rounded-2xl bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-2xl shadow-[#F72585]/40 hover:scale-110 active:scale-95 transition-all z-40 hover:shadow-[#F72585]/60"
-          title="Add New Banner"
-        >
-          <Plus className="w-7 h-7" />
-        </button>
 
         <BannerFormModal 
           isOpen={isModalOpen}

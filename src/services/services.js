@@ -594,9 +594,30 @@ class AuthService {
 
     async saveBanner(formData) {
       const token = this.getToken();
-      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+      if (!token) {
+        console.error('No token available for saveBanner');
+        return { success: false, error: 'Not authenticated. Please login.' };
+      }
+
+      if (this.isTokenExpired()) {
+        console.error('Token expired for saveBanner');
+        this.logout();
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      const decoded = this.decodeToken();
+      console.log('User type:', this.getUserType());
+      console.log('Token payload:', decoded);
 
       const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_BANNER}`;
+      
+      console.log('Saving banner to:', url);
+      console.log('Token available:', !!token);
+      console.log('Token preview:', token.substring(0, 20) + '...');
+      console.log('FormData entries:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0], typeof pair[1] === 'object' ? pair[1].name || pair[1] : pair[1]);
+      }
 
       try {
         const headers = {
@@ -609,9 +630,16 @@ class AuthService {
           body: formData
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
         const raw = await response.text().catch(() => '');
+        console.log('Response body:', raw);
         
         if (!response.ok) {
+          if (response.status === 403) {
+            throw new Error(`Access forbidden. Please check your permissions or login again. Server response: ${raw}`);
+          }
           throw new Error(`Failed to save banner: ${response.status} ${response.statusText}\n${raw}`);
         }
         

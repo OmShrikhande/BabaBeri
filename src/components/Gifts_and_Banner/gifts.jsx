@@ -135,7 +135,6 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             <div className="relative">
               <input
                 type="file"
-                accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
                 id="gift-image-upload"

@@ -137,7 +137,7 @@ export const navigationItems = [
   { id: 'coin-recharge', label: 'Coin Recharge', icon: 'Coins' },
   { id: 'diamonds-wallet', label: 'Diamonds Cashout', icon: 'Gem' },
   { id: 'ranking', label: 'Rankings', icon: 'Trophy' },
-  { id: 'role-stages', label: 'Role Stages', icon: 'Shield' },
+  { id: 'role-stages', label: 'Goals & Stages', icon: 'Shield' },
   // { id: 'analytics', label: 'Analytics', icon: 'BarChart' },
   { id: 'user-details', label: 'User Details', icon: 'Users' }, // Slight rename for clarity
   { id: 'vip-levels', label: 'VIP / Levels', icon: 'Crown' },

@@ -1,206 +1,309 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { getRoles, getByRole, createStage, updateStage, deleteStage, resetRole } from '../../services/roleStagesService';
-import authService from '../../services/authService';
-import RoleSelector from './RoleSelector';
-import StageForm from './StageForm';
-import StageList from './StageList';
-import ConfirmDialog from './ConfirmDialog';
-import { Shield, Plus } from 'lucide-react';
-import { getUserRoleDisplayName, isSuperAdmin } from '../../utils/roleBasedAccess';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, ArrowLeft, Save, Loader2 } from 'lucide-react';
+import authService from '../../services/services';
+import RoleStagesList from './RoleStagesList';
 
-const Section = ({ title, children, className = '' }) => (
-  <section className={`bg-[#121212] rounded-xl border border-gray-800 p-6 ${className}`}>
-    {title && <h2 className="text-lg font-semibold mb-4 text-white/90">{title}</h2>}
-    {children}
-  </section>
-);
-
-const RoleStagesPage = ({ currentUser }) => {
-  const roles = useMemo(() => getRoles(), []);
-  const [activeRole, setActiveRole] = useState(roles[0]);
+const RoleStagesPage = () => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingStage, setEditingStage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [stages, setStages] = useState([]);
-  const [editing, setEditing] = useState(null); // stage being edited
-  const [confirm, setConfirm] = useState(null); // { stage }
-  const [percentages, setPercentages] = useState([]);
+  const [formData, setFormData] = useState({
+    name: 'Silver',
+    goalFor: 'AGENCY',
+    goals: [
+      { goalType: 'DIAMOND', minValue: '' },
+      { goalType: 'CASHOUT', minValue: '' }
+    ]
+  });
 
-
-
-  // Load stages for the selected role
   useEffect(() => {
-    const data = getByRole(activeRole);
-    setStages(data.stages || []);
-  }, [activeRole]);
+    fetchStages();
+  }, []);
 
-  const roleMapping = {
-    'super admin': 'SUPERADMIN',
-    'admin':'SUBADMIN',
-    'host': 'HOST',
-    'master-agency': 'MASTER-AGENCY',
-    'agency': 'AGENCY'
+  const fetchStages = async () => {
+    setIsLoading(true);
+    try {
+      const result = await authService.getAllGoals();
+      if (result.success) {
+        setStages(result.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching stages:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getRolePercentage = (role) => {
-    const percentFor = roleMapping[role];
-    const percentage = percentages.find(p => p.percentfor === percentFor);
-    return percentage ? percentage.percent : null;
+  const handleEdit = (stage) => {
+    setEditingStage(stage);
+    setFormData({
+      name: stage.name,
+      goalFor: stage.goalFor,
+      goals: stage.goals.map(g => ({
+        goalType: g.goalType,
+        minValue: g.minValue
+      }))
+    });
+    setIsCreating(true);
   };
 
-  const rolePercentage = getRolePercentage(activeRole);
-  const maxStages = rolePercentage !== null ? rolePercentage : 3;
-  const allowUnlimitedStages = isSuperAdmin(currentUser?.userType);
-  const canAddMore = allowUnlimitedStages || stages.length < maxStages;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-  // Fetch percentages if super admin
-  useEffect(() => {
-    if (isSuperAdmin(currentUser?.userType)) {
-      const fetchPercentages = async () => {
-        try {
-          const token = authService.getToken();
-          if (!token) return;
-          const response = await fetch('https://proxstream.online/auth/superadmin/getallpercentage', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            setPercentages(data);
-          }
-        } catch (error) {
-          console.error('Failed to fetch percentages:', error);
-        }
+  const handleGoalChange = (index, field, value) => {
+    const newGoals = [...formData.goals];
+    newGoals[index][field] = value;
+    setFormData({ ...formData, goals: newGoals });
+  };
+
+  const addGoal = () => {
+    setFormData({
+      ...formData,
+      goals: [...formData.goals, { goalType: 'DIAMOND', minValue: '' }]
+    });
+  };
+
+  const removeGoal = (index) => {
+    const newGoals = formData.goals.filter((_, i) => i !== index);
+    setFormData({ ...formData, goals: newGoals });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      // Ensure minValues are numbers
+      const payload = {
+        ...formData,
+        goals: formData.goals.map(g => ({
+          ...g,
+          minValue: Number(g.minValue)
+        }))
       };
-      fetchPercentages();
-    }
-  }, [currentUser]);
 
-  const refresh = () => {
-    const data = getByRole(activeRole);
-    setStages(data.stages || []);
-  };
-
-  const handleCreate = async (payload) => {
-    try {
-      createStage(activeRole, payload, allowUnlimitedStages);
-      refresh();
-      setEditing(null);
-    } catch (e) {
-      alert(e?.message || 'Failed to create stage');
-    }
-  };
-
-  const handleUpdate = async (payload) => {
-    try {
-      updateStage(activeRole, editing.id, payload);
-      refresh();
-      setEditing(null);
-    } catch (e) {
-      alert(e?.message || 'Failed to update stage');
-    }
-  };
-
-  const handleDelete = async (stage) => setConfirm({ stage });
-
-  const confirmDelete = () => {
-    try {
-      deleteStage(activeRole, confirm.stage.id);
-      refresh();
-      setConfirm(null);
-    } catch (e) {
-      alert(e?.message || 'Failed to delete stage');
+      console.log('Submitting Tier Data:', payload);
+      const result = await authService.saveTiers(payload);
+      
+      if (result.success) {
+        alert(editingStage ? 'Role stage updated successfully!' : 'Role stage created successfully!');
+        setIsCreating(false);
+        setEditingStage(null);
+        fetchStages(); // Refresh list
+        // Reset form
+        setFormData({
+          name: 'Silver',
+          goalFor: 'AGENCY',
+          goals: [
+            { goalType: 'DIAMOND', minValue: '' },
+            { goalType: 'CASHOUT', minValue: '' }
+          ]
+        });
+      } else {
+        alert('Failed to save role stage: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('An error occurred while saving.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleResetRole = () => {
-    if (!window.confirm('Reset stages to defaults for this role?')) return;
-    resetRole(activeRole);
-    refresh();
-  };
-
-  return (
-    <div className="relative flex min-h-screen h-screen bg-[#0B0B0B] text-white flex-col overflow-hidden">
-      {/* Header */}
-      <div className="p-4 sm:p-6 border-b border-gray-800 bg-[#121212] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center">
-            <Shield className="w-6 h-6 text-white" />
-          </div>
+  if (isCreating) {
+    return (
+      <div className="p-6">
+        <div className="mb-6 flex items-center gap-4">
+          <button 
+            onClick={() => {
+              setIsCreating(false);
+              setEditingStage(null);
+            }}
+            className="p-2 rounded-lg bg-[#1A1A1A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div>
-            <h1 className="text-xl font-bold">Role Stages</h1>
-            <p className="text-xs text-gray-400">Super Admin: configure stages per role based on percentages</p>
-            {percentages.length > 0 && (
-              <div className="flex gap-2 mt-2">
-                {percentages.map((p) => (
-                  <div key={p.id} className="px-2 py-1 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white text-xs rounded-md">
-                    {p.percentfor}: {p.percent}%
-                  </div>
-                ))}
-              </div>
-            )}
+            <h1 className="text-2xl font-bold text-white">
+              {editingStage ? 'Edit Role Stage' : 'Create New Role Stage'}
+            </h1>
+            <p className="text-gray-400 text-sm">
+              {editingStage ? 'Modify existing stage goals' : 'Define a new stage and its goals'}
+            </p>
           </div>
         </div>
-        {currentUser && (
-          <div className="text-right text-xs text-gray-400">
-            <div className="text-gray-300">{currentUser.username}</div>
-            <div>{getUserRoleDisplayName(currentUser.userType)}</div>
-          </div>
-        )}
-      </div>
 
-      {/* Content */}
-      <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Role Selection & Actions */}
-        <Section title="Role" className="lg:col-span-1">
-          <RoleSelector roles={roles} value={activeRole} onChange={setActiveRole} />
-          <div className="mt-4 flex items-center gap-2">
+        <form onSubmit={handleSubmit} className="max-w-4xl space-y-8">
+          {/* Basic Info Section */}
+          <div className="bg-[#1A1A1A] rounded-xl p-6 border border-white/5 space-y-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400">Stage Name</label>
+                <select
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full bg-black/90 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#F72585] transition-colors appearance-none"
+                >
+                  <option value="Silver">Silver</option>
+                  <option value="Gold">Gold</option>
+                  <option value="Platinum">Platinum</option>
+                  </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-400">Goal For Role</label>
+                <select
+                  name="goalFor"
+                  value={formData.goalFor}
+                  onChange={handleInputChange}
+                  className="w-full bg-black/90 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#F72585] transition-colors appearance-none"
+                >
+                  <option value="AGENCY">Agency</option>
+                  <option value="HOST">Host</option>
+                  <option value="MASTER_AGENCY">Master Agency</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Goals Section */}
+          <div className="bg-[#1A1A1A] rounded-xl p-6 border border-white/5 space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">Stage Goals</h2>
+              {/* <button
+                type="button"
+                onClick={addGoal}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F72585]/10 text-[#F72585] hover:bg-[#F72585]/20 text-sm font-medium transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Goal
+              </button> */}
+            </div>
+
+            <div className="space-y-4">
+              {formData.goals.map((goal, index) => (
+                <div key={index} className="flex items-start gap-4 bg-black/20 p-4 rounded-lg border border-white/5 group hover:border-white/10 transition-colors">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-500">Goal Type</label>
+                      <select
+                        value={goal.goalType}
+                        onChange={(e) => handleGoalChange(index, 'goalType', e.target.value)}
+                        className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#F72585] transition-colors"
+                      >
+                        <option value="DIAMOND">Diamond</option>
+                        <option value="CASHOUT">Cashout</option>
+                        {/* <option value="COIN">Coin</option> */}
+                      </select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium text-gray-500">Min Value</label>
+                      <input
+                        type="number"
+                        value={goal.minValue}
+                        onChange={(e) => handleGoalChange(index, 'minValue', Number(e.target.value))}
+                        placeholder="0"
+                        className="w-full bg-[#1A1A1A] border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#F72585] transition-colors"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeGoal(index)}
+                    className="mt-6 p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                    title="Remove Goal"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              
+              {formData.goals.length === 0 && (
+                <div className="text-center py-8 text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-lg">
+                  No goals defined. Click "Add Goal" to start.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-start gap-4 pt-4 border-t border-white/10">
             <button
-              disabled={!canAddMore}
-              onClick={() => setEditing({ id: null, name: '', percentage: 0, description: '' })}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${canAddMore ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}
+              type="button"
+              onClick={() => {
+                setIsCreating(false);
+                setEditingStage(null);
+              }}
+              className="px-6 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 font-medium transition-colors"
+              disabled={isLoading}
             >
-              <Plus className="w-4 h-4" /> Add Stage
+              Cancel
             </button>
             <button
-              onClick={handleResetRole}
-              className="px-3 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700"
+              type="submit"
+              disabled={isLoading}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-[#F72585]/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Reset Role
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {isLoading ? (editingStage ? 'Updating...' : 'Creating...') : (editingStage ? 'Update Stage' : 'Create Stage')}
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Max {maxStages} stages per role. Customize label, percentage, and description.</p>
-        </Section>
-
-        {/* Stages List */}
-        <Section title={`Stages for "${activeRole}"`} className="lg:col-span-2">
-          <StageList
-            stages={stages}
-            onEdit={(s) => setEditing(s)}
-            onDelete={handleDelete}
-            selectedRole={roleMapping[activeRole] || activeRole.toUpperCase()}
-          />
-        </Section>
-
-        {/* Editor */}
-        {editing !== null && (
-          <Section title={editing?.id ? 'Edit Stage' : 'Add Stage'} className="lg:col-span-3">
-            <StageForm
-              initial={editing?.id ? editing : null}
-              onSubmit={editing?.id ? handleUpdate : handleCreate}
-              onCancel={() => setEditing(null)}
-            />
-          </Section>
-        )}
+        </form> 
       </div>
+    );
+  }
 
-      <ConfirmDialog
-        open={!!confirm}
-        title="Delete Stage"
-        message={`Are you sure you want to delete "${confirm?.stage?.name}"?`}
-        onConfirm={confirmDelete}
-        onCancel={() => setConfirm(null)}
-      />
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Role Stages</h1>
+          <p className="text-gray-400">Manage achievement stages and goals for different roles</p>
+        </div>
+        <button
+          onClick={() => setIsCreating(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+        >
+          <Plus className="w-5 h-5" />
+          Create New Stage
+        </button>
+      </div>
+      
+      {isLoading && stages.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-[#F72585] animate-spin mb-4" />
+          <p className="text-gray-400">Loading role stages...</p>
+        </div>
+      ) : stages.length > 0 ? (
+        <RoleStagesList stages={stages} onEdit={handleEdit} />
+      ) : (
+        <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-8 text-center">
+          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500">
+            <Plus className="w-8 h-8" />
+          </div>
+          <h3 className="text-white font-medium mb-2">No Stages Found</h3>
+          <p className="text-gray-400 text-sm mb-6">Get started by creating a new role stage</p>
+          <button
+            onClick={() => setIsCreating(true)}
+            className="text-[#F72585] hover:text-[#7209B7] font-medium transition-colors"
+          >
+            Create your first stage &rarr;
+          </button>
+        </div>
+      )}
     </div>
   );
 };

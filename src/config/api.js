@@ -56,7 +56,11 @@ export const API_CONFIG = {
     // Get rate list (Super Admin only)
     GET_RATE_LIST: '/auth/superadmin/getratelist',
     // Change rate (Super Admin only)
-    CHANGE_RATE: '/auth/superadmin/changrate'
+    CHANGE_RATE: '/auth/superadmin/changrate',
+    // Save Tiers (Goals by superadmin)
+    SAVE_TIERS: '/auth/superadmin/savetiers',
+    // Get all goals (Tiers)
+    GET_ALL_GOALS: '/auth/api/getallgoals'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

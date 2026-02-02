@@ -339,6 +339,68 @@ class AuthService {
         return { success: false, error: error.message || 'Failed to fetch plans.' };
       }
     }
+    // Save Tiers (Goals)
+    async saveTiers(tierData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_TIERS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'POST',
+          body: JSON.stringify(tierData)
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save tier: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Save tiers error:', error);
+        return { success: false, error: error.message || 'Failed to save tier.' };
+      }
+    }
+
+    // Get all goals (Tiers)
+    async getAllGoals() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_GOALS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch goals: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get all goals error:', error);
+        return { success: false, error: error.message || 'Failed to fetch goals.' };
+      }
+    }
+
     // Get pending cashout list
     async getPendingCashoutList() {
       const token = this.getToken();

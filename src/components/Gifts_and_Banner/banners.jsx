@@ -174,7 +174,7 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             <div className="relative">
               <input
                 type="file"
-                accept="image/*,video/*,.gif"
+                // accept="image/*,video/*,.gif"
                 onChange={handleFileChange}
                 className="hidden"
                 id="banner-image-upload"

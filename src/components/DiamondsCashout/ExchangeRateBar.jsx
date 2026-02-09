@@ -43,18 +43,18 @@ const ExchangeRateBar = () => {
     <div className="flex items-center justify-between bg-[#1A1A1A] rounded-lg p-4 border border-gray-700">
       <div className="flex items-center space-x-8">
         <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
+          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
             <span className="text-black text-xs font-bold">●</span>
           </div>
-          <span className="text-white font-medium">1 Coin </span>
+          <span className="text-white font-medium">1 diamond </span>
         </div>
         
         <div className="text-gray-400 text-xl font-bold">=</div>
         
         <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
+          {/* <div className="w-6 h-6 bg-cyan-400 rounded-full flex items-center justify-center">
             <span className="text-black text-xs font-bold">♦</span>
-          </div>
+          </div> */}
           {isEditing ? (
              <div className="flex items-center">
                <input
@@ -67,10 +67,10 @@ const ExchangeRateBar = () => {
                 autoFocus
                 step="0.1"
               />
-               <span className="text-white font-medium ml-1">Diamonds</span>
+               <span className="text-white font-medium ml-1">diamonds</span>
              </div>
           ) : (
-            <span className="text-white font-medium">{diamondRate} Diamonds</span>
+            <span className="text-white font-medium">{diamondRate} INR</span>
           )}
            <button onClick={() => setIsEditing(!isEditing)} className="text-gray-400 hover:text-white ml-2">
              <Edit className="w-4 h-4" />

@@ -74,7 +74,9 @@ export const API_CONFIG = {
     // Save banner
     SAVE_BANNER: '/auth/superadmin/savebanner',
     // Get user by code
-    GET_BY_CODE: '/auth/api/getByCode'
+    GET_BY_CODE: '/auth/api/getByCode',
+    // Get all users (Super Admin only)
+    ALL_USERS: '/auth/api/allusers'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

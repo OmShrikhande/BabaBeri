@@ -113,8 +113,8 @@ const SearchableSelect = ({ label, id, options, value, onSelect, isSearching, se
                     <span className="text-white">
                       {option.name || option.username || `Host #${option.id}`}
                     </span>
-                    <span className="text-xs text-gray-400">ID: {option.id}</span>
-                    <span className="text-xs text-gray-400">Code: {option.code}</span>
+                    <span className="text-xs text-gray-400">ID: {option.code}</span>
+                    {/* <span className="text-xs text-gray-400">Code: {option.code}</span> */}
                   </div>
                 </button>
               ))
@@ -131,10 +131,10 @@ const SearchableSelect = ({ label, id, options, value, onSelect, isSearching, se
           <User className="w-4 h-4 text-[#F72585]" />
           <div className="text-sm text-white">
             <span>
-              Selected: {selectedOption.name || selectedOption.username || `Host #${selectedOption.id}`}
+              Selected: {selectedOption.name || selectedOption.username || `User #${selectedOption.id}`}
             </span>
-            <span className="block text-xs text-gray-400">ID: {selectedOption.id}</span>
-            <span className="block text-xs text-gray-400">Code: {selectedOption.code}</span>
+            <span className="block text-xs text-gray-400">ID: {selectedOption.code}</span>
+            {/* <span className="block text-xs text-gray-400">Code: {selectedOption.code}</span> */}
           </div>
         </div>
       )}
@@ -143,15 +143,15 @@ const SearchableSelect = ({ label, id, options, value, onSelect, isSearching, se
 };
 
 const HostRechargeSection = ({
-  hosts,
-  filteredHosts,
-  selectedHost,
+  users,
+  filteredUsers,
+  selectedUser,
   rechargeAmount,
-  hostSearch,
+  userSearch,
   isSearching,
   isRecharging,
   onSearchChange,
-  onSelectHost,
+  onSelectUser,
   onAmountChange,
   onRecharge
 }) => (
@@ -161,20 +161,20 @@ const HostRechargeSection = ({
         <Coins className="w-6 h-6 text-[#F72585]" />
       </div>
       <h2 className="text-2xl font-semibold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-        Recharge Coins to Host
+        Recharge Coins to Any User
       </h2>
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-[2fr,1fr] gap-6">
       <div className="space-y-4">
         <SearchableSelect
-          label="Select Host"
-          id="host-select"
-          options={filteredHosts}
-          value={selectedHost ? selectedHost.id : ''}
-          onSelect={onSelectHost}
+          label="Select User"
+          id="user-select"
+          options={filteredUsers}
+          value={selectedUser ? selectedUser.id : ''}
+          onSelect={onSelectUser}
           isSearching={isSearching}
-          searchValue={hostSearch}
+          searchValue={userSearch}
           onSearchChange={onSearchChange}
         />
       </div>
@@ -222,16 +222,16 @@ const HostRechargeSection = ({
 
     <div className="mt-6 p-4 bg-gray-900/30 rounded-lg border border-gray-800/50">
       <div className="text-sm text-gray-400 mb-2">
-        Available Hosts: <span className="text-white font-medium">{hosts.length}</span>
+        Available Users: <span className="text-white font-medium">{users.length}</span>
       </div>
       <div className="space-y-1">
-        {hosts.slice(0, 3).map((host) => (
+        {users.slice(0, 3).map((user) => (
           <div
-            key={host.id}
+            key={user.id}
             className="text-xs text-gray-500 flex items-center gap-2"
           >
             <span className="w-2 h-2 rounded-full bg-[#F72585]/50"></span>
-            <span>{host.name || host.username || `Host #${host.id}`}</span>
+            <span>{user.name || user.username || `User #${user.id}`}</span>
           </div>
         ))}
       </div>

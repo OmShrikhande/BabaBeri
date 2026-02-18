@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import API_CONFIG, { DEFAULT_HEADERS, TOKEN_CONFIG } from '../../config/api';
+import authService from '../../services/services';
 
 // Shared utilities -----------------------------------------------------------
 const getStoredToken = () => sessionStorage.getItem(TOKEN_CONFIG.STORAGE_KEY) || localStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
@@ -23,13 +24,13 @@ const buildAuthHeaders = (token) => (
     : DEFAULT_HEADERS
 );
 
-// Hosts ---------------------------------------------------------------------
-export const useHostData = ({ addToast }) => {
-  const [hosts, setHosts] = useState([]);
+// Users ---------------------------------------------------------------------
+export const useUserData = ({ addToast }) => {
+  const [users, setUsers] = useState([]);
   const [isRecharging, setIsRecharging] = useState(false);
-  const [selectedHost, setSelectedHost] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [rechargeAmount, setRechargeAmount] = useState('');
-  const [hostSearch, setHostSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [token, setToken] = useState(() => getStoredToken());
 
@@ -46,84 +47,62 @@ export const useHostData = ({ addToast }) => {
   const userCode = deriveUserCode(userInfo);
 
   useEffect(() => {
-    if (!userCode) {
-      addToast('error', 'Missing UserCode for active host lookup');
-      return;
-    }
-
     let isMounted = true;
 
-    async function fetchHosts() {
+    async function fetchUsers() {
       try {
-        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ACTIVE_HOSTS}?${new URLSearchParams({ UserCode: userCode }).toString()}`;
-        const response = await fetch(url, { method: 'PUT', headers });
-        if (!response.ok) {
-          throw new Error(`Failed: ${response.status}`);
-        }
-        const data = await response.json();
-        const rawHosts = Array.isArray(data) ? data : data.hosts || [];
-        const normalized = rawHosts.map((host) => ({
-          ...host,
-          id:
-            host.id ||
-            host._id ||
-            host.hostId ||
-            host.userId ||
-            String(host.id || host._id || host.hostId || host.userId || '')
-        }));
-        if (isMounted) {
-          setHosts(normalized);
+        const result = await authService.getAllUsers();
+
+        if (result.success && isMounted) {
+          setUsers(result.data);
+        } else {
+          console.error('Fetch users error:', result.error);
+          if (isMounted) {
+            addToast('error', result.error || 'Error fetching users');
+          }
         }
       } catch (error) {
-        console.error('Fetch hosts error:', error);
+        console.error('Fetch users error:', error);
         if (isMounted) {
-          addToast('error', 'Error fetching hosts');
+          addToast('error', 'Error fetching users');
         }
       }
     }
 
-    fetchHosts();
+    fetchUsers();
 
     return () => {
       isMounted = false;
     };
-  }, [addToast, headers, userCode]);
+  }, [addToast]);
 
   useEffect(() => {
-    if (!hostSearch) return undefined;
+    if (!userSearch) return undefined;
 
     const controller = new AbortController();
     const timeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const url = `${API_CONFIG.BASE_URL}/auth/user/getallhost?role=HOST${hostSearch ? `&search=${encodeURIComponent(hostSearch)}` : ''}`;
-        const response = await fetch(url, {
-          method: 'GET',
-          headers,
-          signal: controller.signal
-        });
+        const result = await authService.getAllUsers();
 
-        if (!response.ok) {
-          throw new Error('Search hosts failed');
+        if (result.success) {
+          // Filter users based on search
+          const searchLower = userSearch.toLowerCase();
+          const filtered = result.data.filter((user) => (
+            String(user.id).includes(searchLower) ||
+            (user.name && user.name.toLowerCase().includes(searchLower)) ||
+            (user.username && user.username.toLowerCase().includes(searchLower)) ||
+            (user.code && user.code.toLowerCase().includes(searchLower))
+          ));
+          setUsers(filtered);
+        } else {
+          console.error('User search error:', result.error);
+          addToast('error', result.error || 'User search failed');
         }
-
-        const data = await response.json();
-        const raw = Array.isArray(data) ? data : data.hosts || data.users || [];
-        const normalized = raw.map((host) => ({
-          ...host,
-          id:
-            host.id ||
-            host._id ||
-            host.hostId ||
-            host.userId ||
-            String(host.id || host._id || host.hostId || host.userId || '')
-        }));
-
-        setHosts(normalized);
       } catch (error) {
         if (error.name !== 'AbortError') {
-          console.error('Host search error:', error);
-          addToast('error', 'Host search failed');
+          console.error('User search error:', error);
+          addToast('error', 'User search failed');
         }
       } finally {
         setIsSearching(false);
@@ -134,36 +113,38 @@ export const useHostData = ({ addToast }) => {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [headers, hostSearch, addToast]);
+  }, [userSearch, addToast]);
 
-  
-  const filteredHosts = useMemo(() => {
-    const searchLower = hostSearch.toLowerCase();
-    return hosts.filter((host) => (
-      String(host.id).includes(searchLower) ||
-      (host.name && host.name.toLowerCase().includes(searchLower)) ||
-      (host.username && host.username.toLowerCase().includes(searchLower))
+  const filteredUsers = useMemo(() => {
+    if (!userSearch) return users;
+
+    const searchLower = userSearch.toLowerCase();
+    return users.filter((user) => (
+      String(user.id).includes(searchLower) ||
+      (user.name && user.name.toLowerCase().includes(searchLower)) ||
+      (user.username && user.username.toLowerCase().includes(searchLower)) ||
+      (user.code && user.code.toLowerCase().includes(searchLower))
     ));
-  }, [hosts, hostSearch]);
+  }, [users, userSearch]);
 
   return {
     state: {
-      hosts,
-      filteredHosts,
-      selectedHost,
+      users,
+      filteredUsers,
+      selectedUser,
       rechargeAmount,
       isRecharging,
-      hostSearch,
+      userSearch,
       isSearching,
       headers,
       userCode
     },
     actions: {
-      setHosts,
-      setSelectedHost,
+      setUsers,
+      setSelectedUser,
       setRechargeAmount,
       setIsRecharging,
-      setHostSearch,
+      setUserSearch,
       setIsSearching
     }
   };

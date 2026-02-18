@@ -382,22 +382,68 @@ class AuthService {
       try {
         const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
         const raw = await response.text().catch(() => '');
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch goals: ${response.status} ${response.statusText}\n${raw}`);
         }
-        
+
         let data = null;
         try {
           data = JSON.parse(raw);
         } catch {
           throw new Error('Invalid response format');
         }
-        
+
         return { success: true, data: data };
       } catch (error) {
         console.error('Get all goals error:', error);
         return { success: false, error: error.message || 'Failed to fetch goals.' };
+      }
+    }
+
+    // Get all users (Super Admin only)
+    async getAllUsers() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ALL_USERS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch all users: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+
+        // Return the data directly if it's an array, or wrap it if it's inside a property
+        const rawList = Array.isArray(data) ? data : (data.data || data.users || []);
+
+        // Map API response to component expected format
+        const usersList = rawList.map(item => {
+          return {
+            ...item,
+            id: item.id || item._id,
+            name: item.name || item.username || item.fullName || 'Unknown',
+            username: item.username || item.name || item.fullName || 'Unknown',
+            code: item.code || item.userCode || item.usercode || String(item.id || item._id),
+            email: item.email || '',
+            role: item.role || item.userType || item.accountType || 'user',
+            status: item.status || 'active'
+          };
+        });
+
+        return { success: true, data: usersList };
+      } catch (error) {
+        console.error('Get all users error:', error);
+        return { success: false, error: error.message || 'Failed to fetch all users.' };
       }
     }
 

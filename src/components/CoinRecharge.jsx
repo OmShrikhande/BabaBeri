@@ -3,9 +3,9 @@ import API_CONFIG from '../config/api';
 import useToast from '../hooks/useToast';
 import ToastList from './ToastList';
 
-const COINS_PLUS_URL = (() => {
+const RECHARGE_URL = (() => {
   const baseUrl = API_CONFIG.BASE_URL ?? import.meta.env.VITE_API_BASE_URL ?? '';
-  return `${baseUrl}${API_CONFIG.ENDPOINTS.COINS_PLUS}`;
+  return `${baseUrl}${API_CONFIG.ENDPOINTS.RECHARGE_MANUAL}`;
 })();
 import CoinRechargeHeader from './CoinRecharge/CoinRechargeHeader';
 import HostRechargeSection from './CoinRecharge/HostRechargeSection';
@@ -15,7 +15,7 @@ import HistoryTab from './CoinRecharge/Tabs/HistoryTab';
 import OfferModal from './CoinRecharge/Modals/OfferModal';
 import PlanModal from './CoinRecharge/Modals/PlanModal';
 import {
-  useHostData,
+  useUserData,
   useOfferManagement,
   usePlanManagement,
   useRechargeHistory
@@ -41,9 +41,9 @@ const CoinRecharge = () => {
   const { toasts, addToast, removeToast } = useToast();
 
   const {
-    state: hostState,
-    actions: hostActions
-  } = useHostData({ addToast });
+    state: userState,
+    actions: userActions
+  } = useUserData({ addToast });
 
   const {
     state: offerState,
@@ -59,22 +59,22 @@ const CoinRecharge = () => {
     history,
     isLoadingHistory,
     loadHistory
-  } = useRechargeHistory({ headers: hostState.headers, addToast });
+  } = useRechargeHistory({ headers: userState.headers, addToast });
   const [activeTab, setActiveTab] = useState('offers');
 
 
   const handleRecharge = useCallback(async () => {
-    if (!hostState.selectedHost || !hostState.rechargeAmount) {
-      addToast('error', 'Select host and enter coin amount');
+    if (!userState.selectedUser || !userState.rechargeAmount) {
+      addToast('error', 'Select user and enter coin amount');
       return;
     }
 
-    hostActions.setIsRecharging(true);
+    userActions.setIsRecharging(true);
     try {
-      const url = `${COINS_PLUS_URL}?id=${hostState.selectedHost.id}&coins=${hostState.rechargeAmount}`;
+      const url = `${RECHARGE_URL}?code=${userState.selectedUser.code}&coins=${parseInt(userState.rechargeAmount, 10)}`;
       const response = await fetch(url, {
         method: 'PUT',
-        headers: hostState.headers
+        headers: userState.headers
       });
 
       if (!response.ok) {
@@ -83,38 +83,38 @@ const CoinRecharge = () => {
       }
 
       addToast('success', 'Coins recharged successfully!');
-      hostActions.setRechargeAmount('');
-      hostActions.setSelectedHost(null);
+      userActions.setRechargeAmount('');
+      userActions.setSelectedUser(null);
     } catch (error) {
       console.error('Recharge coins error:', error);
       addToast('error', 'Recharge failed');
     } finally {
-      hostActions.setIsRecharging(false);
+      userActions.setIsRecharging(false);
     }
-  }, [hostState.selectedHost, hostState.rechargeAmount, hostState.headers, hostActions, addToast]);
+  }, [userState.selectedUser, userState.rechargeAmount, userState.headers, userActions, addToast]);
 
   return (
     <div className="min-h-screen bg-[#121212] text-white p-6">
       <CoinRechargeHeader />
 
       <HostRechargeSection
-        hosts={hostState.hosts}
-        filteredHosts={hostState.filteredHosts}
-        selectedHost={hostState.selectedHost}
-        rechargeAmount={hostState.rechargeAmount}
-        hostSearch={hostState.hostSearch}
-        isSearching={hostState.isSearching}
-        isRecharging={hostState.isRecharging}
-        onSearchChange={(event) => hostActions.setHostSearch(event.target.value)}
-        onSelectHost={(event) => {
+        users={userState.users}
+        filteredUsers={userState.filteredUsers}
+        selectedUser={userState.selectedUser}
+        rechargeAmount={userState.rechargeAmount}
+        userSearch={userState.userSearch}
+        isSearching={userState.isSearching}
+        isRecharging={userState.isRecharging}
+        onSearchChange={(event) => userActions.setUserSearch(event.target.value)}
+        onSelectUser={(event) => {
           if (event.option) {
-            hostActions.setSelectedHost(event.option);
+            userActions.setSelectedUser(event.option);
             return;
           }
-          const selected = hostState.filteredHosts.find((host) => String(host.id) === event.target.value);
-          hostActions.setSelectedHost(selected || null);
+          const selected = userState.filteredUsers.find((user) => String(user.id) === event.target.value);
+          userActions.setSelectedUser(selected || null);
         }}
-        onAmountChange={(event) => hostActions.setRechargeAmount(event.target.value)}
+        onAmountChange={(event) => userActions.setRechargeAmount(event.target.value)}
         onRecharge={handleRecharge}
       />
 

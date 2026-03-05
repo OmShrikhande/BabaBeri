@@ -1,5 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { APP_CONFIG } from './config/api';
+import { AuthProvider } from './context/AuthContext';
+
+// Guards
+import ProtectedRoute from './components/guards/ProtectedRoute';
+import PublicRoute from './components/guards/PublicRoute';
+
+// Pages
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import OwnerAreaPage from './pages/OwnerAreaPage';
+
+// Layouts & Goals
+import AdminLayout from './layouts/AdminLayout';
+import AdminGoals from './pages/admin/AdminGoals';
+import MasterAgencyLayout from './layouts/MasterAgencyLayout';
+import MasterAgencyGoals from './pages/masteragency/MasterAgencyGoals';
+import AgencyLayout from './layouts/AgencyLayout';
+import AgencyGoals from './pages/agency/AgencyGoals';
+
+// Existing Components
 import Dashboard from './components/Dashboard';
 import HostVerification from './components/HostVerification';
 import Agencies from './components/Agencies';
@@ -14,12 +35,10 @@ import Ranking from './components/Ranking';
 import CoinRecharge from './components/CoinRecharge';
 import DiamondsCashout from './components/DiamondsCashout';
 import Wallet from './components/CoinRecharge/Wallet';
-import Header from './components/Header';
 import Profile from './components/Profile';
-import Login from './components/Login';
 import AuthTest from './components/AuthTest';
 import MasterAgency from './components/MasterAgency';
-import { default as HostDetails } from './components/HostDetails';
+import HostDetails from './components/HostDetails';
 import RoleStagesPage from './components/RoleStages/RoleStagesPage';
 import UserActivation from './components/UserActivation';
 import AdminDashboard from './components/AdminDashboard';
@@ -29,442 +48,126 @@ import AgencyDashboard from './components/AgencyDashboard';
 import VipLevels from './components/VipLevels';
 import ReportsBan from './components/ReportsBan';
 import RolePercentage from './components/RolePercentage';
-import authService from './services/authService';
 import Createlayout from './components/Create/Createlayout';
 import GiftsAndBannersLayout from './components/Gifts_and_Banner';
-import { canAccessRoute, getDefaultRouteForUser } from './utils/roleBasedAccess';
-
-const getPathForUserType = (userType) => {
-  if (!userType) {
-    return '/';
-  }
-  if (userType === 'super-admin') {
-    return '/';
-  }
-  if (userType === 'admin') {
-    return '/admin';
-  }
-  if (userType === 'master-agency') {
-    return '/master-agency';
-  }
-  if (userType === 'agency') {
-    return '/agency';
-  }
-  return '/';
-};
 
 function App() {
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  
-  // App state
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeRoute, setActiveRoute] = useState('dashboard');
-  const [previousRoute, setPreviousRoute] = useState(null);
-  const [selectedAgencyId, setSelectedAgencyId] = useState(null);
-  const [selectedSubAdminId, setSelectedSubAdminId] = useState(null); // legacy ID usage
-  const [selectedSubAdmin, setSelectedSubAdmin] = useState(null); // { id, code, name, subUsers }
-  const [selectedMasterAgencyId, setSelectedMasterAgencyId] = useState(null);
-  const [selectedAgencyHostId, setSelectedAgencyHostId] = useState(null);
-  const [agencies, setAgencies] = useState([]);
-  const [agenciesLoading, setAgenciesLoading] = useState(true);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (!isAuthenticated) {
-      if (window.location.pathname !== '/') {
-        window.history.replaceState(null, '', '/');
-      }
-      return;
-    }
-
-    const targetPath = getPathForUserType(currentUser?.userType);
-    if (targetPath && window.location.pathname !== targetPath) {
-      window.history.replaceState(null, '', targetPath);
-    }
-  }, [isAuthenticated, activeRoute, currentUser]);
-
-  // Check for existing authentication on app load
-  useEffect(() => {
-    const token = authService.getToken();
-    const userInfo = authService.getUserInfo();
-    
-    if (token && !authService.isTokenExpired(token)) {
-      // User is already authenticated
-      const type = authService.getUserType();
-      const user = {
-        username: userInfo?.username || userInfo?.email || 'User',
-        userType: type, // already normalized in service
-        loginTime: userInfo?.loginTime || new Date().toISOString(),
-        token: token,
-        isDemo: false
-      };
-      setCurrentUser(user);
-      setIsAuthenticated(true);
-
-      // Route to appropriate dashboard based on user type
-      if (type === 'admin') {
-        setActiveRoute('admin-dashboard');
-      } else if (type === 'master-agency') {
-        setActiveRoute('master-agency-dashboard');
-      } else if (type === 'agency') {
-        setActiveRoute('agency-dashboard');
-      }
-    } else if (token) {
-      // Token exists but is expired
-      authService.logout();
-    }
-  }, []);
-
-  // Load agencies data when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadAgenciesData();
-    }
-  }, [isAuthenticated]);
-
-  const loadAgenciesData = async () => {
-    setAgenciesLoading(true);
-    try {
-      await authService.ensureUserProfileCached();
-
-      const response = await authService.getActiveHosts();
-
-      if (response.success) {
-        // Transform API data: group hosts by owner (agency code)
-        const hostsByAgency = {};
-
-        if (Array.isArray(response.data)) {
-          response.data.forEach(host => {
-            const agencyCode = host.owner || 'Unknown';
-            if (!hostsByAgency[agencyCode]) {
-              hostsByAgency[agencyCode] = [];
-            }
-            hostsByAgency[agencyCode].push({
-              id: `H${host.id}`,
-              name: host.name,
-              earnings: host.diamond || 0, // Assuming diamond as earnings
-              redeemed: 0 // Not provided in API
-            });
-          });
-        }
-
-        // Create agency objects from grouped hosts
-        const transformedAgencies = Object.keys(hostsByAgency).map((agencyCode, index) => {
-          const hosts = hostsByAgency[agencyCode];
-          const totalEarnings = hosts.reduce((sum, host) => sum + host.earnings, 0);
-
-          // Use mock agency data structure, but with real host data
-          return {
-            id: agencyCode,
-            name: `Agency ${agencyCode}`, // Default name since not provided
-            totalAgencies: hosts.length,
-            goals: {
-              current: 1,
-              total: 2,
-              progress: 50,
-              moneyEarned: totalEarnings,
-              moneyTarget: 10000
-            },
-            earnings: {
-              lastMonth: Math.floor(totalEarnings * 0.8),
-              thisMonth: totalEarnings,
-              redeemDiamonds: Math.floor(totalEarnings * 0.1)
-            },
-            tier: 'Royal Silver', // Default tier
-            revenueShare: 10,
-            hosts: hosts
-          };
-        });
-
-        setAgencies(transformedAgencies);
-      } else {
-        console.error('Failed to fetch active hosts:', response.error);
-        // Fallback to empty array or handle error
-        setAgencies([]);
-      }
-    } catch (error) {
-      console.error('Error loading agencies:', error);
-      setAgencies([]);
-    } finally {
-      setAgenciesLoading(false);
-    }
-  };
-
-  // Authentication handlers
-  const handleLogin = (loginData) => {
-    const userType = authService.getUserType();
-    const userData = {
-      username: loginData.username,
-      userType: userType, // ensure normalized type from service
-      loginTime: new Date().toISOString(),
-      token: loginData.token,
-      isDemo: loginData.isDemo || false,
-      apiData: loginData.apiData
-    };
-
-    // Store additional user info for non-demo logins (avoid overwriting server profile if it exists)
-    if (!loginData.isDemo && loginData.apiData) {
-      const existingProfile = authService.getUserInfo() || {};
-      const merged = {
-        ...existingProfile,
-        username: existingProfile.username || loginData.username,
-        email: existingProfile.email || loginData.username,
-        loginTime: existingProfile.loginTime || userData.loginTime,
-        ...loginData.apiData
-      };
-      localStorage.setItem('userInfo', JSON.stringify(merged));
-    }
-
-    setCurrentUser(userData);
-    setIsAuthenticated(true);
-
-    // Route to appropriate dashboard based on user type
-    if (userType === 'admin') {
-      setActiveRoute('admin-dashboard');
-    } else if (userType === 'master-agency') {
-      setActiveRoute('master-agency-dashboard');
-    } else if (userType === 'agency') {
-      setActiveRoute('agency-dashboard');
-    }
-  };
-
-  const handleLogout = () => {
-    // Clear authentication data
-    authService.logout();
-    
-    // Reset app state
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    setActiveRoute('dashboard');
-    setSidebarOpen(false);
-    
-    // Reset navigation state
-    setSelectedAgencyId(null);
-    setSelectedSubAdminId(null);
-    setSelectedMasterAgencyId(null);
-    setSelectedAgencyHostId(null);
-  };
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleNavigation = (route) => {
-    // Check if user can access this route
-    if (!canAccessRoute(route, currentUser?.userType)) {
-      console.warn(`Access denied to route: ${route} for user type: ${currentUser?.userType}`);
-      return;
-    }
-
-    setPreviousRoute(activeRoute);
-    setActiveRoute(route);
-    setSidebarOpen(false); // Close sidebar on mobile after navigation
-    // Reset selections when navigating away
-    if (route !== 'agencies') {
-      setSelectedAgencyId(null);
-    }
-    if (route !== 'sub-admins') {
-      setSelectedSubAdminId(null);
-      setSelectedSubAdmin(null);
-      setSelectedMasterAgencyId(null);
-      setSelectedAgencyHostId(null);
-    }
-  };
-
-  const handleNavigateToAgencyDetail = (agencyId) => {
-    setSelectedAgencyId(agencyId);
-  };
-
-  const handleBackToAgencies = () => {
-    setSelectedAgencyId(null);
-  };
-
-  // Sub-admin navigation handlers
-  const handleNavigateToSubAdminDetail = (subAdmin) => {
-    // subAdmin: { id, code, name, subUsers }
-    setSelectedSubAdminId(subAdmin?.id);
-    setSelectedSubAdmin(subAdmin);
-    setSelectedMasterAgencyId(null); // Reset master agency when selecting sub admin
-  };
-
-  const handleNavigateToMasterAgency = (subAdminId, masterAgencyId) => {
-    setSelectedSubAdminId(subAdminId);
-    setSelectedMasterAgencyId(masterAgencyId);
-    setSelectedAgencyHostId(null); // Reset agency host when selecting master agency
-  };
-
-  const handleNavigateToAgencyHost = (subAdminId, masterAgencyId, agencyId) => {
-    setSelectedSubAdminId(subAdminId);
-    setSelectedMasterAgencyId(masterAgencyId);
-    setSelectedAgencyHostId(agencyId);
-  };
-
-  const handleBackToSubAdmins = () => {
-    setSelectedSubAdminId(null);
-    setSelectedSubAdmin(null);
-    setSelectedMasterAgencyId(null);
-    setSelectedAgencyHostId(null);
-  };
-
-  const handleBackToSubAdminDetail = () => {
-    setSelectedMasterAgencyId(null);
-    setSelectedAgencyHostId(null);
-  };
-
-  const handleBackToMasterAgency = () => {
-    setSelectedAgencyHostId(null);
-  };
-
-  const renderMainContent = () => {
-    // Check if user can access the current route
-    if (!canAccessRoute(activeRoute, currentUser?.userType)) {
-      // Redirect to default route for user type
-      const defaultRoute = getDefaultRouteForUser(currentUser?.userType);
-      if (activeRoute !== defaultRoute) {
-        setActiveRoute(defaultRoute);
-        return null; // Will re-render with correct route
-      }
-    }
-
-    switch (activeRoute) {
-      case 'admin-dashboard':
-        return <AdminDashboard />;
-      case 'master-agency-dashboard':
-        return <MasterAgencyDashboard />;
-      case 'create-agency':
-        return (
-          <div className="p-6">
-            <MasterAgencyCreateAgency />
-          </div>
-        );
-      case 'agency-dashboard':
-        return <AgencyDashboard />;
-      case 'host-verification':
-        return <HostVerification />;
-      case 'agencies':
-        if (selectedAgencyId) {
-          return (
-            <AgencyDetail 
-              agencyId={selectedAgencyId} 
-              onBack={handleBackToAgencies} 
-            />
-          );
-        }
-        return <Agencies onNavigateToDetail={handleNavigateToAgencyDetail} />;
-      case 'sub-admins':
-        if (selectedAgencyHostId && selectedMasterAgencyId && selectedSubAdminId) {
-          return (
-            <AgencyHostDetail
-              subAdminId={selectedSubAdminId}
-              masterAgencyId={selectedMasterAgencyId}
-              agencyId={selectedAgencyHostId}
-              onBack={handleBackToMasterAgency}
-            />
-          );
-        }
-        if (selectedMasterAgencyId && selectedSubAdminId) {
-          return (
-            <MasterAgencyDetail
-              subAdminId={selectedSubAdminId}
-              masterAgencyId={selectedMasterAgencyId}
-              onBack={handleBackToSubAdminDetail}
-              onNavigateToAgencyHost={handleNavigateToAgencyHost}
-            />
-          );
-        }
-        if (selectedSubAdmin) {
-          return (
-            <SubAdminDetail
-              subAdminId={selectedSubAdmin?.id}
-              adminCode={selectedSubAdmin?.code}
-              subAdminName={selectedSubAdmin?.name}
-              subUsers={selectedSubAdmin?.subUsers || []}
-              onBack={handleBackToSubAdmins}
-              onNavigateToMasterAgency={handleNavigateToMasterAgency}
-              currentUser={currentUser}
-            />
-          );
-        }
-        return <SubAdmins onNavigateToDetail={handleNavigateToSubAdminDetail} />;
-      case 'master-agency':
-        return <MasterAgency onNavigateToDetail={handleNavigateToMasterAgency} currentUser={currentUser} />;
-      case 'live-monitoring':
-        return <LiveMonitoring />;
-      case 'ranking':
-        return <Ranking />;
-      case 'coin-recharge':
-        return <CoinRecharge currentUser={currentUser} onNavigate={handleNavigation} />;
-      case 'coin-recharge-wallet':
-        return <Wallet onBack={() => handleNavigation('coin-recharge')} currentUser={currentUser} />;
-      case 'diamonds-wallet':
-        return <DiamondsCashout onNavigateToWallet={() => handleNavigation('wallet')} onNavigateToDiamondsWallet={() => handleNavigation('wallet')} />;
-      case 'wallet':
-        return <Wallet onBack={() => handleNavigation('diamonds-wallet')} />;
-      case 'role-stages':
-        return <RoleStagesPage currentUser={currentUser} />;
-      case 'block-user':
-        return <BlockUsers />;
-      case 'user-activation':
-        return <UserActivation />;
-      case 'users-details':
-      case 'user-details':
-        return <HostDetails />;
-      case 'gifts-banners':
-        return <GiftsAndBannersLayout />;
-      case 'vip-levels':
-        return <VipLevels />;
-      case 'reports-ban':
-        return <ReportsBan />;
-      case 'role-percentage':
-        return <RolePercentage />;
-      case 'auth-test':
-        return <AuthTest />;
-    case 'create':
-      return <Createlayout />;
-      case 'profile':
-        return <Profile currentUser={currentUser} onBack={() => handleNavigation(previousRoute || 'dashboard')} />;
-      case 'dashboard':
-      default:
-        return <Dashboard currentUser={currentUser} onLogout={handleLogout} onNavigate={handleNavigation} />;
-    }
-  };
-
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
-    <div className="flex h-screen bg-[#1A1A1A] overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
-        toggleSidebar={toggleSidebar}
-        activeRoute={activeRoute}
-        onNavigation={handleNavigation}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-      />
+    <AuthProvider>
+      <Routes>
+        {/* Public Routes */}
+      <Route element={<PublicRoute />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
+      </Route>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden main-content-area">
-        {/* Mobile Header */}
-        <Header 
-          toggleSidebar={toggleSidebar} 
-          currentUser={currentUser}
-          onLogout={handleLogout}
-          onProfileClick={() => handleNavigation('profile')}
-        />
+      {/* Owner / Super Admin Routes */}
+      <Route 
+        path={`/${APP_CONFIG.OWNER_SECRET_PATH}`} 
+        element={
+          <ProtectedRoute allowedRoles={['super-admin']}>
+            <OwnerAreaPage />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="move-create" element={<Createlayout />} />
+        <Route path="sub-admins" element={<SubAdmins />} />
+        <Route path="sub-admins/:adminCode" element={<SubAdminDetail />} />
+        <Route path="sub-admins/:adminCode/:masterAgencyId" element={<MasterAgencyDetail />} />
+        <Route path="sub-admins/:adminCode/:masterAgencyId/:agencyId" element={<AgencyHostDetail />} />
+        <Route path="master-agency" element={<MasterAgency />} />
+        <Route path="agencies" element={<Agencies />} />
+        <Route path="agencies/:agencyId" element={<AgencyDetail />} />
+        <Route path="host-verification" element={<HostVerification />} />
+        <Route path="verified-hosts" element={<HostDetails />} />
+        <Route path="live-monitoring" element={<LiveMonitoring />} />
+        <Route path="coin-recharge" element={<CoinRecharge />} />
+        <Route path="diamonds-wallet" element={<DiamondsCashout />} />
+        <Route path="ranking" element={<Ranking />} />
+        <Route path="role-stages" element={<RoleStagesPage />} />
+        <Route path="user-details" element={<HostDetails />} />
+        <Route path="vip-levels" element={<VipLevels />} />
+        <Route path="gifts-banners" element={<GiftsAndBannersLayout />} />
+        <Route path="block-users" element={<BlockUsers />} />
+        <Route path="user-activation" element={<UserActivation />} />
+        <Route path="reports-ban" element={<ReportsBan />} />
+        <Route path="role-percentage" element={<RolePercentage />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="auth-test" element={<AuthTest />} />
+        <Route path="wallet" element={<Wallet />} />
+      </Route>
 
-        {/* Dynamic Content */}
-        {renderMainContent()}
-      </div>
-    </div>
+      {/* Admin Routes */}
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={
+          <div className="p-6">
+            <AdminGoals />
+            <AdminDashboard />
+          </div>
+        } />
+        <Route path="move-create" element={<Createlayout />} />
+        <Route path="master-agency" element={<MasterAgency />} />
+        <Route path="master-agency/:masterAgencyId" element={<MasterAgencyDetail />} />
+        <Route path="agencies" element={<Agencies />} />
+        <Route path="agencies/:agencyId" element={<AgencyDetail />} />
+        <Route path="host-details" element={<HostDetails />} />
+        <Route path="coin-recharge" element={<CoinRecharge />} />
+        <Route path="block-users" element={<BlockUsers />} />
+      </Route>
+
+      {/* Master Agency Routes */}
+      <Route 
+        path="/master-agency" 
+        element={
+          <ProtectedRoute allowedRoles={['master-agency']}>
+            <MasterAgencyLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={
+          <div className="p-6">
+            <MasterAgencyGoals />
+            <MasterAgencyDashboard />
+          </div>
+        } />
+        <Route path="create-agency" element={<div className="p-6"><MasterAgencyCreateAgency /></div>} />
+        <Route path="agencies" element={<Agencies />} />
+        <Route path="agencies/:agencyId" element={<AgencyDetail />} />
+        <Route path="host-details" element={<HostDetails />} />
+        <Route path="coin-recharge" element={<CoinRecharge />} />
+      </Route>
+
+      {/* Agency Routes */}
+      <Route 
+        path="/agency" 
+        element={
+          <ProtectedRoute allowedRoles={['agency']}>
+            <AgencyLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={
+          <div className="p-6">
+            <AgencyGoals />
+            <AgencyDashboard />
+          </div>
+        } />
+        <Route path="host-details" element={<HostDetails />} />
+        <Route path="coin-recharge" element={<CoinRecharge />} />
+      </Route>
+
+      {/* Catch-all redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 

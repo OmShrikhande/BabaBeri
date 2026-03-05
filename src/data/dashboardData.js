@@ -121,33 +121,23 @@ export const supporterCardsData = {
 };
 
 export const navigationItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
-  { id: 'master-agency-dashboard', label: 'Progress', icon: 'LayoutDashboard' },
-  { id: 'create-agency', label: 'Create Agency', icon: 'UserRoundPlus' },
-  // Quick-create action for the UI
-  { id: 'create', label: 'Move and Create', icon: 'UserRoundPlus' },
-  { id: 'sub-admins', label: 'Admin', icon: 'Users' },
-  { id: 'master-agency', label: 'Master Agency', icon: 'Building' },
-  { id: 'agencies', label: 'Agencies', icon: 'Building2' },
-  { id: 'host-verification', label: 'Host Verification', icon: 'Shield' },
-  { id: 'users-details', label: 'Verified Host', icon: 'UserCheck' },
-  { id: 'live-monitoring', label: 'Live Monitoring', icon: 'Eye' },
-  // { id: 'vs-monitoring', label: 'VS Monitoring', icon: 'Sword' }, // New entry
-  // { id: 'party-monitoring', label: 'Party Monitoring', icon: 'Mic' }, // New entry
-  { id: 'coin-recharge', label: 'Coin Recharge', icon: 'Coins' },
-  { id: 'diamonds-wallet', label: 'Diamonds Cashout', icon: 'Gem' },
-  { id: 'ranking', label: 'Rankings', icon: 'Trophy' },
-  { id: 'role-stages', label: 'Goals & Stages', icon: 'Shield' },
-  // { id: 'analytics', label: 'Analytics', icon: 'BarChart' },
-  { id: 'user-details', label: 'User Details', icon: 'Users' }, // Slight rename for clarity
-  { id: 'vip-levels', label: 'VIP / Levels', icon: 'Crown' },
-  { id: 'gifts-banners', label: 'Gifts / Banners', icon: 'Gift' },
-  // { id: 'recordings', label: 'Recordings', icon: 'Video' },
-  { id: 'block-user', label: 'Block Users', icon: 'UserX' },
-  { id: 'user-activation', label: 'Coinseller Activation', icon: 'Shield' },
-  { id: 'reports-ban', label: 'Reports / Ban Request', icon: 'Flag' },
-  { id: 'role-percentage', label: 'Role Percentages', icon: 'Percent' },
-  // { id: 'ai-warnings', label: 'AI Warnings', icon: 'AlertTriangle' }, // Renamed from "All Warnings"
-  // { id: 'songs-library', label: 'Songs Library', icon: 'Music' },
-  // { id: 'developer-settings', label: 'Developer Settings', icon: 'Settings' }
+  { id: 'dashboard', label: 'Dashboard', icon: 'LayoutDashboard', path: '/ownerarea' },
+  { id: 'create', label: 'Move and Create', icon: 'UserRoundPlus', path: '/ownerarea/move-create' },
+  { id: 'sub-admins', label: 'Admin', icon: 'Users', path: '/ownerarea/sub-admins' },
+  { id: 'master-agency', label: 'Master Agency', icon: 'Building', path: '/ownerarea/master-agency' },
+  { id: 'agencies', label: 'Agencies', icon: 'Building2', path: '/ownerarea/agencies' },
+  { id: 'users-details', label: 'Host Details', icon: 'UserCheck', path: '/ownerarea/verified-hosts' },
+  { id: 'host-verification', label: 'Host Verification', icon: 'Shield', path: '/ownerarea/host-verification' },
+  { id: 'live-monitoring', label: 'Live Monitoring', icon: 'Eye', path: '/ownerarea/live-monitoring' },
+  { id: 'coin-recharge', label: 'Coin Recharge', icon: 'Coins', path: '/ownerarea/coin-recharge' },
+  { id: 'diamonds-wallet', label: 'Diamonds Cashout', icon: 'Gem', path: '/ownerarea/diamonds-wallet' },
+  { id: 'ranking', label: 'Rankings', icon: 'Trophy', path: '/ownerarea/ranking' },
+  { id: 'role-stages', label: 'Goals & Stages', icon: 'Shield', path: '/ownerarea/role-stages' },
+  { id: 'user-details', label: 'User Details', icon: 'Users', path: '/ownerarea/user-details' },
+  { id: 'vip-levels', label: 'VIP / Levels', icon: 'Crown', path: '/ownerarea/vip-levels' },
+  { id: 'gifts-banners', label: 'Gifts / Banners', icon: 'Gift', path: '/ownerarea/gifts-banners' },
+  { id: 'block-user', label: 'Block Users', icon: 'UserX', path: '/ownerarea/block-users' },
+  { id: 'user-activation', label: 'Coinseller Activation', icon: 'Shield', path: '/ownerarea/user-activation' },
+  { id: 'reports-ban', label: 'Reports / Ban Request', icon: 'Flag', path: '/ownerarea/reports-ban' },
+  { id: 'role-percentage', label: 'Role Percentages', icon: 'Percent', path: '/ownerarea/role-percentage' },
 ];

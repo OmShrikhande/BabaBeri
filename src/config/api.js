@@ -116,4 +116,10 @@ export const USER_TYPES = {
   MASTER_AGENCY: 'master-agency'
 };
 
+export const APP_CONFIG = {
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'ProxStream',
+  APP_URL: import.meta.env.VITE_APP_URL || 'https://proxstream.com',
+  OWNER_SECRET_PATH: import.meta.env.VITE_OWNER_SECRET_PATH || 'ownerarea',
+};
+
 export default API_CONFIG;

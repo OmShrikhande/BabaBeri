@@ -4,9 +4,11 @@ import { CardSkeleton, TableSkeleton } from './LoadingSkeleton';
 import EntityMovementModal from './EntityMovementModal';
 import authService from '../services/authService';
 import AgencyDetail from './AgencyDetail';
+import { useAuth } from '../context/AuthContext';
 import { a } from 'framer-motion/client';
 
-const Agencies = ({ onNavigateToDetail, currentUser, agencies: propAgencies = [], loading: propLoading = false }) => {
+const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: propLoading = false }) => {
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTier, setFilterTier] = useState('all');
   const [showMovementModal, setShowMovementModal] = useState(false);

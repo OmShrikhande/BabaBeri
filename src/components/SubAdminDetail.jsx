@@ -1,11 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X, Shield, Crown, Lock, Coins, TrendingUp, User } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
 // import authService from '../services/authService';
 
-const SubAdminDetail = ({ subAdminId, onBack, onNavigateToMasterAgency, currentUser, adminCode, subAdminName, subUsers = [] }) => {
+const SubAdminDetail = ({ currentUser, subAdminName, subUsers = [] }) => {
+  const { adminCode } = useParams();
+  const subAdminId = adminCode;
+  const navigate = useNavigate();
+  const onBack = () => navigate(-1);
+  const onNavigateToMasterAgency = (saId, maId) => {
+    navigate(`/ownerarea/sub-admins/${saId}/${maId}`);
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);

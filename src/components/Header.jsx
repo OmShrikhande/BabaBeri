@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, Bell, Search, User, LogOut, Crown, Shield } from 'lucide-react';
+import { Menu, Bell, Search, User, LogOut, Crown, Shield, ChevronRight } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
 import SuperAdminWallet from './SuperAdminWallet';
 
 const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
+  const location = useLocation();
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -19,13 +21,16 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const pathSegments = location.pathname.split('/').filter(p => p);
+
   return (
     <header 
       className="bg-[#1A1A1A] border-b border-gray-800 px-6 py-4 lg:hidden"
       role="banner"
     >
       <div className="flex items-center justify-between">
-        {/* Left side - Menu button and title */}
+        {/* Left side - Menu button and breadcrumbs */}
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleSidebar}
@@ -34,7 +39,23 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
           >
             <Menu className="w-6 h-6" />
           </button>
-          <h1 className="text-xl font-bold text-white">Dashboard</h1>
+          
+          <div className="hidden sm:flex items-center space-x-2 text-sm">
+            <Link to="/" className="text-gray-400 hover:text-white font-medium capitalize">
+              {pathSegments[0] || 'Home'}
+            </Link>
+            {pathSegments.length > 1 && (
+              <>
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+                <span className="text-white font-semibold capitalize">
+                  {pathSegments[1].replace('-', ' ')}
+                </span>
+              </>
+            )}
+          </div>
+          <h1 className="text-xl font-bold text-white sm:hidden capitalize">
+            {pathSegments[pathSegments.length - 1]?.replace('-', ' ') || 'Dashboard'}
+          </h1>
         </div>
 
         {/* Right side - Actions */}
@@ -84,7 +105,7 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
               <div className="absolute right-0 top-full mt-2 w-48 bg-[#1A1A1A] border border-gray-700 rounded-lg shadow-xl z-50">
                 <div className="p-3 border-b border-gray-700">
                   <p className="text-sm font-semibold text-white">{currentUser?.username}</p>
-                  <p className="text-xs text-gray-400 capitalize">{currentUser?.userType.replace('-', ' ')}</p>
+                  <p className="text-xs text-gray-400 capitalize">{currentUser?.userType?.replace('-', ' ')}</p>
                 </div>
                 <button
                   onClick={() => {

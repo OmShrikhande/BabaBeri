@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { ArrowLeft, X, AlertCircle, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import useToast from '../../hooks/useToast';
 import ToastList from '../ToastList';
 import WalletSummary from './WalletSummary';
@@ -10,7 +11,9 @@ import DiamondCreditsModal from '../DiamondsCashout/DiamondCreditsModal';
 import SuperAdminWallet from '../SuperAdminWallet';
 import authService from '../../services/authService';
 
-const Wallet = ({ onBack, currentUser }) => {
+const Wallet = ({ currentUser }) => {
+  const navigate = useNavigate();
+  const onBack = () => navigate(-1);
   const { toasts, addToast, removeToast } = useToast();
   const [componentError, setComponentError] = useState(null);
   const [showAddCoinsModal, setShowAddCoinsModal] = useState(false);

@@ -4,8 +4,10 @@ import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus, X, LayoutDashboar
 // import MasterAgencyForm from './MasterAgencyForm';
 import { normalizeUserType } from '../utils/roleBasedAccess';
 import authService from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 
-const MasterAgency = ({ onNavigateToDetail, currentUser }) => {
+const MasterAgency = ({ onNavigateToDetail }) => {
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);

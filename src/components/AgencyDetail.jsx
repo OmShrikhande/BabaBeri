@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, Eye, User, Building2, Diamond, TrendingUp, Coins, ChevronDown, Lock, Shield, Crown } from 'lucide-react';
 import { TableSkeleton } from './LoadingSkeleton';
 import authService from '../services/authService';
 
-const AgencyDetail = ({ agencyId, onBack }) => {
+const AgencyDetail = () => {
+  const { agencyId } = useParams();
+  const navigate = useNavigate();
+  const onBack = () => navigate(-1);
   const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

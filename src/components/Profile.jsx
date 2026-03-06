@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import authService from '../services/authService';
 import LoadingCard from './LoadingCard';
+import { useNavigate } from 'react-router-dom';
 
 // Small label/value row with optional icon. Responsive: stacks on mobile, 2/3 split on sm+
 const InfoRow = React.memo(({ label, value, icon: Icon = null }) => (
@@ -79,7 +80,9 @@ const TextArea = ({ id, label, value, onChange, placeholder = '', rows = 4, disa
   </label>
 );
 
-const Profile = ({ currentUser, onBack }) => {
+const Profile = ({ currentUser }) => {
+  const navigate = useNavigate();
+  const onBack = () => navigate(-1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [data, setData] = useState(null);

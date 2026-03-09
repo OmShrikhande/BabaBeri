@@ -314,6 +314,39 @@ class AuthService {
       }
     }
 
+    // Permanent Reject/Clear Form Host
+    async permanentRejectHost(hostId) {
+      console.log('Services: permanentRejectHost called', { hostId });
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PERMANENT_REJECT}?usercode=${hostId}&status=REJECT`;
+      console.log('Services: Making request to', url);
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+        console.log('Services: Response status:', response.status);
+        const raw = await response.text().catch(() => '');
+        console.log('Services: Response body:', raw);
+
+        if (!response.ok) {
+           throw new Error(`Failed to permanently reject host: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+           data = { message: raw };
+        }
+
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Permanent reject host error:', error);
+        return { success: false, error: error.message || 'Failed to permanently reject host.' };
+      }
+    }
+
     // Get all plans
     async getAllPlans() {
       const token = this.getToken();

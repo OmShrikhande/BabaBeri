@@ -51,6 +51,8 @@ export const API_CONFIG = {
     GET_LIVE_FORM_STATUS: '/api/liveusers/getLiveFormStatus',
     // Approve/Reject live form
     APPROVE_REJECT_LIVE_FORM: '/auth/superadmin/approve-reject-live-form',
+    // Permanent reject/Clear form
+    PERMANENT_REJECT: '/auth/superadmin/permanent-approve-reject-live-form',
     // Change owner (Move host)
     CHANGE_OWNER: '/auth/superadmin/changeowner',
     // Get rate list (Super Admin only)

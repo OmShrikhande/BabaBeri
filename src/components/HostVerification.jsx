@@ -181,11 +181,25 @@ const HostVerification = () => {
     }
   };
 
-  const handleClearForm = () => {
+  const handleClearForm = async () => {
     if (selectedHost) {
-      // Placeholder for clear form functionality
-      window.alert('Clear Form functionality not implemented yet');
-      closeSidebar();
+      if (window.confirm(`Are you sure you want to permanently reject host ${selectedHost.usercode}? This will clear their form.`)) {
+        try {
+          const result = await authService.permanentRejectHost(selectedHost.usercode);
+          if (result.success) {
+            // Update local state to remove the host from the list
+            setHosts(prevHosts => prevHosts.filter(host => host.hostId !== selectedHost.usercode));
+            setFilteredHosts(prevFilteredHosts => prevFilteredHosts.filter(host => host.hostId !== selectedHost.usercode));
+            window.alert('Form cleared and host permanently rejected');
+            closeSidebar();
+          } else {
+            window.alert(result.error || 'Failed to clear form');
+          }
+        } catch (err) {
+          console.error('Error clearing form:', err);
+          window.alert('An error occurred while clearing form');
+        }
+      }
     }
   };
 

@@ -35,6 +35,10 @@ export const API_CONFIG = {
     // Get cashout history (Super Admin only)
     GET_CASHOUT_HISTORY: '/auth/superadmin/cashouthistory',
     SUPERADMIN_BALANCE: '/auth/superadmin/balance',
+    // Superadmin self recharge (Super Admin only)
+    SUPERADMIN_SELF_RECHARGE: '/auth/superadmin/superadminselfrecharge',
+    // Verify superadmin self recharge OTP (Super Admin only)
+    VERIFY_SUPERADMIN_RECHARGE_OTP: '/auth/superadmin/verify_sup_adm_recharge_otp',
     // Recharge history lookup (Admin/Super Admin only)
     GET_RECHARGE_HISTORY: '/auth/api/gethistory',
     // Add coins to host (Admin/Super Admin only)

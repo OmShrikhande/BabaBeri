@@ -395,7 +395,7 @@ function App() {
       case 'ranking':
         return <Ranking />;
       case 'coin-recharge':
-        return <CoinRecharge />;
+        return <CoinRecharge currentUser={currentUser} />;
       case 'diamonds-wallet':
         return <DiamondsCashout onNavigateToWallet={() => handleNavigation('wallet')} />;
       case 'wallet':

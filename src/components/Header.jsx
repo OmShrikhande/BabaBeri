@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, Bell, Search, User, LogOut, Crown, Shield } from 'lucide-react';
+import SuperAdminWallet from './SuperAdminWallet';
 
 const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -38,6 +39,9 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
 
         {/* Right side - Actions */}
         <div className="flex items-center space-x-3">
+          {/* Super Admin Wallet */}
+          <SuperAdminWallet currentUser={currentUser} />
+
           {/* Search */}
           <button
             className="text-gray-400 hover:text-white transition-colors p-2"

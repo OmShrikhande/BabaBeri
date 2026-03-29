@@ -37,7 +37,7 @@ const INITIAL_PLANS = [
   { id: 6, coins: 10000, price: 1200.99 }
 ];
 
-const CoinRecharge = () => {
+const CoinRecharge = ({ currentUser }) => {
   const { toasts, addToast, removeToast } = useToast();
 
   const {
@@ -95,7 +95,7 @@ const CoinRecharge = () => {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white p-6">
-      <CoinRechargeHeader />
+      <CoinRechargeHeader currentUser={currentUser} />
 
       <HostRechargeSection
         users={userState.users}

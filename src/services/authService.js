@@ -939,6 +939,151 @@ class AuthService {
     }
   }
 
+  // Superadmin self recharge - get OTP for adding coins
+  async superAdminSelfRecharge(coins) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can perform self recharge.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SUPERADMIN_SELF_RECHARGE}?coins=${coins}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST'
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to initiate self recharge: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      // If we get here, the API call was successful (status 200+)
+      // The API returns the OTP directly, but we don't need to extract it
+      // Just return success since the OTP was sent to the user
+      return { success: true, message: 'OTP sent successfully to your registered device' };
+    } catch (error) {
+      console.error('Superadmin self recharge error:', error);
+      return { success: false, error: error.message || 'Failed to initiate self recharge.' };
+    }
+  }
+
+  // Verify superadmin self recharge OTP
+  async verifySuperAdminRechargeOtp(otp) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can verify recharge OTP.' };
+    }
+
+    if (!otp || otp.length !== 6) {
+      return { success: false, error: 'Invalid OTP format' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.VERIFY_SUPERADMIN_RECHARGE_OTP}?otp=${encodeURIComponent(otp)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'PUT'
+      });
+
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Failed to verify OTP: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          // If not JSON, assume success with plain text response
+          data = { message: raw || 'OTP verified successfully' };
+        }
+      }
+
+      return { success: true, data, message: 'OTP verified successfully' };
+    } catch (error) {
+      console.error('Verify superadmin recharge OTP error:', error);
+      return { success: false, error: error.message || 'Failed to verify OTP.' };
+    }
+  }
+
+  // Send OTP for superadmin wallet operations
+  async sendWalletOtp() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can request wallet OTP.' };
+    }
+
+    // In a real implementation, this would call an API endpoint to send OTP
+    // For now, we'll simulate OTP sending
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { success: true, message: 'OTP sent successfully to your registered device' };
+    } catch (error) {
+      console.error('Send wallet OTP error:', error);
+      return { success: false, error: 'Failed to send OTP. Please try again.' };
+    }
+  }
+
+  // Verify OTP for superadmin wallet operations
+  async verifyWalletOtp(otp) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const role = normalizeUserType(this.getUserType());
+    if (role !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can verify wallet OTP.' };
+    }
+
+    if (!otp || otp.length !== 6) {
+      return { success: false, error: 'Invalid OTP format' };
+    }
+
+    // In a real implementation, this would call an API endpoint to verify OTP
+    // For now, we'll simulate OTP verification (accepting 123456 as valid)
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const isValidOtp = otp === '123456'; // Mock OTP for demo purposes
+      if (isValidOtp) {
+        return { success: true, message: 'OTP verified successfully' };
+      } else {
+        return { success: false, error: 'Invalid OTP' };
+      }
+    } catch (error) {
+      console.error('Verify wallet OTP error:', error);
+      return { success: false, error: 'Failed to verify OTP. Please try again.' };
+    }
+  }
+
   // Save diamond credit/debit
   async saveDiamond({ diamonds, status }) {
     const token = this.getToken();

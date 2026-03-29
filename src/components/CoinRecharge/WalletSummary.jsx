@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Wallet, PlusCircle, XCircle, PlusCircle as AddIcon } from 'lucide-react';
 
-const WalletSummary = ({ walletSummary, loadingWallet, onAddCredit }) => {
+const WalletSummary = ({ walletSummary, loadingWallet, onAddCredit, currentUser, onAddCoins }) => {
   const walletCards = useMemo(() => {
     return [
       {
@@ -36,15 +36,25 @@ const WalletSummary = ({ walletSummary, loadingWallet, onAddCredit }) => {
             <h2 className="text-xl font-semibold text-white">Admin Wallet</h2>
             <p className="text-sm text-gray-400">Monitor and manage all diamond credits in real-time</p>
           </div>
-          <button
-            onClick={onAddCredit}
-            className="hidden md:inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
-          >
-            <AddIcon className="w-4 h-4 mr-2" />
-            Add Credit
-          </button>
+          {currentUser?.userType === 'super-admin' ? (
+            <button
+              onClick={onAddCoins}
+              className="hidden md:inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              Add Coins
+            </button>
+          ) : (
+            <button
+              onClick={onAddCredit}
+              className="hidden md:inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+            >
+              <AddIcon className="w-4 h-4 mr-2" />
+              Add Credit
+            </button>
+          )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {walletCards.map(card => (
             <div

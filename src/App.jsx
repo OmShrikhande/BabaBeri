@@ -13,7 +13,7 @@ import LiveMonitoring from './components/LiveMonitoring';
 import Ranking from './components/Ranking';
 import CoinRecharge from './components/CoinRecharge';
 import DiamondsCashout from './components/DiamondsCashout';
-import Wallet from './components/DiamondsCashout/Wallet';
+import Wallet from './components/CoinRecharge/Wallet';
 import Header from './components/Header';
 import Profile from './components/Profile';
 import Login from './components/Login';
@@ -395,7 +395,9 @@ function App() {
       case 'ranking':
         return <Ranking />;
       case 'coin-recharge':
-        return <CoinRecharge currentUser={currentUser} />;
+        return <CoinRecharge currentUser={currentUser} onNavigate={handleNavigation} />;
+      case 'coin-recharge-wallet':
+        return <Wallet onBack={() => handleNavigation('coin-recharge')} currentUser={currentUser} />;
       case 'diamonds-wallet':
         return <DiamondsCashout onNavigateToWallet={() => handleNavigation('wallet')} />;
       case 'wallet':

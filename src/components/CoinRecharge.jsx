@@ -12,6 +12,7 @@ import HostRechargeSection from './CoinRecharge/HostRechargeSection';
 // import OffersTab from './CoinRecharge/Tabs/OffersTab';
 import PlansTab from './CoinRecharge/Tabs/PlansTab';
 import HistoryTab from './CoinRecharge/Tabs/HistoryTab';
+
 import OfferModal from './CoinRecharge/Modals/OfferModal';
 import PlanModal from './CoinRecharge/Modals/PlanModal';
 import {
@@ -37,7 +38,7 @@ const INITIAL_PLANS = [
   { id: 6, coins: 10000, price: 1200.99 }
 ];
 
-const CoinRecharge = ({ currentUser }) => {
+const CoinRecharge = ({ currentUser, onNavigate }) => {
   const { toasts, addToast, removeToast } = useToast();
 
   const {
@@ -95,7 +96,10 @@ const CoinRecharge = ({ currentUser }) => {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white p-6">
-      <CoinRechargeHeader currentUser={currentUser} />
+      <CoinRechargeHeader
+        currentUser={currentUser}
+        onNavigateToWallet={() => onNavigate('coin-recharge-wallet')}
+      />
 
       <HostRechargeSection
         users={userState.users}
@@ -120,7 +124,7 @@ const CoinRecharge = ({ currentUser }) => {
 
       <div className="mb-6">
         <div className="flex space-x-4 border-b border-gray-700">
-          
+
           <button
             type="button"
             onClick={() => setActiveTab('plans')}
@@ -143,11 +147,12 @@ const CoinRecharge = ({ currentUser }) => {
           >
             Recharge History
           </button>
+
         </div>
       </div>
 
       <div className="space-y-6">
-      
+
 
         {activeTab === 'plans' && (
           <PlansTab
@@ -163,6 +168,8 @@ const CoinRecharge = ({ currentUser }) => {
             isLoading={isLoadingHistory}
           />
         )}
+
+
       </div>
 
       <OfferModal

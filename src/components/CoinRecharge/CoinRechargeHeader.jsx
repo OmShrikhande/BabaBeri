@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Coins, Edit } from 'lucide-react';
+import { Coins, Edit, Wallet } from 'lucide-react';
 import authService from '../../services/authService';
-import SuperAdminWallet from '../SuperAdminWallet';
 
-const CoinRechargeHeader = ({ currentUser }) => {
+const CoinRechargeHeader = ({ currentUser, onNavigateToWallet }) => {
   const [inrValue, setInrValue] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -75,7 +74,13 @@ const CoinRechargeHeader = ({ currentUser }) => {
             <Edit className="w-4 h-4" />
           </button>
         </div>
-        <SuperAdminWallet currentUser={currentUser} />
+        <button
+          onClick={onNavigateToWallet}
+          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+        >
+          <Wallet className="w-4 h-4 mr-2" />
+          Wallet
+        </button>
       </div>
     </div>
   );

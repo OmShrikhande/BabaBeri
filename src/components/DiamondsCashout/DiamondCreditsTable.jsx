@@ -38,20 +38,20 @@ const DiamondCreditsTable = ({
         <div>
           <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
             <CircleDollarSign className="w-5 h-5 text-[#F72585]" />
-            <span>Diamond Credits</span>
+            <span>Coin Transactions</span>
           </h3>
           <p className="text-xs text-gray-400 flex items-center space-x-1">
             <Clock className="w-3 h-3" />
             <span>Last updated: {formattedLastUpdated}</span>
           </p>
         </div>
-        <button
+        {/* <button
           onClick={onAddClick}
           className="flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
         >
           <PlusCircle className="w-4 h-4 mr-2" />
           Add Credits
-        </button>
+        </button> */}
       </div>
 
       <div className="overflow-x-auto">
@@ -60,13 +60,13 @@ const DiamondCreditsTable = ({
             <tr>
               <th className="px-6 py-3 text-left font-medium">User Code</th>
               <th className="px-6 py-3 text-left font-medium">Diamonds</th>
-              <th className="px-6 py-3 text-left font-medium">Amount (₹)</th>
+              {/* <th className="px-6 py-3 text-left font-medium">Amount (₹)</th> */}
               <th className="px-6 py-3 text-left font-medium">Status</th>
               <th className="px-6 py-3 text-left font-medium">Transaction ID</th>
-              <th className="px-6 py-3 text-left font-medium">Payment Method</th>
+              {/* <th className="px-6 py-3 text-left font-medium">Payment Method</th> */}
               <th className="px-6 py-3 text-left font-medium">Created At</th>
-              <th className="px-6 py-3 text-left font-medium">Notes</th>
-              <th className="px-6 py-3 text-right font-medium">Actions</th>
+              {/* <th className="px-6 py-3 text-left font-medium">Notes</th> */}
+              {/* <th className="px-6 py-3 text-right font-medium">Actions</th> */}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800 text-gray-300">
@@ -89,9 +89,9 @@ const DiamondCreditsTable = ({
                   <tr key={credit.id} className="hover:bg-[#1D1D1D] transition-colors">
                     <td className="px-6 py-4 font-medium text-white">{credit.usercode || 'N/A'}</td>
                     <td className="px-6 py-4 text-white">{credit.diamonds?.toLocaleString?.() ?? credit.diamonds ?? 0}</td>
-                    <td className="px-6 py-4">
+                    {/* <td className="px-6 py-4">
                       {credit.amount ? `₹${Number(credit.amount).toLocaleString()}` : '—'}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${creditStatusBadgeClass(credit.status)}`}>
                         {credit.status || 'N/A'}
@@ -100,18 +100,18 @@ const DiamondCreditsTable = ({
                     <td className="px-6 py-4 text-xs text-gray-400">
                       {credit.transactionId || '—'}
                     </td>
-                    <td className="px-6 py-4 text-xs text-gray-400 uppercase">
+                    {/* <td className="px-6 py-4 text-xs text-gray-400 uppercase">
                       {credit.paymentMethod || '—'}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 text-xs text-gray-400">
                       {createdAt}
                     </td>
-                    <td className="px-6 py-4 text-xs text-gray-400">
+                    {/* <td className="px-6 py-4 text-xs text-gray-400">
                       {credit.notes || '—'}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-3">
-                        <button
+                        {/* <button
                           onClick={() => onEditClick(credit)}
                           className="p-2 rounded-full bg-[#1F1F1F] text-gray-400 hover:text-white"
                           title="Edit"
@@ -129,7 +129,7 @@ const DiamondCreditsTable = ({
                           ) : (
                             <Trash2 className="w-4 h-4" />
                           )}
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

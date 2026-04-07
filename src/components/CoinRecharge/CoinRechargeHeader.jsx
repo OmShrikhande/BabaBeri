@@ -1,0 +1,89 @@
+import React, { useState, useEffect } from 'react';
+import { Coins, Edit, Wallet } from 'lucide-react';
+import authService from '../../services/authService';
+
+const CoinRechargeHeader = ({ currentUser, onNavigateToWallet }) => {
+  const [inrValue, setInrValue] = useState(1);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const fetchRate = async () => {
+      try {
+        const response = await authService.getRateList(2);
+        if (response.success && response.data) {
+          setInrValue(response.data.rate);
+        }
+      } catch (error) {
+        console.error('Error fetching coin rate:', error);
+      }
+    };
+    fetchRate();
+  }, []);
+
+  const handleEdit = () => {
+    setIsEditing(!isEditing);
+  };
+
+  const saveRate = async () => {
+    try {
+      const response = await authService.changeRate(2, inrValue);
+      if (response.success) {
+        setIsEditing(false);
+      } else {
+        console.error('Failed to update rate:', response.error);
+        // Optionally revert or show error
+      }
+    } catch (error) {
+      console.error('Error updating coin rate:', error);
+    }
+  };
+
+  const handleSave = (e) => {
+    if (e.key === 'Enter') {
+      saveRate();
+    }
+  };
+
+  return (
+    <div className="mb-8 flex justify-between items-end">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Coin Recharge Management</h1>
+        <p className="text-gray-400">Manage all coin recharge related operations</p>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
+          <div className="flex items-center gap-2 text-yellow-500 font-semibold">
+            <span>1 Coin</span>
+            <Coins className="w-5 h-5" />
+          </div>
+          <span className="text-gray-400">=</span>
+          {isEditing ? (
+            <input
+              type="number"
+              value={inrValue}
+              onChange={(e) => setInrValue(Number(e.target.value))}
+              onKeyDown={handleSave}
+              onBlur={saveRate}
+              className="text-white font-bold text-lg bg-transparent border-none outline-none w-16"
+              autoFocus
+            />
+          ) : (
+            <span className="text-white font-bold text-lg">{inrValue} INR</span>
+          )}
+          <button onClick={handleEdit} className="text-gray-400 hover:text-white ml-2">
+            <Edit className="w-4 h-4" />
+          </button>
+        </div>
+        <button
+          onClick={onNavigateToWallet}
+          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+        >
+          <Wallet className="w-4 h-4 mr-2" />
+          Wallet
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default CoinRechargeHeader;

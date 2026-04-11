@@ -111,7 +111,7 @@ Feature-specific documentation:
 1. Create a new branch for your feature
 2. Make changes and test locally
 3. Run linting to ensure code quality: `npm run lint`
-4. Submit a pull request
+4. Submit a pull request .
 
 ## Support
 

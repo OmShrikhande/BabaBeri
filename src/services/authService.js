@@ -1488,6 +1488,212 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to change rate.' };
     }
   }
+
+  // Deduct coins from host
+  async deductCoinsFromHost(hostId, amount) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/api/coinsminus?id=${encodeURIComponent(hostId)}&coins=${encodeURIComponent(amount)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to deduct coins: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Deduct coins error:', error);
+      return { success: false, error: error.message || 'Failed to deduct coins.' };
+    }
+  }
+
+  // Update user status (Active / Pending / Deactivate / Ban)
+  async updateUserStatus(userCode, status) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/api/updatestatus?usercode=${encodeURIComponent(userCode)}&status=${encodeURIComponent(status)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to update status: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Update status error:', error);
+      return { success: false, error: error.message || 'Failed to update status.' };
+    }
+  }
+
+  // Deactivate a user account by email
+  async deactivateProfile(email) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/user/deactivate-profile?email=${encodeURIComponent(email)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to deactivate profile: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Deactivate profile error:', error);
+      return { success: false, error: error.message || 'Failed to deactivate profile.' };
+    }
+  }
+
+  // Convert diamonds to coins (super admin only)
+  async convertDiamondsToCoins(diamonds) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/convertdiamond_to_coin_for_sa?diamond=${encodeURIComponent(diamonds)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'POST' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to convert diamonds: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Convert diamonds error:', error);
+      return { success: false, error: error.message || 'Failed to convert diamonds to coins.' };
+    }
+  }
+
+  // Get all role percentages
+  async getAllPercentages() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/getallpercentage`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to fetch percentages: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get percentages error:', error);
+      return { success: false, error: error.message || 'Failed to fetch percentages.' };
+    }
+  }
+
+  // Update role percentage by id
+  async updateRolePercentage(id, percent) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/update-percent`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, percent: parseFloat(percent) })
+      });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to update percentage: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Update percentage error:', error);
+      return { success: false, error: error.message || 'Failed to update percentage.' };
+    }
+  }
+
+  // Get user list by owner code
+  async getUsersByOwnerCode() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/private/getdatabyownercode`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to fetch data: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get by owner code error:', error);
+      return { success: false, error: error.message || 'Failed to fetch user list by owner code.' };
+    }
+  }
+
+  // Set commission for a user
+  async setCommission({ commissionType, commission, userId }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/commission/setcommission`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commissiontype: commissionType, commission: parseFloat(commission), userid: userId })
+      });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to set commission: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Set commission error:', error);
+      return { success: false, error: error.message || 'Failed to set commission.' };
+    }
+  }
+
+  // Get total available coins
+  async getTotalAvailableCoins() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/api/getTotalCoins`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to fetch total coins: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get total coins error:', error);
+      return { success: false, error: error.message || 'Failed to fetch total coins.' };
+    }
+  }
+
+  // Get total sold coins
+  async getTotalSellCoins() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/api/getTotalCoinsSell`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to fetch total sell coins: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get total sell coins error:', error);
+      return { success: false, error: error.message || 'Failed to fetch total sell coins.' };
+    }
+  }
+
+  // Delete live form from database
+  async deleteLiveForm(id) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/api/liveusers/delete/${encodeURIComponent(id)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'DELETE' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to delete live form: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Delete live form error:', error);
+      return { success: false, error: error.message || 'Failed to delete live form.' };
+    }
+  }
 }
 
 // Export singleton instance

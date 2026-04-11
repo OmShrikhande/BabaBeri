@@ -146,6 +146,7 @@ export const navigationItems = [
   { id: 'block-user', label: 'Block Users', icon: 'UserX' },
   { id: 'user-activation', label: 'Coinseller Activation', icon: 'Shield' },
   { id: 'reports-ban', label: 'Reports / Ban Request', icon: 'Flag' },
+  { id: 'role-percentage', label: 'Role Percentages', icon: 'Percent' },
   // { id: 'ai-warnings', label: 'AI Warnings', icon: 'AlertTriangle' }, // Renamed from "All Warnings"
   // { id: 'songs-library', label: 'Songs Library', icon: 'Music' },
   // { id: 'developer-settings', label: 'Developer Settings', icon: 'Settings' }

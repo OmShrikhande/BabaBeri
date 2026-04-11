@@ -187,7 +187,6 @@ const HostVerification = () => {
         try {
           const result = await authService.permanentRejectHost(selectedHost.usercode);
           if (result.success) {
-            // Update local state to remove the host from the list
             setHosts(prevHosts => prevHosts.filter(host => host.hostId !== selectedHost.usercode));
             setFilteredHosts(prevFilteredHosts => prevFilteredHosts.filter(host => host.hostId !== selectedHost.usercode));
             window.alert('Form cleared and host permanently rejected');
@@ -198,6 +197,28 @@ const HostVerification = () => {
         } catch (err) {
           console.error('Error clearing form:', err);
           window.alert('An error occurred while clearing form');
+        }
+      }
+    }
+  };
+
+  const handleDeleteLiveForm = async () => {
+    if (selectedHost) {
+      const hostId = selectedHost.id || selectedHost.hostId || selectedHost.usercode;
+      if (window.confirm(`Are you sure you want to permanently delete this form for ${selectedHost.usercode}? This cannot be undone.`)) {
+        try {
+          const result = await authService.deleteLiveForm(hostId);
+          if (result.success) {
+            setHosts(prevHosts => prevHosts.filter(host => host.hostId !== selectedHost.usercode));
+            setFilteredHosts(prevFilteredHosts => prevFilteredHosts.filter(host => host.hostId !== selectedHost.usercode));
+            window.alert('Live form deleted successfully.');
+            closeSidebar();
+          } else {
+            window.alert(result.error || 'Failed to delete live form');
+          }
+        } catch (err) {
+          console.error('Error deleting live form:', err);
+          window.alert('An error occurred while deleting the live form');
         }
       }
     }
@@ -444,27 +465,41 @@ const HostVerification = () => {
 
                     {/* Action Buttons */}
                     {mode === 'pending' ? (
-                      <div className="flex gap-4 mt-6">
+                      <div className="flex flex-col gap-3 mt-6">
+                        <div className="flex gap-4">
+                          <button
+                            onClick={handleReject}
+                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={handleAccept}
+                            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                          >
+                            Accept
+                          </button>
+                        </div>
                         <button
-                          onClick={handleReject}
-                          className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                          onClick={handleDeleteLiveForm}
+                          className="w-full px-4 py-2 bg-red-900/20 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/40 transition-colors text-sm font-medium"
                         >
-                          Reject
-                        </button>
-                        <button
-                          onClick={handleAccept}
-                          className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-                        >
-                          Accept
+                          Delete Form Permanently
                         </button>
                       </div>
                     ) : mode === 'rejected' ? (
-                      <div className="flex justify-center mt-6">
+                      <div className="flex flex-col gap-3 mt-6">
                         <button
                           onClick={handleClearForm}
-                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                         >
                           Clear Form
+                        </button>
+                        <button
+                          onClick={handleDeleteLiveForm}
+                          className="w-full px-4 py-2 bg-red-900/20 text-red-400 border border-red-800 rounded-lg hover:bg-red-900/40 transition-colors text-sm font-medium"
+                        >
+                          Delete Form Permanently
                         </button>
                       </div>
                     ) : null}

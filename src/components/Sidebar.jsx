@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck, 
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX, 
   AlertTriangle, Video, Flag, BarChart, UserCog, Settings, Menu, X, LogOut, User,
-  ShieldCheck,UserRoundPlus
+  ShieldCheck, UserRoundPlus, Percent
 } from 'lucide-react';
 import { navigationItems } from '../data/dashboardData';
 import { getFilteredNavigationItems, getUserRoleDisplayName } from '../utils/roleBasedAccess';
@@ -11,7 +11,7 @@ import { getFilteredNavigationItems, getUserRoleDisplayName } from '../utils/rol
 const iconMap = {
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck,
   Eye, Mic, Building2, Sword, Crown, Gift, Trophy, Music, UserX,
-  AlertTriangle, Video, Flag, BarChart, UserCog, Settings,UserRoundPlus
+  AlertTriangle, Video, Flag, BarChart, UserCog, Settings, UserRoundPlus, Percent
 };
 
 const Sidebar = ({ isOpen, toggleSidebar, activeRoute = 'dashboard', onNavigation, currentUser, onLogout }) => {

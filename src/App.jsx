@@ -26,6 +26,9 @@ import AdminDashboard from './components/AdminDashboard';
 import MasterAgencyDashboard from './components/MasterAgencyDashboard';
 import MasterAgencyCreateAgency from './components/MasterAgencyCreateAgency';
 import AgencyDashboard from './components/AgencyDashboard';
+import VipLevels from './components/VipLevels';
+import ReportsBan from './components/ReportsBan';
+import RolePercentage from './components/RolePercentage';
 import authService from './services/authService';
 import Createlayout from './components/Create/Createlayout';
 import GiftsAndBannersLayout from './components/Gifts_and_Banner';
@@ -399,7 +402,7 @@ function App() {
       case 'coin-recharge-wallet':
         return <Wallet onBack={() => handleNavigation('coin-recharge')} currentUser={currentUser} />;
       case 'diamonds-wallet':
-        return <DiamondsCashout onNavigateToWallet={() => handleNavigation('wallet')} />;
+        return <DiamondsCashout onNavigateToWallet={() => handleNavigation('wallet')} onNavigateToDiamondsWallet={() => handleNavigation('wallet')} />;
       case 'wallet':
         return <Wallet onBack={() => handleNavigation('diamonds-wallet')} />;
       case 'role-stages':
@@ -413,6 +416,12 @@ function App() {
         return <HostDetails />;
       case 'gifts-banners':
         return <GiftsAndBannersLayout />;
+      case 'vip-levels':
+        return <VipLevels />;
+      case 'reports-ban':
+        return <ReportsBan />;
+      case 'role-percentage':
+        return <RolePercentage />;
       case 'auth-test':
         return <AuthTest />;
     case 'create':

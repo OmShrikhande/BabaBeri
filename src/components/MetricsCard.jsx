@@ -1,10 +1,10 @@
 import React from 'react';
 import { 
-  Users, Building, UserCheck, Coins, Gem, Activity, Mic, DollarSign 
+  Users, Building, UserCheck, Coins, Gem, Activity, Mic, DollarSign, Hash
 } from 'lucide-react';
 
 const iconMap = {
-  Users, Building, UserCheck, Coins, Gem, Activity, Mic, DollarSign
+  Users, Building, UserCheck, Coins, Gem, Activity, Mic, DollarSign, Hash
 };
 
 const MetricsCard = ({ title, value, icon, color = 'pink', className = '' }) => {

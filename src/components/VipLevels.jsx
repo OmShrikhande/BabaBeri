@@ -4,6 +4,7 @@ import {
   X, RefreshCw, Download, AlertCircle, ChevronUp, ChevronDown, Info, Award, TrendingUp
 } from 'lucide-react';
 import authService from '../services/authService';
+import { API_CONFIG } from '../config/api.js';
 import ConfirmDialog from './RoleStages/ConfirmDialog';
 import SearchBar from './SearchBar';
 import ToggleButtonGroup from './ToggleButtonGroup';
@@ -34,7 +35,7 @@ const VipLevels = () => {
     setError(null);
     try {
       const response = await authService.makeAuthenticatedRequest(
-        '/auth/api/getappvipplans', { method: 'GET' }
+        `${API_CONFIG.BASE_URL}/auth/api/getappvipplans`, { method: 'GET' }
       );
       if (response.ok) {
         const data = await response.json();
@@ -56,7 +57,7 @@ const VipLevels = () => {
       // Note: API endpoint for VIP members not found in documentation
       // Trying common endpoint patterns
       const response = await authService.makeAuthenticatedRequest(
-        '/auth/api/getvipusers', { method: 'GET' }
+        `${API_CONFIG.BASE_URL}/auth/api/getvipusers`, { method: 'GET' }
       );
       if (response.ok) {
         const data = await response.json();
@@ -229,13 +230,27 @@ const VipLevels = () => {
       fd.append('needCoins', formData.coinsRequired);
       fd.append('validFor', formData.validFor);
       fd.append('vipAFriend', formData.vipFriendCount || 0);
-      fd.append('invisibleMode', formData.invisibleMode);
+      fd.append('invisibleMode', String(formData.invisibleMode));
       if (formData.avatarImage) fd.append('avatarFile', formData.avatarImage);
-      const response = await authService.makeAuthenticatedRequest(
-        '/auth/superadmin/create-vip-plan', { method: 'POST', body: fd, headers: {} }
-      );
+
+      // Use fetch directly — do NOT use makeAuthenticatedRequest here.
+      // makeAuthenticatedRequest merges DEFAULT_HEADERS which sets 'Content-Type: application/json',
+      // which overrides the browser's auto-set 'multipart/form-data; boundary=...' and breaks the upload.
+      const token = authService.getToken();
+      const response = await fetch(`${API_CONFIG.BASE_URL}/auth/superadmin/create-vip-plan`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // ⚠️ Do NOT set Content-Type here — let the browser set it with the correct multipart boundary
+        },
+        body: fd
+      });
+
       if (response.ok) { setShowModal(false); fetchPlans(); }
-      else throw new Error('Failed to save VIP plan');
+      else {
+        const raw = await response.text().catch(() => '');
+        throw new Error(`Failed to save VIP plan: ${response.status} ${raw}`);
+      }
     } catch (err) {
       alert(err.message || 'Failed to save VIP plan');
     } finally {
@@ -247,7 +262,7 @@ const VipLevels = () => {
     if (!deletingPlan) return;
     try {
       const response = await authService.makeAuthenticatedRequest(
-        `/auth/superadmin/delete-vip-plan/${deletingPlan.id}`, { method: 'DELETE' }
+        `${API_CONFIG.BASE_URL}/auth/superadmin/delete-vip-plan/${deletingPlan.id}`, { method: 'DELETE' }
       );
       if (response.ok) { setDeletingPlan(null); fetchPlans(); }
       else throw new Error('Failed to delete VIP plan');

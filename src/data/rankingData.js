@@ -295,7 +295,7 @@ export const mockSupportersRanking = [
 
 export const rankingDurations = [
   { value: 'daily', label: 'Daily' },
-  { value: 'weekly', label: 'Weekly' },
+  // { value: 'weekly', label: 'Weekly' },
   { value: 'monthly', label: 'Monthly' },
   { value: 'yearly', label: 'Yearly' }
 ];
@@ -316,6 +316,7 @@ export const getRankBadgeColor = (rank) => {
 
 // Helper function to get level badge color
 export const getLevelBadgeColor = (level) => {
+  if (!level) return 'bg-gray-600/20 text-gray-400 border-gray-600/30';
   if (level.includes('Diamond')) return 'bg-blue-600/20 text-blue-400 border-blue-600/30';
   if (level.includes('VIP Gold')) return 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30';
   if (level.includes('Gold')) return 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30';

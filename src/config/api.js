@@ -82,7 +82,9 @@ export const API_CONFIG = {
     // Get user by code
     GET_BY_CODE: '/auth/api/getByCode',
     // Get all users (Super Admin only)
-    ALL_USERS: '/auth/api/allusers'
+    ALL_USERS: '/auth/api/allusers',
+    // Top 10 Hosts by Diamond
+    TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond'
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

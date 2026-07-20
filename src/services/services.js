@@ -736,6 +736,31 @@ class AuthService {
       }
     }
 
+    async getTopHostRanking(type, date) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_HOST_RANKING}?type=${type}&date=${date}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch top host ranking: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Get top host ranking error:', error);
+        return { success: false, error: error.message || 'Failed to fetch top host ranking.' };
+      }
+    }
+
   }
 
 const authService = new AuthService();

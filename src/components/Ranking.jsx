@@ -4,11 +4,12 @@ import SearchBar from './SearchBar';
 import ToggleButtonGroup from './ToggleButtonGroup';
 import RankingTable from './RankingTable';
 import RankingTableSkeleton from './RankingTableSkeleton';
-import { 
-  mockHostsRanking, 
-  mockSupportersRanking, 
-  rankingDurations, 
-  rankingTypes 
+import authService from '../services/services';
+import {
+  mockHostsRanking,
+  mockSupportersRanking,
+  rankingDurations,
+  rankingTypes
 } from '../data/rankingData';
 
 const Ranking = () => {
@@ -17,14 +18,59 @@ const Ranking = () => {
   const [selectedDuration, setSelectedDuration] = useState('monthly');
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [hostsData, setHostsData] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}-01`;
+  });
+
+  useEffect(() => {
+    if (activeType === 'hosts') {
+      fetchHostsRanking();
+    }
+  }, [activeType, selectedDuration, selectedDate]);
+
+  const fetchHostsRanking = async () => {
+    setIsLoading(true);
+    try {
+      const response = await authService.getTopHostRanking(selectedDuration.toLowerCase(), selectedDate);
+      if (response.success && response.data) {
+        const formattedData = response.data.map((item, index) => ({
+          id: item.usercode || `user-${index}`,
+          rank: index + 1,
+          userId: item.usercode,
+          username: item.username || 'N/A',
+          fullName: item.name || 'Unknown',
+          diamondsValue: item.totalDiamond || 0,
+          diamonds: (item.totalDiamond || 0).toLocaleString(),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name || 'User')}&background=random`
+        }));
+        setHostsData(formattedData);
+      } else {
+        setHostsData([]);
+      }
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Simulate data refresh
   const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setLastUpdated(new Date());
-    }, 1000);
+    if (activeType === 'hosts') {
+      fetchHostsRanking();
+    } else {
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+        setLastUpdated(new Date());
+      }, 1000);
+    }
   };
 
   // Export data functionality
@@ -53,11 +99,11 @@ const Ranking = () => {
   // Get statistics
   const getStats = () => {
     const data = getCurrentData();
-    const totalValue = data.reduce((sum, item) => 
+    const totalValue = data.reduce((sum, item) =>
       sum + (activeType === 'hosts' ? item.diamondsValue : item.coinsValue), 0
     );
     const averageValue = totalValue / data.length;
-    
+
     return {
       total: data.length,
       totalValue: totalValue.toLocaleString(),
@@ -68,13 +114,13 @@ const Ranking = () => {
 
   // Get current data based on active type
   const getCurrentData = () => {
-    return activeType === 'hosts' ? mockHostsRanking : mockSupportersRanking;
+    return activeType === 'hosts' ? hostsData : mockSupportersRanking;
   };
 
   // Get total count for current type
   const getTotalCount = () => {
     const data = getCurrentData();
-    const filteredData = data.filter(item => 
+    const filteredData = data.filter(item =>
       item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.userId.toLowerCase().includes(searchTerm.toLowerCase())
@@ -97,7 +143,7 @@ const Ranking = () => {
                 <p className="text-gray-400">View top performers and supporters</p>
               </div>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
               <button
@@ -125,7 +171,7 @@ const Ranking = () => {
               <div>
                 <p className="text-[#F72585] font-medium text-sm mb-1">Note</p>
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  Rankings are updated in real-time based on user activity. Hosts are ranked by diamonds earned, 
+                  Rankings are updated in real-time based on user activity. Hosts are ranked by diamonds earned,
                   while supporters are ranked by coins spent. The ranking period can be adjusted using the duration filter.
                 </p>
               </div>
@@ -144,7 +190,7 @@ const Ranking = () => {
               className="flex-1"
               id="ranking-search"
             />
-            
+
             {/* Duration Dropdown */}
             <div className="flex items-center gap-2 min-w-[200px]">
               <Calendar className="w-4 h-4 text-gray-400" aria-hidden="true" />
@@ -154,7 +200,23 @@ const Ranking = () => {
               <select
                 id="duration-select"
                 value={selectedDuration}
-                onChange={(e) => setSelectedDuration(e.target.value)}
+                onChange={(e) => {
+                  const newDuration = e.target.value;
+                  setSelectedDuration(newDuration);
+
+                  const d = new Date(selectedDate);
+                  if (newDuration === 'monthly') {
+                    d.setDate(1);
+                  } else if (newDuration === 'yearly') {
+                    d.setMonth(0);
+                    d.setDate(1);
+                  }
+
+                  const year = d.getFullYear();
+                  const month = String(d.getMonth() + 1).padStart(2, '0');
+                  const date = String(d.getDate()).padStart(2, '0');
+                  setSelectedDate(`${year}-${month}-${date}`);
+                }}
                 className="flex-1 bg-[#121212] border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-[#F72585] focus:outline-none focus:ring-2 focus:ring-[#F72585]/20 transition-all duration-200"
                 aria-label="Select ranking duration"
               >
@@ -164,6 +226,43 @@ const Ranking = () => {
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Date Picker (Dynamic based on duration) */}
+            <div className="flex items-center gap-2 min-w-[150px]">
+              {selectedDuration === 'yearly' ? (
+                <input
+                  type="number"
+                  min="2000"
+                  max="2100"
+                  value={selectedDate.split('-')[0]}
+                  onChange={(e) => {
+                    const y = e.target.value;
+                    if (y && y.length === 4) setSelectedDate(`${y}-01-01`);
+                  }}
+                  className="flex-1 bg-[#121212] border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-[#F72585] focus:outline-none focus:ring-2 focus:ring-[#F72585]/20 transition-all duration-200"
+                />
+              ) : selectedDuration === 'monthly' ? (
+                <input
+                  type="month"
+                  value={selectedDate.substring(0, 7)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) setSelectedDate(`${val}-01`);
+                  }}
+                  className="flex-1 bg-[#121212] border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-[#F72585] focus:outline-none focus:ring-2 focus:ring-[#F72585]/20 transition-all duration-200"
+                />
+              ) : (
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) setSelectedDate(val);
+                  }}
+                  className="flex-1 bg-[#121212] border border-gray-700 rounded-lg px-3 py-2.5 text-white focus:border-[#F72585] focus:outline-none focus:ring-2 focus:ring-[#F72585]/20 transition-all duration-200"
+                />
+              )}
             </div>
           </div>
 
@@ -175,7 +274,7 @@ const Ranking = () => {
               onToggle={setActiveType}
               className="w-full sm:w-auto"
             />
-            
+
             {/* Stats */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 text-sm text-gray-400 w-full lg:w-auto">
               <div className="flex items-center gap-2">

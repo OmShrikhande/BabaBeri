@@ -18,12 +18,32 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
     fetchMasterAgencies();
   }, []);
 
+  // Extract the unique code/id from a master agency object
+  const extractAgencyCode = (agency) => {
+    if (!agency) return '';
+    return (
+      agency.userCode ||
+      agency.UserCode ||
+      agency.usercode ||
+      agency.Usercode ||
+      agency.user_code ||
+      agency.code ||
+      agency.Code ||
+      agency.id ||
+      agency.userId ||
+      agency.hostcode ||
+      ''
+    );
+  };
+
   const fetchMasterAgencies = async () => {
     setIsFetchingAgencies(true);
     try {
       const result = await authService.getMasterAgencies();
       if (result.success) {
         const agencies = Array.isArray(result.data) ? result.data : result.data?.data || [];
+        // 👇 Log raw data so you can verify which field holds the code
+        console.log('Master agencies raw data: found');
         setMasterAgencies(agencies);
         if (agencies.length === 0) {
           console.warn('No master agencies found');
@@ -134,11 +154,19 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
             >
               <option value="">Select a master agency</option>
               {masterAgencies.map((agency, index) => {
-                const code = agency.userCode || agency.UserCode || agency.code || agency.Code || agency.user_code || agency.usercode || agency.Usercode || agency.id || agency.userId;
-                const displayName = agency.name || agency.userName || `Agency ${index}`;
+                const code = extractAgencyCode(agency);
+                const displayName =
+                  agency.name ||
+                  agency.agencyName ||
+                  agency.AgencyName ||
+                  agency.userName ||
+                  agency.username ||
+                  agency.UserName ||
+                  code ||
+                  `Agency ${index + 1}`;
                 return (
-                  <option key={index} value={code}>
-                    {displayName}
+                  <option key={`${code}-${index}`} value={code}>
+                    {displayName} {code ? `(${code})` : ''}
                   </option>
                 );
               })}

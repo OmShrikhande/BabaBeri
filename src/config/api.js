@@ -9,6 +9,8 @@ export const API_CONFIG = {
     CREATE_ADMIN: '/auth/create-admin',
     CREATE_MASTER_AGENCY: '/auth/create-masteragency', // Accepts adminName field
     CREATE_AGENCY: '/auth/create-agency',
+    // Upgrade host to agency under a master agency
+    UPGRADE_HOST_TO_AGENCY: '/auth/upgrade',
     COUNT_BY_ROLE: '/auth/api/countbyrole',
     // Manual coin recharge by Super Admin
     RECHARGE_MANUAL: '/auth/api/recharge',

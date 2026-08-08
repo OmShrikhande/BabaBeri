@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import authService from '../../../services/authService';
+import { normalizeCashoutHistory } from '../../../utils/dashboardFinancials';
 
 export const useUserSearch = (addToast) => {
   const [searchUserId, setSearchUserId] = useState('');
@@ -47,15 +48,18 @@ export const useUserSearch = (addToast) => {
       
       if (response.success) {
         const data = response.data || [];
-        const validHistory = Array.isArray(data) ? data.filter(item => 
+        const records = normalizeCashoutHistory(data);
+        const validHistory = records.filter(item =>
           item && typeof item === 'object'
         ).map(item => ({
           diamonds: item.diamonds || 0,
-          date: item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown date',
+          date: item.redeemed_request_date
+            ? new Date(item.redeemed_request_date).toLocaleString()
+            : (item.createdAt ? new Date(item.createdAt).toLocaleString() : 'Unknown date'),
           status: item.status || 'unknown',
           usercode: item.usercode || 'unknown',
           cashAmount: item.cashAmount || 0
-        })) : [];
+        }));
         setCashoutHistory(validHistory);
         addToast(`Loaded ${validHistory.length} history records`, 'success');
       } else {

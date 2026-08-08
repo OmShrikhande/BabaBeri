@@ -19,6 +19,8 @@ const formatCell = (value) => {
 const LiveGiftsDashboardSection = () => {
   const [liveSessions, setLiveSessions] = useState([]);
   const [giftTransactions, setGiftTransactions] = useState([]);
+  const [giftsCatalog, setGiftsCatalog] = useState([]);
+  const [liveTrackingSessions, setLiveTrackingSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,9 +28,11 @@ const LiveGiftsDashboardSection = () => {
     setLoading(true);
     setError(null);
     try {
-      const [sessionsRes, transactionsRes] = await Promise.all([
+      const [sessionsRes, transactionsRes, giftsRes, trackingRes] = await Promise.all([
         liveService.getAdminLiveSessions({ status: 'active' }),
         liveService.getAdminGiftTransactions({ page: 1, limit: 10 }),
+        liveService.getAllGifts(),
+        liveService.getAllLiveTracking(),
       ]);
 
       if (sessionsRes.success) {
@@ -42,10 +46,24 @@ const LiveGiftsDashboardSection = () => {
       } else {
         setGiftTransactions([]);
       }
+
+      if (giftsRes.success) {
+        setGiftsCatalog(parseList(giftsRes.data, ['gifts', 'data', 'items']));
+      } else {
+        setGiftsCatalog([]);
+      }
+
+      if (trackingRes.success) {
+        setLiveTrackingSessions(parseList(trackingRes.data, ['sessions', 'data']));
+      } else {
+        setLiveTrackingSessions([]);
+      }
     } catch (err) {
       setError(err.message || 'Failed to load live and gift data');
       setLiveSessions([]);
       setGiftTransactions([]);
+      setGiftsCatalog([]);
+      setLiveTrackingSessions([]);
     } finally {
       setLoading(false);
     }
@@ -77,6 +95,21 @@ const LiveGiftsDashboardSection = () => {
           {error}
         </div>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="bg-[#1A1A1A] border border-gray-800 rounded-xl p-4">
+          <p className="text-gray-400 text-sm">Gifts in catalog</p>
+          <p className="text-2xl font-bold text-white mt-1">{loading ? '…' : giftsCatalog.length}</p>
+        </div>
+        <div className="bg-[#1A1A1A] border border-gray-800 rounded-xl p-4">
+          <p className="text-gray-400 text-sm">Tracked live sessions</p>
+          <p className="text-2xl font-bold text-white mt-1">{loading ? '…' : liveTrackingSessions.length}</p>
+        </div>
+        <div className="bg-[#1A1A1A] border border-gray-800 rounded-xl p-4">
+          <p className="text-gray-400 text-sm">Recent gift transactions</p>
+          <p className="text-2xl font-bold text-white mt-1">{loading ? '…' : giftTransactions.length}</p>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Active Live Sessions */}

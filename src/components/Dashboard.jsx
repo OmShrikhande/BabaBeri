@@ -4,13 +4,19 @@ import MetricsCard from './MetricsCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';
 import SupporterCard from './SupporterCard';
-import { metricsData as staticMetrics, financialMetricsData, supporterCardsData } from '../data/dashboardData';
-import SubAdminForm from './SubAdminForm';
+import { metricsData as staticMetrics, supporterCardsData } from '../data/dashboardData';
 import DpVerificationModal from './DpVerificationModal';
 
 import authService from '../services/authService';
 import liveService from '../services/services';
 import LiveGiftsDashboardSection from './LiveGiftsDashboardSection';
+import {
+  aggregateDiamondRange,
+  formatMetricNumber,
+  normalizeCashoutHistory,
+  sumCashoutDiamonds,
+  sumCashoutCashAmount,
+} from '../utils/dashboardFinancials';
 
 const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [dynamicCounts, setDynamicCounts] = useState({
@@ -36,6 +42,19 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [totalDiamondsLoading, setTotalDiamondsLoading] = useState(false);
   const [giftTransactionsCount, setGiftTransactionsCount] = useState(null);
   const [giftTransactionsLoading, setGiftTransactionsLoading] = useState(false);
+  const [liveTrackingCount, setLiveTrackingCount] = useState(null);
+  const [liveTrackingLoading, setLiveTrackingLoading] = useState(false);
+  const [financialSummary, setFinancialSummary] = useState({
+    totalProfit: null,
+    totalLoss: null,
+    totalDiamondCashout: null,
+    pendingCashouts: null,
+  });
+  const [financialLoading, setFinancialLoading] = useState(false);
+  const [supporterSummary, setSupporterSummary] = useState({
+    totalRecharge: null,
+    availableCoins: null,
+  });
   const userMenuRef = useRef(null);
 
   // close on outside click
@@ -216,6 +235,97 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     return () => { ignore = true; };
   }, [currentUser]);
 
+  // Fetch public live tracking sessions (replaces static voice rooms metric)
+  useEffect(() => {
+    let ignore = false;
+    const fetchLiveTracking = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setLiveTrackingLoading(true);
+      try {
+        const res = await liveService.getAllLiveTracking();
+        if (!ignore) {
+          const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+          setLiveTrackingCount(list.length);
+        }
+      } catch {
+        if (!ignore) setLiveTrackingCount(staticMetrics.voiceRooms);
+      } finally {
+        if (!ignore) setLiveTrackingLoading(false);
+      }
+    };
+    fetchLiveTracking();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
+  // Fetch financial overview from cashout history + diamond range APIs
+  useEffect(() => {
+    let ignore = false;
+    const fetchFinancialSummary = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setFinancialLoading(true);
+      try {
+        const year = new Date().getFullYear();
+        const [cashoutRes, rangeRes, pendingRes] = await Promise.all([
+          authService.getCashoutHistory(),
+          authService.getDiamondRange(`${year}-01-01`, `${year}-12-31`),
+          authService.getPendingCashoutList(),
+        ]);
+
+        if (ignore) return;
+
+        const cashoutHistory = cashoutRes.success ? normalizeCashoutHistory(cashoutRes.data) : [];
+        const rangeTotals = rangeRes.success ? aggregateDiamondRange(rangeRes.data) : null;
+        const pendingList = pendingRes.success
+          ? (Array.isArray(pendingRes.data) ? pendingRes.data : pendingRes.data?.data || [])
+          : [];
+
+        setFinancialSummary({
+          totalProfit: rangeTotals?.profit ?? sumCashoutCashAmount(cashoutHistory),
+          totalLoss: rangeTotals?.loss ?? 0,
+          totalDiamondCashout: sumCashoutDiamonds(cashoutHistory) || rangeTotals?.cashout || 0,
+          pendingCashouts: pendingList.length,
+        });
+      } catch {
+        if (!ignore) {
+          setFinancialSummary({
+            totalProfit: null,
+            totalLoss: null,
+            totalDiamondCashout: null,
+            pendingCashouts: null,
+          });
+        }
+      } finally {
+        if (!ignore) setFinancialLoading(false);
+      }
+    };
+    fetchFinancialSummary();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
+  // Supporter summary cards from total coins APIs
+  useEffect(() => {
+    let ignore = false;
+    const fetchSupporterSummary = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      try {
+        const [sellRes, coinsRes] = await Promise.all([
+          authService.getTotalSellCoins(),
+          authService.getTotalAvailableCoins(),
+        ]);
+        if (!ignore) {
+          setSupporterSummary({
+            totalRecharge: sellRes.success ? (sellRes.data?.totalSell ?? 0) : null,
+            availableCoins: coinsRes.success ? (coinsRes.data?.coins ?? 0) : null,
+          });
+        }
+      } catch {
+        if (!ignore) setSupporterSummary({ totalRecharge: null, availableCoins: null });
+      }
+    };
+    fetchSupporterSummary();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
   const metricsCards = [
     {
       title: 'Total Sub-Admins',
@@ -258,8 +368,10 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
       color: 'purple'
     },
     {
-      title: 'Voice Rooms',
-      value: staticMetrics.voiceRooms,
+      title: 'Live Tracking',
+      value: liveTrackingLoading
+        ? 'Loading...'
+        : (liveTrackingCount !== null ? liveTrackingCount : staticMetrics.voiceRooms),
       icon: 'Mic',
       color: 'blue'
     },
@@ -281,7 +393,6 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     }
   ];
 
-  // Financial metrics cards
   const financialCards = [
     {
       title: 'Total Coins Sell',
@@ -290,36 +401,48 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
         : (totalCoinsSell !== null ? totalCoinsSell : 'N/A'),
       formatted: totalCoinsSellLoading
         ? ''
-        : (totalCoinsSell !== null ? totalCoinsSell.toLocaleString() : ''),
-      change: '', // API does not provide change/trend, leave blank
-      trend: '',  // API does not provide change/trend, leave blank
+        : (totalCoinsSell !== null ? Number(totalCoinsSell).toLocaleString() : ''),
+      change: '',
+      trend: '',
       icon: 'Coins',
       color: 'yellow'
     },
     {
       title: 'Total Profit',
-      value: financialMetricsData.totalProfit.value,
-      formatted: financialMetricsData.totalProfit.formatted,
-      change: financialMetricsData.totalProfit.change,
-      trend: financialMetricsData.totalProfit.trend,
+      value: financialLoading
+        ? 'Loading...'
+        : (financialSummary.totalProfit ?? 'N/A'),
+      formatted: financialLoading
+        ? ''
+        : (financialSummary.totalProfit !== null ? formatMetricNumber(financialSummary.totalProfit) : ''),
+      change: '',
+      trend: financialSummary.totalProfit > 0 ? 'up' : '',
       icon: 'DollarSign',
       color: 'green'
     },
     {
       title: 'Total Loss',
-      value: financialMetricsData.totalLoss.value,
-      formatted: financialMetricsData.totalLoss.formatted,
-      change: financialMetricsData.totalLoss.change,
-      trend: financialMetricsData.totalLoss.trend,
+      value: financialLoading
+        ? 'Loading...'
+        : (financialSummary.totalLoss ?? 'N/A'),
+      formatted: financialLoading
+        ? ''
+        : (financialSummary.totalLoss !== null ? formatMetricNumber(financialSummary.totalLoss) : ''),
+      change: '',
+      trend: financialSummary.totalLoss > 0 ? 'down' : '',
       icon: 'AlertTriangle',
       color: 'red'
     },
     {
       title: 'Total Diamond Cashout',
-      value: financialMetricsData.totalDiamondCashout.value,
-      formatted: financialMetricsData.totalDiamondCashout.formatted,
-      change: financialMetricsData.totalDiamondCashout.change,
-      trend: financialMetricsData.totalDiamondCashout.trend,
+      value: financialLoading
+        ? 'Loading...'
+        : (financialSummary.totalDiamondCashout ?? 'N/A'),
+      formatted: financialLoading
+        ? ''
+        : (financialSummary.totalDiamondCashout !== null ? formatMetricNumber(financialSummary.totalDiamondCashout) : ''),
+      change: financialSummary.pendingCashouts !== null ? `${financialSummary.pendingCashouts} pending` : '',
+      trend: '',
       icon: 'Gem',
       color: 'purple'
     }
@@ -475,16 +598,24 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
           {/* Supporter Cards - Takes 1 column on XL screens */}
           <div className="space-y-6">
             <SupporterCard
-              title={supporterCardsData.thisMonthRecharge.title}
-              value={supporterCardsData.thisMonthRecharge.value}
-              icon={supporterCardsData.thisMonthRecharge.icon}
-              color={supporterCardsData.thisMonthRecharge.color}
-            />
-            <SupporterCard
-              title={supporterCardsData.totalRecharge.title}
-              value={supporterCardsData.totalRecharge.value}
+              title="Total Coins Sold"
+              value={
+                supporterSummary.totalRecharge !== null
+                  ? Number(supporterSummary.totalRecharge).toLocaleString()
+                  : supporterCardsData.totalRecharge.value
+              }
               icon={supporterCardsData.totalRecharge.icon}
               color={supporterCardsData.totalRecharge.color}
+            />
+            <SupporterCard
+              title="Available Platform Coins"
+              value={
+                supporterSummary.availableCoins !== null
+                  ? Number(supporterSummary.availableCoins).toLocaleString()
+                  : supporterCardsData.thisMonthRecharge.value
+              }
+              icon={supporterCardsData.thisMonthRecharge.icon}
+              color={supporterCardsData.thisMonthRecharge.color}
             />
           </div>
         </div>

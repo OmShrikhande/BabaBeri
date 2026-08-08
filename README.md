@@ -98,6 +98,8 @@ For API configuration and environment variables, create a `.env` file in the roo
 
 ## Documentation
 
+- **[API Status Guide](./API_STATUS.md)** — which APIs are broken, mocked, or need upgrades
+
 Feature-specific documentation:
 - [Agencies Feature](./AGENCIES_FEATURE.md)
 - [Coin Recharge Feature](./COIN_RECHARGE_FEATURE.md)

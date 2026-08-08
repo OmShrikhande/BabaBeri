@@ -19,22 +19,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
   }, []);
 
   // Extract the unique code/id from a master agency object
-  const extractAgencyCode = (agency) => {
-    if (!agency) return '';
-    return (
-      agency.userCode ||
-      agency.UserCode ||
-      agency.usercode ||
-      agency.Usercode ||
-      agency.user_code ||
-      agency.code ||
-      agency.Code ||
-      agency.id ||
-      agency.userId ||
-      agency.hostcode ||
-      ''
-    );
-  };
+  const extractAgencyCode = (agency) => authService.extractUserCode(agency) || '';
 
   const fetchMasterAgencies = async () => {
     setIsFetchingAgencies(true);
@@ -175,7 +160,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">User ID</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Host ID</label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -184,11 +169,12 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
               value={formData.userId}
               onChange={handleInputChange}
               className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
-              placeholder="Enter user ID"
+              placeholder="Enter host code (e.g. PX315)"
               required
               disabled={isLoading || disabled}
             />
           </div>
+          <p className="mt-1 text-xs text-gray-500">Host must not already belong to another agency.</p>
         </div>
 
         <button

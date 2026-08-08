@@ -20,18 +20,34 @@ const MasterAgencyCreateAgency = ({ onCreated, disabled = false }) => {
     checkUserRole();
   }, []);
 
-  const checkUserRole = () => {
+  const resolveMasterAgencyCode = async () => {
+    const userInfo = authService.getUserInfo();
+    let userCode = authService.extractUserCode(userInfo);
+    if (!userCode) {
+      const profile = await authService.ensureUserProfileCached();
+      userCode = authService.extractUserCode(profile);
+    }
+    if (!userCode) {
+      const decoded = authService.decodeToken();
+      userCode = authService.extractUserCode(decoded);
+    }
+    return userCode || '';
+  };
+
+  const checkUserRole = async () => {
     const userType = authService.getUserType();
     const userInfo = authService.getUserInfo();
-    
+
     if (userType === 'master-agency') {
       setIsMasterAgencyUser(true);
-      const userCode = authService.extractUserCode(userInfo);
+      const userCode = await resolveMasterAgencyCode();
       const userName = userInfo?.username || userInfo?.name || userInfo?.email || 'Current User';
-      
+
       if (userCode) {
-        setFormData(prev => ({ ...prev, masterAgencyCode: userCode }));
+        setFormData((prev) => ({ ...prev, masterAgencyCode: userCode }));
         setCurrentMasterAgencyName(userName);
+      } else {
+        setError('Could not determine your master agency code. Please log in again.');
       }
       setIsFetchingAgencies(false);
     } else {
@@ -91,7 +107,11 @@ const MasterAgencyCreateAgency = ({ onCreated, disabled = false }) => {
         setSuccess(`Agency "${formData.name}" created successfully!`);
         const created = result.data;
         onCreated && onCreated(created);
-        setFormData({ name: '', userId: '', masterAgencyCode: '' });
+        setFormData((prev) => ({
+          name: '',
+          userId: '',
+          masterAgencyCode: isMasterAgencyUser ? prev.masterAgencyCode : ''
+        }));
       } else {
         setError(result.error || 'Failed to create agency.');
       }
@@ -163,11 +183,11 @@ const MasterAgencyCreateAgency = ({ onCreated, disabled = false }) => {
               >
                 <option value="">Select a master agency</option>
                 {masterAgencies.map((agency, index) => {
-                  const code = agency.userCode || agency.UserCode || agency.code || agency.Code || agency.user_code || agency.usercode || agency.Usercode || agency.id || agency.userId;
-                  const displayName = agency.name || agency.userName || `Agency ${index}`;
+                  const code = authService.extractUserCode(agency) || `agency-${index}`;
+                  const displayName = agency.name || agency.agencyName || agency.userName || agency.username || code;
                   return (
-                    <option key={index} value={code}>
-                      {displayName}
+                    <option key={`${code}-${index}`} value={code}>
+                      {displayName} {code ? `(${code})` : ''}
                     </option>
                   );
                 })}
@@ -177,7 +197,7 @@ const MasterAgencyCreateAgency = ({ onCreated, disabled = false }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">User ID</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Host ID</label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -186,11 +206,12 @@ const MasterAgencyCreateAgency = ({ onCreated, disabled = false }) => {
               value={formData.userId}
               onChange={handleInputChange}
               className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
-              placeholder="Enter user ID"
+              placeholder="Enter host code (e.g. PX315)"
               required
               disabled={isLoading || disabled}
             />
           </div>
+          <p className="mt-1 text-xs text-gray-500">Host must not already belong to another agency.</p>
         </div>
 
         <button

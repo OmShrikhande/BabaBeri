@@ -64,7 +64,22 @@ class AuthService {
   }
 
   // Logout method
-  logout() {
+  async logout() {
+    const token = this.getToken();
+    if (token) {
+      try {
+        await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LOGOUT}`, {
+          method: 'POST',
+          headers: {
+            ...DEFAULT_HEADERS,
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      } catch (error) {
+        console.warn('Logout API call failed:', error);
+      }
+    }
+
     this.token = null;
     sessionStorage.removeItem(TOKEN_CONFIG.STORAGE_KEY);
     sessionStorage.removeItem(TOKEN_CONFIG.USER_INFO_KEY);
@@ -130,6 +145,7 @@ class AuthService {
       if (freshProfile && typeof freshProfile === 'object') {
         const mergedProfile = { ...(currentInfo || {}), ...freshProfile };
         localStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(mergedProfile));
+        sessionStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(mergedProfile));
         return mergedProfile;
       }
     } catch (error) {
@@ -1235,7 +1251,27 @@ class AuthService {
     }
   }
 
-  // Create agency
+  parseApiPayload(raw) {
+    const trimmed = (raw || '').trim();
+    if (!trimmed) return { message: 'Request completed successfully.' };
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return { message: trimmed };
+    }
+  }
+
+  formatApiError(response, raw, fallback) {
+    const parsed = this.parseApiPayload(raw);
+    const message = parsed?.message || parsed?.error || (typeof parsed === 'string' ? parsed : '');
+    if (message) return message;
+    if (response?.status === 403) {
+      return 'Access denied. Your account may not have permission to upgrade this host, or the host is not eligible.';
+    }
+    return fallback || `Request failed: ${response?.status || 'unknown'} ${response?.statusText || ''}`.trim();
+  }
+
+  // Upgrade host to agency (POST /auth/upgrade?hostcode=&agencyname=&macode=)
   async createAgency({ name, userId, masterAgencyCode }) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
@@ -1244,32 +1280,47 @@ class AuthService {
       return { success: false, error: 'Session expired. Please login again.' };
     }
 
-    const params = new URLSearchParams({
-      hostcode: userId,
-      agencyname: `${name}`,
-      macode: masterAgencyCode
-    });
+    const hostcode = String(userId || '').trim();
+    const agencyname = String(name || '').trim();
+    const macode = String(masterAgencyCode || '').trim();
 
-    const url = `${API_CONFIG.BASE_URL}/auth/upgrade?${params.toString()}`;
+    if (!hostcode || !agencyname || !macode) {
+      return { success: false, error: 'Host ID, agency name, and master agency code are required.' };
+    }
+
+    const hostCheck = await this.getUserByCode(hostcode);
+    if (!hostCheck.success) {
+      return { success: false, error: hostCheck.error || `Host not found: ${hostcode}` };
+    }
+
+    const host = hostCheck.data;
+    const hostRole = String(host?.role || '').toUpperCase();
+    if (hostRole && hostRole !== 'HOST') {
+      return { success: false, error: `User ${hostcode} is a ${host.role}, not a host. Only hosts can be upgraded to agencies.` };
+    }
+
+    if (host?.owner) {
+      return {
+        success: false,
+        error: `Host ${hostcode} is already assigned to ${host.ownername || host.owner} (${host.owner}). Use Move Host instead, or pick an unassigned host.`
+      };
+    }
+
+    const params = new URLSearchParams({ hostcode, agencyname, macode });
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPGRADE_HOST_TO_AGENCY}?${params.toString()}`;
 
     try {
-      const response = await this.makeAuthenticatedRequest(url, {
-        method: 'POST'
-      });
-
+      const response = await this.makeAuthenticatedRequest(url, { method: 'POST' });
       const raw = await response.text().catch(() => '');
+
       if (!response.ok) {
-        throw new Error(`Failed to create agency: ${response.status} ${response.statusText}\n${raw}`);
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to upgrade host: ${response.status} ${response.statusText}`)
+        };
       }
 
-      let data = null;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        throw new Error('Invalid response format');
-      }
-
-      return { success: true, data };
+      return { success: true, data: this.parseApiPayload(raw) };
     } catch (error) {
       console.error('Create agency error:', error);
       return { success: false, error: error.message || 'Failed to create agency.' };
@@ -1649,10 +1700,12 @@ class AuthService {
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
       const raw = await response.text().catch(() => '');
-      let data = null;
-      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
-      if (!response.ok) throw new Error(data?.message || `Failed to fetch total coins: ${response.status}`);
-      return { success: true, data };
+      if (!response.ok) {
+        throw new Error(this.formatApiError(response, raw, `Failed to fetch total coins: ${response.status}`));
+      }
+      const parsed = this.parseApiPayload(raw);
+      const coins = typeof parsed === 'number' ? parsed : Number(parsed?.coins ?? parsed?.total ?? parsed?.message) || 0;
+      return { success: true, data: { coins } };
     } catch (error) {
       console.error('Get total coins error:', error);
       return { success: false, error: error.message || 'Failed to fetch total coins.' };
@@ -1667,13 +1720,72 @@ class AuthService {
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
       const raw = await response.text().catch(() => '');
-      let data = null;
-      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
-      if (!response.ok) throw new Error(data?.message || `Failed to fetch total sell coins: ${response.status}`);
-      return { success: true, data };
+      if (!response.ok) {
+        throw new Error(this.formatApiError(response, raw, `Failed to fetch total sell coins: ${response.status}`));
+      }
+      const parsed = this.parseApiPayload(raw);
+      const totalSell = typeof parsed === 'number' ? parsed : Number(parsed?.totalSell ?? parsed?.total ?? parsed?.message) || 0;
+      return { success: true, data: { totalSell } };
     } catch (error) {
       console.error('Get total sell coins error:', error);
       return { success: false, error: error.message || 'Failed to fetch total sell coins.' };
+    }
+  }
+
+  // Get cashout history (all records or filtered by user code)
+  async getCashoutHistory(userCode = '') {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const params = userCode ? `?usercode=${encodeURIComponent(userCode)}` : '';
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_CASHOUT_HISTORY}${params}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch cashout history: ${response.status}`)
+        };
+      }
+      return { success: true, data: this.parseApiPayload(raw) };
+    } catch (error) {
+      console.error('Get cashout history error:', error);
+      return { success: false, error: error.message || 'Failed to fetch cashout history.' };
+    }
+  }
+
+  // Get diamond analytics range for dashboard charts / financial cards
+  async getDiamondRange(from, to) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const params = new URLSearchParams({ from, to });
+    const url = `${API_CONFIG.BASE_URL}/auth/superadmin/range?${params}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch diamond range: ${response.status}`)
+        };
+      }
+      const data = this.parseApiPayload(raw);
+      return { success: true, data: Array.isArray(data) ? data : (data?.data || []) };
+    } catch (error) {
+      console.error('Get diamond range error:', error);
+      return { success: false, error: error.message || 'Failed to fetch diamond range.' };
     }
   }
 

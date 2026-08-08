@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
 import { coinsRechargeData, diamondAnalyticsData } from '../data/dashboardData';
 import { Coins, Gem, ChevronDown } from 'lucide-react';
 import { useDiamondAnalytics } from './CoinRecharge/hooks';
 import { getDateRange, getWeeklyDates } from '../utils/dateRange';
 import { transformDiamondData } from '../utils/diamondDataTransform';
+import authService from '../services/authService';
 
 const EnhancedChartCard = () => {
   const [selectedType, setSelectedType] = useState('coins');
@@ -14,10 +15,18 @@ const EnhancedChartCard = () => {
     monthly: [],
     yearly: []
   });
+  const [coinsSellTotal, setCoinsSellTotal] = useState(null);
 
   const { diamondData, isLoadingDiamonds, loadDiamondData } = useDiamondAnalytics({ 
     addToast: (type, message) => console.log(`[${type}] ${message}`) 
   });
+
+  const loadCoinsSummary = useCallback(async () => {
+    const res = await authService.getTotalSellCoins();
+    if (res.success) {
+      setCoinsSellTotal(res.data?.totalSell ?? 0);
+    }
+  }, []);
 
   const typeOptions = [
     { value: 'coins', label: 'Coins Recharge', icon: Coins, color: '#F59E0B' },
@@ -39,8 +48,23 @@ const EnhancedChartCard = () => {
         const { from, to } = getDateRange(selectedPeriod);
         loadDiamondData(selectedPeriod, from, to);
       }
+    } else {
+      loadCoinsSummary();
     }
   };
+
+  useEffect(() => {
+    if (selectedType === 'diamonds') {
+      if (selectedPeriod === 'weekly') {
+        loadDiamondData(selectedPeriod, null, null, getWeeklyDates());
+      } else if (selectedPeriod === 'monthly' || selectedPeriod === 'yearly') {
+        const { from, to } = getDateRange(selectedPeriod);
+        loadDiamondData(selectedPeriod, from, to);
+      }
+    } else {
+      loadCoinsSummary();
+    }
+  }, [selectedType, selectedPeriod, loadDiamondData, loadCoinsSummary]);
 
   useEffect(() => {
     if (selectedType === 'diamonds') {
@@ -262,6 +286,11 @@ const EnhancedChartCard = () => {
         <span className="text-gray-300 text-sm font-medium">
           {currentTypeOption.label} - {periodOptions.find(p => p.value === selectedPeriod)?.label}
         </span>
+        {selectedType === 'coins' && coinsSellTotal !== null && (
+          <span className="ml-auto text-xs text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full border border-yellow-500/30">
+            API total sold: {Number(coinsSellTotal).toLocaleString()} coins
+          </span>
+        )}
       </div>
 
       {/* Legend for Diamond Analytics */}

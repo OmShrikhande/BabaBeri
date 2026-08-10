@@ -32,6 +32,15 @@ const LiveMonitoring = () => {
   const [filteredUsers, setFilteredUsers] = useState(mockLiveUsers);
   const [isLoading, setIsLoading] = useState(false);
   const [usingMockData, setUsingMockData] = useState(true);
+  const [sessionStats, setSessionStats] = useState(null);
+  const [sessionGifters, setSessionGifters] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  const parseMetric = (val) => {
+    if (typeof val === 'number') return val;
+    const s = String(val).replace(/[KM]/gi, '');
+    return parseFloat(s) || 0;
+  };
 
   const fetchLiveSessions = useCallback(async () => {
     setIsLoading(true);
@@ -65,6 +74,42 @@ const LiveMonitoring = () => {
     fetchLiveSessions();
   }, [fetchLiveSessions]);
 
+  useEffect(() => {
+    if (!selectedUser?.sessionId || usingMockData) {
+      setSessionStats(null);
+      setSessionGifters([]);
+      return;
+    }
+
+    let ignore = false;
+    const fetchSessionDetails = async () => {
+      setStatsLoading(true);
+      try {
+        const [statsRes, giftersRes] = await Promise.all([
+          authService.getSessionStats(selectedUser.sessionId),
+          authService.getSessionGifters(selectedUser.sessionId, { limit: 10, offset: 0 }),
+        ]);
+        if (!ignore) {
+          setSessionStats(statsRes.success ? statsRes.data : null);
+          const gifters = giftersRes.success
+            ? (Array.isArray(giftersRes.data) ? giftersRes.data : (giftersRes.data?.gifters || giftersRes.data?.data || []))
+            : [];
+          setSessionGifters(gifters);
+        }
+      } catch {
+        if (!ignore) {
+          setSessionStats(null);
+          setSessionGifters([]);
+        }
+      } finally {
+        if (!ignore) setStatsLoading(false);
+      }
+    };
+
+    fetchSessionDetails();
+    return () => { ignore = true; };
+  }, [selectedUser?.sessionId, usingMockData]);
+
   // Filter and sort users
   useEffect(() => {
     let filtered = liveUsers.filter(user => {
@@ -78,13 +123,13 @@ const LiveMonitoring = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'viewers':
-          return parseFloat(b.viewerCount.replace('K', '')) - parseFloat(a.viewerCount.replace('K', ''));
+          return parseMetric(b.viewerCount) - parseMetric(a.viewerCount);
         case 'diamonds':
-          return parseFloat(b.diamondCount.replace('M', '')) - parseFloat(a.diamondCount.replace('M', ''));
+          return parseMetric(b.diamondCount) - parseMetric(a.diamondCount);
         case 'duration':
-          return b.duration.localeCompare(a.duration);
+          return String(b.duration).localeCompare(String(a.duration));
         case 'recent':
-          return b.id - a.id; // Assuming higher ID means more recent
+          return b.id - a.id;
         default:
           return 0;
       }
@@ -372,15 +417,21 @@ const LiveMonitoring = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Viewers:</span>
-                      <span className="text-white">{selectedUser.viewerCount}</span>
+                      <span className="text-white">
+                        {sessionStats?.viewer_count ?? sessionStats?.viewerCount ?? selectedUser.viewerCount}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Diamonds:</span>
-                      <span className="text-purple-400">{selectedUser.diamondCount}</span>
+                      <span className="text-purple-400">
+                        {sessionStats?.diamond_count ?? sessionStats?.diamondCount ?? selectedUser.diamondCount}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Duration:</span>
-                      <span className="text-yellow-400">{selectedUser.duration}</span>
+                      <span className="text-yellow-400">
+                        {sessionStats?.duration ?? sessionStats?.elapsed ?? selectedUser.duration}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Category:</span>
@@ -394,8 +445,30 @@ const LiveMonitoring = () => {
                       <span className="text-gray-400">Status:</span>
                       <span className="text-green-400 capitalize">{selectedUser.status}</span>
                     </div>
+                    {statsLoading && (
+                      <p className="text-xs text-gray-500 pt-1">Loading session details...</p>
+                    )}
                   </div>
                 </div>
+
+                {/* Top Gifters */}
+                {sessionGifters.length > 0 && (
+                  <div className="bg-[#1A1A1A] rounded-lg p-4 border border-gray-700">
+                    <h3 className="text-white font-medium mb-3">Top Gifters</h3>
+                    <div className="space-y-2">
+                      {sessionGifters.slice(0, 5).map((gifter, i) => (
+                        <div key={gifter.user_id || gifter.userId || i} className="flex justify-between text-sm">
+                          <span className="text-gray-300">
+                            {gifter.username || gifter.user_name || gifter.userId || `User ${i + 1}`}
+                          </span>
+                          <span className="text-purple-400">
+                            {gifter.total_gifts ?? gifter.totalGifts ?? gifter.amount ?? gifter.coins ?? '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500">

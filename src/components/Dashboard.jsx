@@ -9,6 +9,8 @@ import SubAdminForm from './SubAdminForm';
 import DpVerificationModal from './DpVerificationModal';
 
 import authService from '../services/authService';
+import liveService from '../services/services';
+import LiveGiftsDashboardSection from './LiveGiftsDashboardSection';
 
 const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [dynamicCounts, setDynamicCounts] = useState({
@@ -28,6 +30,12 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   const [totalCoinsSell, setTotalCoinsSell] = useState(null);
   const [totalCoinsSellLoading, setTotalCoinsSellLoading] = useState(false);
   const [totalCoinsSellError, setTotalCoinsSellError] = useState(null);
+  const [liveUsersCount, setLiveUsersCount] = useState(null);
+  const [liveUsersLoading, setLiveUsersLoading] = useState(false);
+  const [totalDiamonds, setTotalDiamonds] = useState(null);
+  const [totalDiamondsLoading, setTotalDiamondsLoading] = useState(false);
+  const [giftTransactionsCount, setGiftTransactionsCount] = useState(null);
+  const [giftTransactionsLoading, setGiftTransactionsLoading] = useState(false);
   const userMenuRef = useRef(null);
 
   // close on outside click
@@ -126,6 +134,88 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     return () => { ignore = true; };
   }, [currentUser]);
 
+  // Fetch active live users count
+  useEffect(() => {
+    let ignore = false;
+    const fetchLiveUsers = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setLiveUsersLoading(true);
+      try {
+        const res = await liveService.getAdminLiveSessions({ status: 'active' });
+        if (!ignore) {
+          if (res.success) {
+            const list = Array.isArray(res.data)
+              ? res.data
+              : (res.data?.sessions || res.data?.data || []);
+            setLiveUsersCount(list.length);
+          } else {
+            setLiveUsersCount(staticMetrics.liveUsers);
+          }
+        }
+      } catch {
+        if (!ignore) setLiveUsersCount(staticMetrics.liveUsers);
+      } finally {
+        if (!ignore) setLiveUsersLoading(false);
+      }
+    };
+    fetchLiveUsers();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
+  // Fetch total diamonds (credits)
+  useEffect(() => {
+    let ignore = false;
+    const fetchDiamonds = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setTotalDiamondsLoading(true);
+      try {
+        const res = await authService.getDiamondCredits();
+        if (!ignore) {
+          if (res.success) {
+            setTotalDiamonds(res.data?.count ?? res.data?.total ?? res.data ?? 0);
+          } else {
+            setTotalDiamonds(staticMetrics.totalDiamonds);
+          }
+        }
+      } catch {
+        if (!ignore) setTotalDiamonds(staticMetrics.totalDiamonds);
+      } finally {
+        if (!ignore) setTotalDiamondsLoading(false);
+      }
+    };
+    fetchDiamonds();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
+  // Fetch gift transactions count
+  useEffect(() => {
+    let ignore = false;
+    const fetchGiftTransactions = async () => {
+      if (!currentUser || currentUser.userType !== 'super-admin') return;
+      setGiftTransactionsLoading(true);
+      try {
+        const res = await liveService.getAdminGiftTransactions({ page: 1, limit: 100 });
+        if (!ignore) {
+          if (res.success) {
+            const list = Array.isArray(res.data)
+              ? res.data
+              : (res.data?.transactions || res.data?.data || res.data?.items || []);
+            const total = res.data?.total ?? res.data?.totalCount ?? list.length;
+            setGiftTransactionsCount(total);
+          } else {
+            setGiftTransactionsCount(0);
+          }
+        }
+      } catch {
+        if (!ignore) setGiftTransactionsCount(0);
+      } finally {
+        if (!ignore) setGiftTransactionsLoading(false);
+      }
+    };
+    fetchGiftTransactions();
+    return () => { ignore = true; };
+  }, [currentUser]);
+
   const metricsCards = [
     {
       title: 'Total Sub-Admins',
@@ -161,7 +251,9 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     },
     {
       title: 'Live Users',
-      value: staticMetrics.liveUsers,
+      value: liveUsersLoading
+        ? 'Loading...'
+        : (liveUsersCount !== null ? liveUsersCount : staticMetrics.liveUsers),
       icon: 'Activity',
       color: 'purple'
     },
@@ -173,9 +265,19 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
     },
     {
       title: 'Total Diamonds',
-      value: staticMetrics.totalDiamonds,
+      value: totalDiamondsLoading
+        ? 'Loading...'
+        : (totalDiamonds !== null ? totalDiamonds : staticMetrics.totalDiamonds),
       icon: 'Gem',
       color: 'cyan'
+    },
+    {
+      title: 'Gift Transactions',
+      value: giftTransactionsLoading
+        ? 'Loading...'
+        : (giftTransactionsCount !== null ? giftTransactionsCount : 0),
+      icon: 'Hash',
+      color: 'pink'
     }
   ];
 
@@ -347,6 +449,11 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
           ))}
         </div>
       </section>
+
+      {/* Live & Gifts Activity from APIs */}
+      {currentUser?.userType === 'super-admin' && (
+        <LiveGiftsDashboardSection />
+      )}
 
       {/* Analytics Section */}
       <section 

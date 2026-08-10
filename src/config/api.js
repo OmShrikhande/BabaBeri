@@ -84,7 +84,29 @@ export const API_CONFIG = {
     // Get all users (Super Admin only)
     ALL_USERS: '/auth/api/allusers',
     // Top 10 Hosts by Diamond
-    TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond'
+    TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond',
+
+    // Public live tracking
+    DIAMOND_COUNT: '/public/diamond-count',
+    SAVE_LIVE_TRACKING: '/public/live-session',
+    GET_ALL_LIVE_TRACKING: '/public/live-session/all',
+    GET_LIVE_TRACKING_BY_ID: '/public/live-session',
+
+    // Live session management
+    LIVE_START_SESSION: '/live/start-session',
+    LIVE_END_SESSION: '/live/end-session',
+    LIVE_RECOVER_SESSION: '/live/recover-session',
+    LIVE_SESSION_STATS: '/live/session',
+    LIVE_SESSION_GIFTERS: '/live/session',
+    LIVE_HOST_HISTORY: '/live/host/live-history',
+    LIVE_HOST_DAILY_STATS: '/live/host/daily-stats',
+    LIVE_ADMIN_SESSIONS: '/live/admin/live-sessions',
+    LIVE_ADMIN_HOST_ANALYTICS: '/live/admin/host-analytics',
+
+    // Gifts
+    GIFTS_SEND: '/gifts/send',
+    GIFTS_CATALOG: '/gifts/catalog',
+    GIFTS_ADMIN_TRANSACTIONS: '/gifts/admin/gift-transactions',
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

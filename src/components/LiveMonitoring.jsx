@@ -1,10 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import UserCard from './UserCard';
 import WarningModal from './WarningModal';
 import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity } from 'lucide-react';
 import { mockLiveUsers, streamCategories, sortOptions } from '../data/liveMonitoringData';
+import authService from '../services/services';
+
+const mapSessionToUser = (session, index) => ({
+  id: session.id || session.session_id || session.sessionId || index + 1,
+  username: session.username || session.host_name || session.hostName || session.host_id || 'Unknown',
+  thumbnail: session.thumbnail || session.avatar || session.profilePic || '',
+  viewerCount: String(session.viewer_count ?? session.viewerCount ?? session.viewers ?? '0'),
+  diamondCount: String(session.diamond_count ?? session.diamondCount ?? session.diamonds ?? '0'),
+  isLive: session.status === 'active' || session.isLive === true,
+  status: session.status || 'streaming',
+  streamTitle: session.stream_title || session.streamTitle || session.room_name || session.roomName || 'Live Stream',
+  category: session.category || 'General',
+  duration: session.duration || session.elapsed || '0m',
+  country: session.country || session.nationality || '—',
+  sessionId: session.session_id || session.sessionId || session.id,
+});
 
 const LiveMonitoring = () => {
+  const [liveUsers, setLiveUsers] = useState(mockLiveUsers);
   const [selectedUser, setSelectedUser] = useState(mockLiveUsers[0]);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -13,10 +30,44 @@ const LiveMonitoring = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [sortBy, setSortBy] = useState('viewers');
   const [filteredUsers, setFilteredUsers] = useState(mockLiveUsers);
+  const [isLoading, setIsLoading] = useState(false);
+  const [usingMockData, setUsingMockData] = useState(true);
+
+  const fetchLiveSessions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await authService.getAdminLiveSessions({ status: 'active' });
+      if (result.success && result.data) {
+        const rawList = Array.isArray(result.data)
+          ? result.data
+          : (result.data.sessions || result.data.data || []);
+        if (rawList.length > 0) {
+          const mapped = rawList.map(mapSessionToUser);
+          setLiveUsers(mapped);
+          setSelectedUser(mapped[0]);
+          setUsingMockData(false);
+          return;
+        }
+      }
+      setLiveUsers(mockLiveUsers);
+      setSelectedUser(mockLiveUsers[0]);
+      setUsingMockData(true);
+    } catch {
+      setLiveUsers(mockLiveUsers);
+      setSelectedUser(mockLiveUsers[0]);
+      setUsingMockData(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLiveSessions();
+  }, [fetchLiveSessions]);
 
   // Filter and sort users
   useEffect(() => {
-    let filtered = mockLiveUsers.filter(user => {
+    let filtered = liveUsers.filter(user => {
       const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            user.streamTitle?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All Categories' || user.category === selectedCategory;
@@ -41,7 +92,7 @@ const LiveMonitoring = () => {
 
     setFilteredUsers(filtered);
     setCurrentPage(1); // Reset to first page when filtering
-  }, [searchTerm, selectedCategory, sortBy]);
+  }, [searchTerm, selectedCategory, sortBy, liveUsers]);
 
   // Calculate pagination
   const indexOfLastUser = currentPage * usersPerPage;
@@ -78,8 +129,25 @@ const LiveMonitoring = () => {
     <div className="flex-1 bg-[#1A1A1A] p-6 overflow-hidden flex flex-col h-full">
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-white mb-2">Live Monitoring</h1>
-        <p className="text-gray-400">Monitor and manage live streaming users</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-2">Live Monitoring</h1>
+            <p className="text-gray-400">Monitor and manage live streaming users</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {usingMockData && (
+              <span className="text-xs text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full">Using demo data</span>
+            )}
+            <button
+              onClick={fetchLiveSessions}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-[#F72585] hover:bg-[#d91a6f] text-white rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}

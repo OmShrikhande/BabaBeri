@@ -761,6 +761,304 @@ class AuthService {
       }
     }
 
+    async parseJsonResponse(response) {
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status} ${response.statusText}\n${raw}`);
+      }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return { message: raw };
+      }
+    }
+
+    // Get diamond count by duration (public)
+    async getDiamondCount({ from, to, id }) {
+      const params = new URLSearchParams({ from, to, id });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DIAMOND_COUNT}?${params}`;
+
+      try {
+        const response = await fetch(url, { method: 'GET', headers: DEFAULT_HEADERS });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get diamond count error:', error);
+        return { success: false, error: error.message || 'Failed to fetch diamond count.' };
+      }
+    }
+
+    // Save live tracking session (public)
+    async saveLiveTracking({ endDateTime, userLiveToken, maxUsers }) {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SAVE_LIVE_TRACKING}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: DEFAULT_HEADERS,
+          body: JSON.stringify({ endDateTime, userLiveToken, maxUsers })
+        });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Save live tracking error:', error);
+        return { success: false, error: error.message || 'Failed to save live tracking.' };
+      }
+    }
+
+    // Get all live tracking sessions (public)
+    async getAllLiveTracking() {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_LIVE_TRACKING}`;
+
+      try {
+        const response = await fetch(url, { method: 'GET', headers: DEFAULT_HEADERS });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get all live tracking error:', error);
+        return { success: false, error: error.message || 'Failed to fetch live tracking sessions.' };
+      }
+    }
+
+    // Get live tracking session by id (public)
+    async getLiveTrackingById(id) {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_LIVE_TRACKING_BY_ID}/${id}`;
+
+      try {
+        const response = await fetch(url, { method: 'GET', headers: DEFAULT_HEADERS });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get live tracking by id error:', error);
+        return { success: false, error: error.message || 'Failed to fetch live tracking session.' };
+      }
+    }
+
+    // Start live session
+    async startLiveSession({ room_name }) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_START_SESSION}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'POST',
+          body: JSON.stringify({ room_name })
+        });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Start live session error:', error);
+        return { success: false, error: error.message || 'Failed to start live session.' };
+      }
+    }
+
+    // End live session
+    async endLiveSession({ session_id }) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_END_SESSION}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'POST',
+          body: JSON.stringify({ session_id })
+        });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('End live session error:', error);
+        return { success: false, error: error.message || 'Failed to end live session.' };
+      }
+    }
+
+    // Recover live session
+    async recoverLiveSession({ room_name }) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_RECOVER_SESSION}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'POST',
+          body: JSON.stringify({ room_name })
+        });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Recover live session error:', error);
+        return { success: false, error: error.message || 'Failed to recover live session.' };
+      }
+    }
+
+    // Send gift during live session
+    async sendGift({ session_id, receiver_id, gift_id, quantity, idempotency_key }) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GIFTS_SEND}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'POST',
+          body: JSON.stringify({ session_id, receiver_id, gift_id, quantity, idempotency_key })
+        });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Send gift error:', error);
+        return { success: false, error: error.message || 'Failed to send gift.' };
+      }
+    }
+
+    // Get live session stats
+    async getSessionStats(sessionId) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_SESSION_STATS}/${sessionId}/stats`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get session stats error:', error);
+        return { success: false, error: error.message || 'Failed to fetch session stats.' };
+      }
+    }
+
+    // Get live session gifters
+    async getSessionGifters(sessionId, { limit = 50, offset = 0 } = {}) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_SESSION_GIFTERS}/${sessionId}/gifters?${params}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get session gifters error:', error);
+        return { success: false, error: error.message || 'Failed to fetch session gifters.' };
+      }
+    }
+
+    // Get host live history
+    async getHostLiveHistory({ page = 1, limit = 20 } = {}) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_HOST_HISTORY}?${params}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get host live history error:', error);
+        return { success: false, error: error.message || 'Failed to fetch host live history.' };
+      }
+    }
+
+    // Get host daily stats
+    async getHostDailyStats({ from, to }) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const params = new URLSearchParams({ from, to });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_HOST_DAILY_STATS}?${params}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get host daily stats error:', error);
+        return { success: false, error: error.message || 'Failed to fetch host daily stats.' };
+      }
+    }
+
+    // Get gifts catalog
+    async getGiftsCatalog() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GIFTS_CATALOG}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get gifts catalog error:', error);
+        return { success: false, error: error.message || 'Failed to fetch gifts catalog.' };
+      }
+    }
+
+    // Get admin live sessions
+    async getAdminLiveSessions({ host_id, status, date } = {}) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const params = new URLSearchParams();
+      if (host_id) params.set('host_id', host_id);
+      if (status) params.set('status', status);
+      if (date) params.set('date', date);
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_ADMIN_SESSIONS}?${params}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get admin live sessions error:', error);
+        return { success: false, error: error.message || 'Failed to fetch admin live sessions.' };
+      }
+    }
+
+    // Get admin gift transactions
+    async getAdminGiftTransactions({ page = 1, limit = 20 } = {}) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GIFTS_ADMIN_TRANSACTIONS}?${params}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get admin gift transactions error:', error);
+        return { success: false, error: error.message || 'Failed to fetch gift transactions.' };
+      }
+    }
+
+    // Get admin host analytics
+    async getAdminHostAnalytics(hostId) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.LIVE_ADMIN_HOST_ANALYTICS}/${hostId}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const data = await this.parseJsonResponse(response);
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get admin host analytics error:', error);
+        return { success: false, error: error.message || 'Failed to fetch host analytics.' };
+      }
+    }
+
   }
 
 const authService = new AuthService();

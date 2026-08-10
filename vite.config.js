@@ -43,6 +43,42 @@ export default defineConfig({
             proxyReq.setHeader('Referer', 'https://proxstream.online/');
           });
         }
+      },
+      '/live': {
+        target: 'https://proxstream.online',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'https://proxstream.online');
+            proxyReq.setHeader('Referer', 'https://proxstream.online/');
+          });
+        }
+      },
+      '/gifts': {
+        target: 'https://proxstream.online',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'https://proxstream.online');
+            proxyReq.setHeader('Referer', 'https://proxstream.online/');
+          });
+        }
+      },
+      '/public': {
+        target: 'https://proxstream.online',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'https://proxstream.online');
+            proxyReq.setHeader('Referer', 'https://proxstream.online/');
+          });
+        }
       }
     }
   }

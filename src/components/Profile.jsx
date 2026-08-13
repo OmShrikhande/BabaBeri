@@ -179,7 +179,7 @@ const Profile = ({ currentUser }) => {
     setSaveSuccess('');
     try {
       // API: Update Self Profile (PUT, JWT)
-      const url = 'https://proxstream.online/auth/user/updateprofile';
+      const url = 'http://169.58.40.205:8004/auth/user/updateprofile';
       const payload = {
         name: form.name?.trim() || '',
         email: form.email?.trim() || '',

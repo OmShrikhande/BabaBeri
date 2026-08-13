@@ -51,7 +51,7 @@ const AuthTest = () => {
         <div className="bg-[#121212] rounded-lg p-6 border border-gray-800 mb-6">
           <h2 className="text-lg font-semibold mb-4">Test Configuration</h2>
           <div className="space-y-2 text-sm text-gray-300">
-            <p><span className="text-gray-500">API URL:</span> https://proxstream.online</p>
+            <p><span className="text-gray-500">API URL:</span> http://169.58.40.205:8004</p>
             <p><span className="text-gray-500">Endpoint:</span> /auth/login</p>
             <p><span className="text-gray-500">Email:</span> {SUPER_ADMIN_CREDENTIALS.email}</p>
             <p><span className="text-gray-500">Password:</span> {SUPER_ADMIN_CREDENTIALS.password}</p>

@@ -59,7 +59,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
         let res;
         if (currentRole === 'super-admin') {
           const token = authService.getToken();
-          const response = await fetch('https://proxstream.online/auth/api/alluserByRole?role=MASTER_AGENCY', {
+          const response = await fetch('http://169.58.40.205:8004/auth/api/alluserByRole?role=MASTER_AGENCY', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,

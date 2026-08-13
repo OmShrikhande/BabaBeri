@@ -121,7 +121,7 @@ const ReportsBan = () => {
 
     try {
       const response = await authService.makeAuthenticatedRequest(
-        `https://proxstream.online/auth/api/updatestatus?usercode=${user.code}&status=${newStatus.toUpperCase()}`,
+        `http://169.58.40.205:8004/auth/api/updatestatus?usercode=${user.code}&status=${newStatus.toUpperCase()}`,
         { method: 'PUT' }
       );
 

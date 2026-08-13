@@ -233,7 +233,7 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               name="externalLink"
               value={formData.externalLink}
               onChange={handleChange}
-              placeholder="https://proxstream.online/movie"
+              placeholder="http://169.58.40.205:8004/movie"
               className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all"
               required
             />

@@ -82,7 +82,7 @@ const MasterAgencyDashboard = () => {
       try {
         setGoalLoading(true);
         const response = await authService.makeAuthenticatedRequest(
-          'https://proxstream.online/auth/user/getcurrentmonthtarget',
+          'http://169.58.40.205:8004/auth/user/getcurrentmonthtarget',
           { method: 'GET' }
         );
 

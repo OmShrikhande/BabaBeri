@@ -28,7 +28,7 @@ const StageList = ({ onEdit, onDelete, selectedRole }) => {
           return;
         }
 
-        const response = await fetch('https://proxstream.online/auth/superadmin/getallpercentage', {
+        const response = await fetch('http://169.58.40.205:8004/auth/superadmin/getallpercentage', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

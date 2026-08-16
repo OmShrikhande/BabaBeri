@@ -2,7 +2,7 @@
 
 Quick reference for which APIs are broken, missing, mocked, or need backend/frontend upgrades in BeriProject.
 
-**Base URL:** `VITE_API_BASE_URL` (default: `http://169.58.40.205:8004`)  
+**Base URL:** `VITE_API_BASE_URL` (default: `https://proxstreamapi.in`)  
 **Service files:** `src/services/authService.js` (main) and `src/services/services.js` (live, gifts, ranking, tiers)
 
 ---

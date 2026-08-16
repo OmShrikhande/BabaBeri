@@ -76,7 +76,7 @@ const AgencyDashboard = () => {
       try {
         setGoalLoading(true);
         const response = await authService.makeAuthenticatedRequest(
-          'http://169.58.40.205:8004/auth/user/getcurrentmonthtarget',
+          'https://proxstreamapi.in/auth/user/getcurrentmonthtarget',
           { method: 'GET' }
         );
 
@@ -198,7 +198,7 @@ const AgencyDashboard = () => {
               </span>
             </div>
             <p className="text-gray-400 text-sm mt-1">
-              {userInfo?.username || userInfo?.name || 'Agency'} • 
+              {userInfo?.username || userInfo?.name || 'Agency'} •
               <span className="ml-2 px-2 py-0.5 rounded bg-gray-800 text-xs font-mono">
                 {authService.extractUserCode(userInfo) || 'N/A'}
               </span>

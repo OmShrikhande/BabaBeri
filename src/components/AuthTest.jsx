@@ -12,10 +12,10 @@ const AuthTest = () => {
 
     try {
       console.log('🧪 Starting Super Admin authentication test...');
-      
+
       // Test the login
       const loginResult = await testSuperAdminLogin();
-      
+
       let tokenValidation = null;
       if (loginResult.success && loginResult.token) {
         tokenValidation = testTokenValidation(loginResult.token);
@@ -47,11 +47,11 @@ const AuthTest = () => {
     <div className="p-6 bg-[#1A1A1A] min-h-screen text-white">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-[#F72585]">Super Admin Authentication Test</h1>
-        
+
         <div className="bg-[#121212] rounded-lg p-6 border border-gray-800 mb-6">
           <h2 className="text-lg font-semibold mb-4">Test Configuration</h2>
           <div className="space-y-2 text-sm text-gray-300">
-            <p><span className="text-gray-500">API URL:</span> http://169.58.40.205:8004</p>
+            <p><span className="text-gray-500">API URL:</span> https://proxstreamapi.in</p>
             <p><span className="text-gray-500">Endpoint:</span> /auth/login</p>
             <p><span className="text-gray-500">Email:</span> {SUPER_ADMIN_CREDENTIALS.email}</p>
             <p><span className="text-gray-500">Password:</span> {SUPER_ADMIN_CREDENTIALS.password}</p>
@@ -66,7 +66,7 @@ const AuthTest = () => {
           >
             {isLoading ? 'Testing...' : 'Run Authentication Test'}
           </button>
-          
+
           <button
             onClick={clearTest}
             className="px-6 py-3 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-all"
@@ -78,7 +78,7 @@ const AuthTest = () => {
         {testResults && (
           <div className="bg-[#121212] rounded-lg p-6 border border-gray-800">
             <h2 className="text-lg font-semibold mb-4">Test Results</h2>
-            
+
             {testResults.error ? (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
                 <p className="text-red-400 font-semibold">❌ Test Failed</p>
@@ -87,15 +87,14 @@ const AuthTest = () => {
             ) : (
               <div className="space-y-4">
                 {/* Login Test Results */}
-                <div className={`border rounded-lg p-4 ${
-                  testResults.login?.success 
-                    ? 'bg-green-500/10 border-green-500/20' 
+                <div className={`border rounded-lg p-4 ${testResults.login?.success
+                    ? 'bg-green-500/10 border-green-500/20'
                     : 'bg-red-500/10 border-red-500/20'
-                }`}>
+                  }`}>
                   <h3 className="font-semibold mb-2">
                     {testResults.login?.success ? '✅ Login Test: SUCCESS' : '❌ Login Test: FAILED'}
                   </h3>
-                  
+
                   {testResults.login?.success ? (
                     <div className="text-sm space-y-2">
                       <p><span className="text-gray-400">Token:</span> <span className="text-green-400 font-mono text-xs break-all">{testResults.login.token?.substring(0, 50)}...</span></p>
@@ -115,19 +114,18 @@ const AuthTest = () => {
 
                 {/* Token Validation Results */}
                 {testResults.tokenValidation && (
-                  <div className={`border rounded-lg p-4 ${
-                    testResults.tokenValidation.isValid 
-                      ? 'bg-green-500/10 border-green-500/20' 
+                  <div className={`border rounded-lg p-4 ${testResults.tokenValidation.isValid
+                      ? 'bg-green-500/10 border-green-500/20'
                       : 'bg-yellow-500/10 border-yellow-500/20'
-                  }`}>
+                    }`}>
                     <h3 className="font-semibold mb-2">
                       {testResults.tokenValidation.isValid ? '✅ Token Validation: VALID' : '⚠️ Token Validation: INVALID'}
                     </h3>
-                    
+
                     <div className="text-sm space-y-2">
                       <p><span className="text-gray-400">Is Expired:</span> <span className={testResults.tokenValidation.isExpired ? 'text-red-400' : 'text-green-400'}>{testResults.tokenValidation.isExpired ? 'Yes' : 'No'}</span></p>
                       <p><span className="text-gray-400">User Type:</span> <span className="text-blue-400">{testResults.tokenValidation.userType}</span></p>
-                      
+
                       {testResults.tokenValidation.decoded && (
                         <div>
                           <p className="text-gray-400">Decoded Token:</p>
@@ -141,7 +139,7 @@ const AuthTest = () => {
                 )}
               </div>
             )}
-            
+
             <p className="text-xs text-gray-500 mt-4">Test completed at: {testResults.timestamp}</p>
           </div>
         )}

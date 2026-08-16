@@ -179,7 +179,7 @@ const Profile = ({ currentUser }) => {
     setSaveSuccess('');
     try {
       // API: Update Self Profile (PUT, JWT)
-      const url = 'http://169.58.40.205:8004/auth/user/updateprofile';
+      const url = 'https://proxstreamapi.in/auth/user/updateprofile';
       const payload = {
         name: form.name?.trim() || '',
         email: form.email?.trim() || '',
@@ -199,7 +199,7 @@ const Profile = ({ currentUser }) => {
         try {
           const parsed = raw ? JSON.parse(raw) : null;
           if (parsed?.message) message = parsed.message;
-        } catch {}
+        } catch { }
         throw new Error(raw ? `${message} | Details: ${raw}` : message);
       }
 
@@ -514,12 +514,12 @@ const Profile = ({ currentUser }) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <TextInput id="username" label="Username" value={data?.username || ''} onChange={() => {}} disabled />
-                  <TextInput id="code" label="Code" value={data?.code || ''} onChange={() => {}} disabled />
+                  <TextInput id="username" label="Username" value={data?.username || ''} onChange={() => { }} disabled />
+                  <TextInput id="code" label="Code" value={data?.code || ''} onChange={() => { }} disabled />
                   <TextInput id="name" label="Name" value={form.name} onChange={onChangeForm('name')} />
                   <TextInput id="email" label="Email" icon={Mail} value={form.email} onChange={onChangeForm('email')} />
                   <TextInput id="dob" label="DOB" icon={Calendar} type="date" value={form.dob} onChange={onChangeForm('dob')} />
-                  <TextInput id="region" label="Region" icon={MapPin} value={data?.region || ''} onChange={() => {}} disabled />
+                  <TextInput id="region" label="Region" icon={MapPin} value={data?.region || ''} onChange={() => { }} disabled />
                   <TextArea id="bio" label="Bio" value={form.bio} onChange={onChangeForm('bio')} rows={5} className="md:col-span-2" />
                 </div>
               )}

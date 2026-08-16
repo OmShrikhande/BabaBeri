@@ -59,7 +59,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
         let res;
         if (currentRole === 'super-admin') {
           const token = authService.getToken();
-          const response = await fetch('http://169.58.40.205:8004/auth/api/alluserByRole?role=MASTER_AGENCY', {
+          const response = await fetch('https://proxstreamapi.in/auth/api/alluserByRole?role=MASTER_AGENCY', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -75,20 +75,20 @@ const MasterAgency = ({ onNavigateToDetail }) => {
           // Map backend data to UI shape, best-effort with safe fallbacks
           const mapped = Array.isArray(res.data)
             ? res.data.map((item, idx) => ({
-                id: item.id || item._id || idx + 1,
-                name: item.name || item.masterAgencyName || item.username || 'Master Agency',
-                agencyId: item.agencyId || item.code || item.usercode || '#N/A',
-                totalAgency: item.totalAgency || item.agencyCount || 0,
-                myEarning: item.myEarning || item.earning || 0,
-                redeemed: item.redeemed || 0,
-                subAdminName: item.owner || item.subAdminName || item.adminName || '—',
-                subAdminId: item.owner ? item.owner : item.subAdminId || item.adminId || 0,
-                currentParent: item.owner || item.subAdminName || item.adminName || '—',
-                coins: item.coins || item.coinBalance || 0,
-                profilePic: item.profilePic || '',
-                createdAt: new Date(item.createdAt),
-                updatedAt: new Date(item.updatedAt),
-              }))
+              id: item.id || item._id || idx + 1,
+              name: item.name || item.masterAgencyName || item.username || 'Master Agency',
+              agencyId: item.agencyId || item.code || item.usercode || '#N/A',
+              totalAgency: item.totalAgency || item.agencyCount || 0,
+              myEarning: item.myEarning || item.earning || 0,
+              redeemed: item.redeemed || 0,
+              subAdminName: item.owner || item.subAdminName || item.adminName || '—',
+              subAdminId: item.owner ? item.owner : item.subAdminId || item.adminId || 0,
+              currentParent: item.owner || item.subAdminName || item.adminName || '—',
+              coins: item.coins || item.coinBalance || 0,
+              profilePic: item.profilePic || '',
+              createdAt: new Date(item.createdAt),
+              updatedAt: new Date(item.updatedAt),
+            }))
             : [];
           setApiMasterAgencies(mapped);
         } else if (!ignore && res && !res.success) {
@@ -121,7 +121,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
   // Sort master agencies
   const sortedMasterAgencies = [...filteredMasterAgencies].sort((a, b) => {
     let aValue, bValue;
-    
+
     switch (sortBy) {
       case 'name':
         aValue = String(a.name || '').toLowerCase();
@@ -180,18 +180,18 @@ const MasterAgency = ({ onNavigateToDetail }) => {
 
   const stats = React.useMemo(() => {
     if (!agenciesList || agenciesList.length === 0) {
-        return { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 };
+      return { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 };
     }
     return agenciesList.reduce((acc, curr) => ({
-        totalDiamonds: acc.totalDiamonds + (Number(curr.totaldiamonds) || Number(curr.overalldiamonds) || 0),
-        totalCoins: acc.totalCoins + (Number(curr.coins) || 0),
-        totalRedeem: acc.totalRedeem + (Number(curr.redeem) || 0),
-        hostCount: acc.hostCount + 1
+      totalDiamonds: acc.totalDiamonds + (Number(curr.totaldiamonds) || Number(curr.overalldiamonds) || 0),
+      totalCoins: acc.totalCoins + (Number(curr.coins) || 0),
+      totalRedeem: acc.totalRedeem + (Number(curr.redeem) || 0),
+      hostCount: acc.hostCount + 1
     }), { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 });
   }, [agenciesList]);
 
-  const goalsCompleted = 
-    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) + 
+  const goalsCompleted =
+    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) +
     (stats.hostCount >= goals.hostTarget ? 1 : 0);
 
   if (selectedAgency) {
@@ -210,7 +210,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F72585] rounded-full" />
             </button>
-            <button 
+            <button
               onClick={() => setSelectedAgency(null)}
               className="p-2 text-gray-400 hover:text-white hover:bg-[#1A1A1E] rounded-lg transition-colors"
             >
@@ -222,152 +222,152 @@ const MasterAgency = ({ onNavigateToDetail }) => {
         {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto p-8">
           <div className="flex flex-col gap-8 max-w-[1600px] mx-auto">
-          <div className="flex flex-col lg:flex-row gap-6 mb-10">
-            {/* Left Column: Goals + Stats */}
-            <div className="w-full lg:w-[65%] flex flex-col gap-8">
+            <div className="flex flex-col lg:flex-row gap-6 mb-10">
+              {/* Left Column: Goals + Stats */}
+              <div className="w-full lg:w-[65%] flex flex-col gap-8">
                 {/* Goals Section */}
                 <div className="w-full border border-gray-800 rounded-xl p-5">
-                    <h2 className="text-xl font-bold text-white mb-6">{goalsCompleted}/2 Goals Remaining</h2>
-                    
-                    {/* Diamond Goal */}
-                    <div className="mb-6">
-                        <div className="flex items-center text-white mb-2">
-                        <Diamond className="w-4 h-4 mr-2 text-blue-400" />
-                        <span className="font-medium">{stats.totalDiamonds} / {goals.diamondTarget}</span>
-                        </div>
-                        <div className="flex items-center">
-                        <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
-                            <div 
-                                className="h-full bg-pink-500 rounded-full transition-all duration-500" 
-                                style={{width: `${Math.min((stats.totalDiamonds/goals.diamondTarget)*100, 100)}%`}}
-                            ></div>
-                        </div>
-                        <div className={`w-5 h-5 border ${stats.totalDiamonds >= goals.diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
-                            {stats.totalDiamonds >= goals.diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
-                        </div>
-                        </div>
-                    </div>
+                  <h2 className="text-xl font-bold text-white mb-6">{goalsCompleted}/2 Goals Remaining</h2>
 
-                    {/* Host Goal */}
-                    <div className="mb-6">
-                        <div className="flex items-center text-white mb-2">
-                        <User className="w-4 h-4 mr-2 text-purple-400" />
-                        <span className="font-medium">{stats.hostCount} / {goals.hostTarget}</span>
-                        </div>
-                        <div className="flex items-center">
-                        <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
-                            <div 
-                                className="h-full bg-pink-500 rounded-full transition-all duration-500" 
-                                style={{width: `${Math.min((stats.hostCount/goals.hostTarget)*100, 100)}%`}}
-                            ></div>
-                        </div>
-                        <div className={`w-5 h-5 border ${stats.hostCount >= goals.hostTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
-                            {stats.hostCount >= goals.hostTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
-                        </div>
-                        </div>
+                  {/* Diamond Goal */}
+                  <div className="mb-6">
+                    <div className="flex items-center text-white mb-2">
+                      <Diamond className="w-4 h-4 mr-2 text-blue-400" />
+                      <span className="font-medium">{stats.totalDiamonds} / {goals.diamondTarget}</span>
                     </div>
+                    <div className="flex items-center">
+                      <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                        <div
+                          className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min((stats.totalDiamonds / goals.diamondTarget) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className={`w-5 h-5 border ${stats.totalDiamonds >= goals.diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                        {stats.totalDiamonds >= goals.diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Host Goal */}
+                  <div className="mb-6">
+                    <div className="flex items-center text-white mb-2">
+                      <User className="w-4 h-4 mr-2 text-purple-400" />
+                      <span className="font-medium">{stats.hostCount} / {goals.hostTarget}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                        <div
+                          className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min((stats.hostCount / goals.hostTarget) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className={`w-5 h-5 border ${stats.hostCount >= goals.hostTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                        {stats.hostCount >= goals.hostTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Stats & Filter Section */}
                 <div className="w-full">
-                    {/* Date Filter */}
-                    <div className="mb-6">
-                        <div className="relative inline-block">
-                            <select className="appearance-none bg-[#2A2A2A] text-white pl-4 pr-10 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-[#F72585] cursor-pointer hover:border-gray-600 transition-colors">
-                            <option>Current Month</option>
-                            <option>Last Month</option>
-                            <option>Last Week</option>
-                            <option>Last Year</option>
-                            <option>Custom</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                        </div>
+                  {/* Date Filter */}
+                  <div className="mb-6">
+                    <div className="relative inline-block">
+                      <select className="appearance-none bg-[#2A2A2A] text-white pl-4 pr-10 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-[#F72585] cursor-pointer hover:border-gray-600 transition-colors">
+                        <option>Current Month</option>
+                        <option>Last Month</option>
+                        <option>Last Week</option>
+                        <option>Last Year</option>
+                        <option>Custom</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Redeem Card */}
+                    <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                      <p className="text-gray-400 text-sm mb-2">Redeemed Diamonds</p>
+                      <div className="flex items-center">
+                        <Diamond className="w-5 h-5 text-blue-400 mr-2" />
+                        <span className="text-xl font-bold text-white">{stats.totalRedeem.toLocaleString()}</span>
+                      </div>
                     </div>
 
-                    {/* Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Redeem Card */}
-                        <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
-                            <p className="text-gray-400 text-sm mb-2">Redeemed Diamonds</p>
-                            <div className="flex items-center">
-                                <Diamond className="w-5 h-5 text-blue-400 mr-2" />
-                                <span className="text-xl font-bold text-white">{stats.totalRedeem.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        {/* Coins Card */}
-                        <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
-                            <p className="text-gray-400 text-sm mb-2">Total Coins</p>
-                            <div className="flex items-center">
-                                <Coins className="w-5 h-5 text-yellow-400 mr-2" />
-                                <span className="text-xl font-bold text-white">{stats.totalCoins.toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        {/* Growth Card */}
-                        <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
-                            <p className="text-gray-400 text-sm mb-2">Growth</p>
-                            <div className="flex items-center">
-                                <TrendingUp className="w-5 h-5 text-green-400 mr-2" />
-                                <span className="text-xl font-bold text-white">+12.5%</span>
-                            </div>
-                        </div>
+                    {/* Coins Card */}
+                    <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                      <p className="text-gray-400 text-sm mb-2">Total Coins</p>
+                      <div className="flex items-center">
+                        <Coins className="w-5 h-5 text-yellow-400 mr-2" />
+                        <span className="text-xl font-bold text-white">{stats.totalCoins.toLocaleString()}</span>
+                      </div>
                     </div>
+
+                    {/* Growth Card */}
+                    <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800 hover:border-gray-700 transition-colors">
+                      <p className="text-gray-400 text-sm mb-2">Growth</p>
+                      <div className="flex items-center">
+                        <TrendingUp className="w-5 h-5 text-green-400 mr-2" />
+                        <span className="text-xl font-bold text-white">+12.5%</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-            </div>
+              </div>
 
-            {/* Right Column: Royal Tiers */}
-            <div className="w-full lg:w-[35%] flex flex-col gap-4">
-                 {/* Royal Silver */}
-                 <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
-                    <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-b from-gray-700 to-gray-900 border border-gray-600 flex items-center justify-center">
-                             <Shield className="w-6 h-6 text-gray-300 fill-gray-300/20" />
-                        </div>
-                        <div>
-                            <h3 className="text-white font-bold text-lg">Royal Silver</h3>
-                            <p className="text-gray-400 text-xs">10.0% revenue share</p>
-                        </div>
+              {/* Right Column: Royal Tiers */}
+              <div className="w-full lg:w-[35%] flex flex-col gap-4">
+                {/* Royal Silver */}
+                <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-b from-gray-700 to-gray-900 border border-gray-600 flex items-center justify-center">
+                      <Shield className="w-6 h-6 text-gray-300 fill-gray-300/20" />
                     </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg">Royal Silver</h3>
+                      <p className="text-gray-400 text-xs">10.0% revenue share</p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Royal Gold */}
                 <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
-                     <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-b from-yellow-600 to-yellow-900 border border-yellow-700 flex items-center justify-center">
-                             <Crown className="w-6 h-6 text-yellow-400 fill-yellow-400/20" />
-                        </div>
-                        <div>
-                            <h3 className="text-white font-bold text-lg">Royal Gold</h3>
-                            <p className="text-gray-400 text-xs">10.0% revenue share</p>
-                        </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-b from-yellow-600 to-yellow-900 border border-yellow-700 flex items-center justify-center">
+                      <Crown className="w-6 h-6 text-yellow-400 fill-yellow-400/20" />
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center border border-gray-700">
-                        <Lock className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <h3 className="text-white font-bold text-lg">Royal Gold</h3>
+                      <p className="text-gray-400 text-xs">10.0% revenue share</p>
                     </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center border border-gray-700">
+                    <Lock className="w-4 h-4 text-gray-500" />
+                  </div>
                 </div>
 
                 {/* Royal Platinum */}
                 <div className="bg-[#111] border border-gray-800 p-5 rounded-2xl flex items-center justify-between group cursor-pointer hover:border-gray-600 transition-all shadow-lg">
-                     <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-b from-slate-600 to-slate-800 border border-slate-600 flex items-center justify-center">
-                             <Shield className="w-6 h-6 text-slate-300 fill-slate-300/20" />
-                        </div>
-                        <div>
-                            <h3 className="text-white font-bold text-lg">Royal Platinum</h3>
-                            <p className="text-gray-400 text-xs">10.0% revenue share</p>
-                        </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-b from-slate-600 to-slate-800 border border-slate-600 flex items-center justify-center">
+                      <Shield className="w-6 h-6 text-slate-300 fill-slate-300/20" />
                     </div>
-                     <div className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center border border-gray-700">
-                        <Lock className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <h3 className="text-white font-bold text-lg">Royal Platinum</h3>
+                      <p className="text-gray-400 text-xs">10.0% revenue share</p>
                     </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center border border-gray-700">
+                    <Lock className="w-4 h-4 text-gray-500" />
+                  </div>
                 </div>
+              </div>
             </div>
-         </div>
-            
+
             {/* Main Content Column */}
             <div className="flex-1 space-y-8 min-w-0">
-              
+
               {/* Stats Grid */}
               {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
@@ -394,7 +394,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
               <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
                 <div className="p-6 border-b border-gray-800">
 
-                  
+
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-white">List of Agencies</h2>
                     <div className="flex items-center space-x-4">
@@ -463,18 +463,18 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                     <div className="p-8 text-center text-gray-400">No agencies found for this master agency.</div>
                   )}
                   {!agenciesLoading && !agenciesError && agenciesList.map((agency, index) => (
-                    <div 
-                      key={agency.id || index} 
+                    <div
+                      key={agency.id || index}
                       className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group"
                     >
                       {/* Agency Name */}
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors flex items-center justify-center text-xs font-bold text-white">
-                           {agency.profilePic ? (
-                             <img src={agency.profilePic} alt="" className="w-full h-full rounded-full object-cover" />
-                           ) : (
-                             `A${index + 1}`
-                           )}
+                          {agency.profilePic ? (
+                            <img src={agency.profilePic} alt="" className="w-full h-full rounded-full object-cover" />
+                          ) : (
+                            `A${index + 1}`
+                          )}
                         </div>
                         <div>
                           <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer">
@@ -549,7 +549,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
           </div> */}
         </div>
       </div>
-            
+
       {/* Main Content */}
       <div className="flex-1 overflow-auto table-scroll-container">
         <div className="p-6 space-y-6">
@@ -661,8 +661,8 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                 {/* Table Body */}
                 <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
                   {sortedMasterAgencies.map((masterAgency, index) => (
-                    <div 
-                      key={`${masterAgency.subAdminId}-${masterAgency.id}`} 
+                    <div
+                      key={`${masterAgency.subAdminId}-${masterAgency.id}`}
                       className="grid grid-cols-13 gap-4 px-4 py-5 hover:bg-[#222222] transition-all duration-200 group"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
@@ -670,7 +670,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
                         <div>
-                          <div 
+                          <div
                             className="text-white font-bold text-sm group-hover:text-[#F72585] transition-colors cursor-pointer"
                             onClick={() => onNavigateToDetail && onNavigateToDetail(masterAgency.subAdminId, masterAgency.id)}
                           >
@@ -689,7 +689,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                       {/* Sub Admin Name */}
                       <div className="flex items-center">
                         <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
-                          {masterAgency.ownerName || masterAgency.subAdminName || masterAgency.owner ||'—' }
+                          {masterAgency.ownerName || masterAgency.subAdminName || masterAgency.owner || '—'}
                         </span>
                       </div>
 
@@ -773,7 +773,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                 <h3 className="text-xl font-bold text-white mb-3">No master agencies found</h3>
                 <p className="text-gray-400 max-w-md">
                   {searchTerm
-                    ? "No master agencies match your search criteria." 
+                    ? "No master agencies match your search criteria."
                     : "No master agencies are currently available."
                   }
                 </p>

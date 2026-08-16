@@ -3,13 +3,12 @@ import { ArrowLeft, Image, X, Upload, Loader2, CheckCircle, XCircle, Plus, Calen
 import authService from '../../services/services';
 
 const Toast = ({ message, type, onClose }) => (
-  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${
-    type === 'success' 
-      ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md' 
+  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${type === 'success'
+      ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md'
       : type === 'info'
-      ? 'bg-[#0F172A]/90 border-blue-500/50 text-blue-400 backdrop-blur-md'
-      : 'bg-[#0F172A]/90 border-red-500/50 text-red-400 backdrop-blur-md'
-  }`}>
+        ? 'bg-[#0F172A]/90 border-blue-500/50 text-blue-400 backdrop-blur-md'
+        : 'bg-[#0F172A]/90 border-red-500/50 text-red-400 backdrop-blur-md'
+    }`}>
     {type === 'success' ? <CheckCircle className="w-5 h-5" /> : type === 'info' ? <Image className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
     <p className="text-sm font-bold tracking-wide">{message}</p>
     <button onClick={onClose} className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors">
@@ -24,28 +23,28 @@ const BannerCard = ({ banner }) => {
   const externalLink = banner.externalLink || '#';
   const expiryDate = banner.expiryTime ? new Date(banner.expiryTime) : null;
   const isExpired = expiryDate && expiryDate < new Date();
-  
+
   const formatDate = (date) => {
     if (!date) return 'No Expiry';
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return date.toLocaleDateString('en-US', options);
   };
-  
+
   return (
     <div className="bg-[#1A1A1A] rounded-2xl border border-white/5 overflow-hidden hover:border-[#F72585]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#F72585]/20 hover:-translate-y-1 group">
       <div className="relative h-48 bg-black/40 overflow-hidden">
         {imageUrl.match(/\.(mp4|webm|ogg)$/i) ? (
-          <video 
-            src={imageUrl} 
+          <video
+            src={imageUrl}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             muted
             loop
             autoPlay
           />
         ) : (
-          <img 
-            src={imageUrl} 
-            alt="Banner" 
+          <img
+            src={imageUrl}
+            alt="Banner"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             onError={(e) => {
               e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200"%3E%3Crect width="400" height="200" fill="%231A1A1A"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23666" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
@@ -68,28 +67,28 @@ const BannerCard = ({ banner }) => {
           </div>
         )}
       </div>
-      
+
       <div className="p-4 space-y-3">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Button Text</span>
             <span className="text-sm font-bold text-white">{btnName}</span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Link</span>
             <span className="text-xs font-bold text-[#4CC9F0] truncate max-w-[200px]" title={externalLink}>
               {externalLink}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Expiry Date</span>
             <span className={`text-xs font-bold ${isExpired ? 'text-red-400' : 'text-[#4CC9F0]'}`}>
               {formatDate(expiryDate)}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">ID</span>
             <span className="text-sm font-bold text-[#F72585]">#{banner.id}</span>
@@ -119,7 +118,7 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0]; 
+    const file = e.target.files[0];
     if (file) {
       setSelectedFile(file);
       setFileType(file.type);
@@ -133,8 +132,8 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ 
-      ...formData, 
+    onSubmit({
+      ...formData,
       file: selectedFile,
       status: 1
     });
@@ -158,7 +157,7 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             <h2 className="text-2xl font-black text-white tracking-tight">Add New Banner</h2>
             <p className="text-gray-400 text-sm font-medium mt-1">Upload image and set banner details</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
           >
@@ -180,7 +179,7 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 id="banner-image-upload"
                 required
               />
-              <label 
+              <label
                 htmlFor="banner-image-upload"
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white hover:border-[#F72585] transition-all cursor-pointer flex items-center justify-between"
               >
@@ -193,15 +192,15 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             {previewUrl && (
               <div className="relative w-full h-48 bg-black/40 rounded-xl overflow-hidden border border-white/5">
                 {fileType.startsWith('video/') ? (
-                  <video 
-                    src={previewUrl} 
+                  <video
+                    src={previewUrl}
                     className="w-full h-full object-cover"
                     controls
                   />
                 ) : (
-                  <img 
-                    src={previewUrl} 
-                    alt="Preview" 
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
                     className="w-full h-full object-cover"
                   />
                 )}
@@ -233,7 +232,7 @@ const BannerFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
               name="externalLink"
               value={formData.externalLink}
               onChange={handleChange}
-              placeholder="http://169.58.40.205:8004/movie"
+              placeholder="https://proxstreamapi.in/movie"
               className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all"
               required
             />
@@ -316,13 +315,13 @@ const BannersPage = ({ onBack }) => {
       console.log('Fetching banners...');
       const response = await authService.getAllBanners();
       console.log('Fetch banners response:', response);
-      
+
       if (response.success) {
         const rawList = Array.isArray(response.data) ? response.data : [];
         console.log('Banner count:', rawList.length);
-        
+
         const sortedBanners = rawList.sort((a, b) => b.id - a.id);
-        
+
         setBanners(sortedBanners);
       } else {
         throw new Error(response.error || 'Failed to fetch banners');
@@ -366,7 +365,7 @@ const BannersPage = ({ onBack }) => {
       });
 
       const response = await authService.saveBanner(formData);
-      
+
       if (response.success) {
         showNotification('Banner created successfully');
         setIsModalOpen(false);
@@ -387,7 +386,7 @@ const BannersPage = ({ onBack }) => {
       <div className="max-w-[1600px] mx-auto">
         <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={onBack}
               className="p-2.5 rounded-xl bg-[#1A1A1A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition-all border border-white/5"
             >
@@ -407,25 +406,23 @@ const BannersPage = ({ onBack }) => {
               <Plus className="w-5 h-5" />
               Add Banner
             </button>
-            
+
             <div className="flex items-center gap-2 p-1 rounded-xl bg-[#1A1A1A] border border-white/5">
               <button
                 onClick={() => setActiveTab('active')}
-                className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${
-                  activeTab === 'active'
+                className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${activeTab === 'active'
                     ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Active
               </button>
               <button
                 onClick={() => setActiveTab('inactive')}
-                className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${
-                  activeTab === 'inactive'
+                className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all ${activeTab === 'inactive'
                     ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Inactive
               </button>
@@ -455,8 +452,8 @@ const BannersPage = ({ onBack }) => {
               No {activeTab === 'active' ? 'Active' : 'Inactive'} Banners
             </h3>
             <p className="text-gray-400 text-sm mb-10 max-w-md mx-auto">
-              {activeTab === 'active' 
-                ? 'Start by creating your first banner to promote content' 
+              {activeTab === 'active'
+                ? 'Start by creating your first banner to promote content'
                 : 'No inactive banners at the moment'}
             </p>
           </div>
@@ -468,7 +465,7 @@ const BannersPage = ({ onBack }) => {
           </div>
         )}
 
-        <BannerFormModal 
+        <BannerFormModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleCreateBanner}
@@ -476,7 +473,7 @@ const BannersPage = ({ onBack }) => {
         />
 
         {toast && (
-          <Toast 
+          <Toast
             message={toast.message}
             type={toast.type}
             onClose={() => setToast(null)}

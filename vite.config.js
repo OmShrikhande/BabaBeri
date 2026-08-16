@@ -7,76 +7,76 @@ export default defineConfig({
   server: {
     proxy: {
       '/auth': {
-        target: 'http://169.58.40.205:8004',
+        target: 'https://proxstreamapi.in',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
             // Add headers that the server might expect
-            proxyReq.setHeader('Origin', 'http://169.58.40.205:8004');
-            proxyReq.setHeader('Referer', 'http://169.58.40.205:8004/');
+            proxyReq.setHeader('Origin', 'https://proxstreamapi.in');
+            proxyReq.setHeader('Referer', 'https://proxstreamapi.in/');
           });
         }
       },
       '/api': {
-        target: 'http://169.58.40.205:8004',
+        target: 'https://proxstreamapi.in',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
             // Add headers that the server might expect
-            proxyReq.setHeader('Origin', 'http://169.58.40.205:8004');
-            proxyReq.setHeader('Referer', 'http://169.58.40.205:8004/');
+            proxyReq.setHeader('Origin', 'https://proxstreamapi.in');
+            proxyReq.setHeader('Referer', 'https://proxstreamapi.in/');
           });
         }
       },
       '/commission': {
-        target: 'http://169.58.40.205:8004',
+        target: 'https://proxstreamapi.in',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
-            proxyReq.setHeader('Origin', 'http://169.58.40.205:8004');
-            proxyReq.setHeader('Referer', 'http://169.58.40.205:8004/');
+            proxyReq.setHeader('Origin', 'https://proxstreamapi.in');
+            proxyReq.setHeader('Referer', 'https://proxstreamapi.in/');
           });
         }
       },
       '/live': {
-        target: 'http://169.58.40.205:8004',
+        target: 'https://proxstreamapi.in',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'http://169.58.40.205:8004');
-            proxyReq.setHeader('Referer', 'http://169.58.40.205:8004/');
+            proxyReq.setHeader('Origin', 'https://proxstreamapi.in');
+            proxyReq.setHeader('Referer', 'https://proxstreamapi.in/');
           });
         }
       },
       '/gifts': {
-        target: 'http://169.58.40.205:8004',
+        target: 'https://proxstreamapi.in',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'http://169.58.40.205:8004');
-            proxyReq.setHeader('Referer', 'http://169.58.40.205:8004/');
+            proxyReq.setHeader('Origin', 'https://proxstreamapi.in');
+            proxyReq.setHeader('Referer', 'https://proxstreamapi.in/');
           });
         }
       },
       '/public': {
-        target: 'http://169.58.40.205:8004',
+        target: 'https://proxstreamapi.in',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path,
         configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq) => {
-            proxyReq.setHeader('Origin', 'http://169.58.40.205:8004');
-            proxyReq.setHeader('Referer', 'http://169.58.40.205:8004/');
+            proxyReq.setHeader('Origin', 'https://proxstreamapi.in');
+            proxyReq.setHeader('Referer', 'https://proxstreamapi.in/');
           });
         }
       }

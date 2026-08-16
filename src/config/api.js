@@ -14,8 +14,10 @@ export const API_CONFIG = {
     COUNT_BY_ROLE: '/auth/api/countbyrole',
     // Manual coin recharge by Super Admin
     RECHARGE_MANUAL: '/auth/api/recharge',
-    // Recharge plans - create
+    // Recharge plans - create, update, delete
     RECHARGE_PLAN_CREATE: '/auth/api/saveplan',
+    RECHARGE_PLAN_UPDATE: '/auth/api/updateByPlans',
+    RECHARGE_PLAN_DELETE: '/auth/api/deleteByPlansId',
     // Approve profile picture (JWT protected)
     APPROVE_PROFILE: '/auth/api/approveprofile',
     // List all pending profile pictures (JWT protected)

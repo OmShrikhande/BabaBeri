@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API_CONFIG from '../config/api';
 import useToast from '../hooks/useToast';
 import ToastList from './ToastList';
@@ -116,6 +117,7 @@ const DeductCoinsModal = ({ isOpen, onClose, addToast }) => {
 };
 
 const CoinRecharge = ({ currentUser, onNavigate }) => {
+  const navigate = useNavigate();
   const { toasts, addToast, removeToast } = useToast();
   const [deductModalOpen, setDeductModalOpen] = useState(false);
 
@@ -164,7 +166,7 @@ const CoinRecharge = ({ currentUser, onNavigate }) => {
 
       <CoinRechargeHeader
         currentUser={currentUser}
-        onNavigateToWallet={() => onNavigate('coin-recharge-wallet')}
+        onNavigateToWallet={() => navigate('../wallet')}
       />
 
       <HostRechargeSection
@@ -200,7 +202,14 @@ const CoinRecharge = ({ currentUser, onNavigate }) => {
 
       <div className="space-y-6">
         {activeTab === 'plans' && (
-          <PlansTab plans={planState.rechargePlans} onOpenModal={() => planActions.setShowPlanModal(true)} />
+          <PlansTab
+            plans={planState.rechargePlans}
+            loading={planState.isLoading}
+            error={planState.error}
+            onOpenModal={() => planActions.setShowPlanModal(true)}
+            onEditPlan={planActions.openEditModal}
+            onDeletePlan={planActions.handlePlanDelete}
+          />
         )}
         {activeTab === 'history' && (
           <HistoryTab history={history} loadHistory={loadHistory} isLoading={isLoadingHistory} />
@@ -218,7 +227,9 @@ const CoinRecharge = ({ currentUser, onNavigate }) => {
       <PlanModal
         isOpen={planState.showPlanModal}
         form={planState.newPlanForm}
-        onClose={() => planActions.setShowPlanModal(false)}
+        editingPlan={planState.editingPlan}
+        isLoading={planState.isLoading}
+        onClose={planActions.closeModal}
         onChange={planActions.setNewPlanForm}
         onSubmit={planActions.handlePlanSubmit}
       />

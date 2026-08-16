@@ -194,37 +194,143 @@ export const useOfferManagement = ({ initialOffers, addToast }) => {
 
 // Plans ---------------------------------------------------------------------
 export const usePlanManagement = ({ initialPlans, addToast }) => {
-  const [rechargePlans, setRechargePlans] = useState(initialPlans);
+  const [rechargePlans, setRechargePlans] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [newPlanForm, setNewPlanForm] = useState({ coins: '', price: '', description: '' });
+  const [editingPlan, setEditingPlan] = useState(null);
+  const [newPlanForm, setNewPlanForm] = useState({ planename: '', coins: '', price: '', description: '', status: 'Active' });
 
-  const handlePlanSubmit = (event) => {
-    event.preventDefault();
+  const loadPlans = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await authService.getAllPlans();
+      if (result.success) {
+        setRechargePlans(result.data || []);
+      } else {
+        setError(result.error);
+        addToast?.('error', result.error || 'Failed to load plans');
+      }
+    } catch (err) {
+      console.error('Error fetching plans:', err);
+      setError('Failed to fetch plans');
+      addToast?.('error', 'Failed to fetch plans');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addToast]);
 
-    const newPlan = {
-      id: rechargePlans.length + 1,
-      ...newPlanForm,
-      coins: parseInt(newPlanForm.coins, 10),
-      price: parseFloat(newPlanForm.price)
-    };
+  useEffect(() => {
+    loadPlans();
+  }, [loadPlans]);
 
-    setRechargePlans([...rechargePlans, newPlan]);
+  const openEditModal = useCallback((plan) => {
+    setEditingPlan(plan);
+    setNewPlanForm({
+      planename: plan.planename || '',
+      coins: String(plan.coins || ''),
+      price: String(plan.planprice || ''),
+      description: plan.discription || '',
+      status: plan.status || 'Active'
+    });
+    setShowPlanModal(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
     setShowPlanModal(false);
-    setNewPlanForm({ coins: '', price: '', description: '' });
-    addToast('success', 'New plan created successfully!');
+    setEditingPlan(null);
+    setNewPlanForm({ planename: '', coins: '', price: '', description: '', status: 'Active' });
+  }, []);
+
+  const handlePlanSubmit = async (event) => {
+    event.preventDefault();
+    if (!newPlanForm.coins || !newPlanForm.price) {
+      addToast?.('error', 'Please enter coins and price.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      let result;
+      if (editingPlan) {
+        // Update existing plan
+        const payload = {
+          id: editingPlan.id,
+          planprice: parseFloat(newPlanForm.price),
+          status: newPlanForm.status || 'Active'
+        };
+        result = await authService.updatePlan(payload);
+        if (result.success) {
+          addToast?.('success', 'Plan updated successfully!');
+          closeModal();
+          loadPlans();
+        } else {
+          addToast?.('error', result.error || 'Failed to update plan');
+        }
+      } else {
+        // Create new plan
+        const payload = {
+          planename: newPlanForm.planename || `${newPlanForm.coins} Coins Plan`,
+          planprice: parseFloat(newPlanForm.price),
+          coins: parseInt(newPlanForm.coins, 10),
+          discription: newPlanForm.description || '',
+          specialoffer: 'false',
+          status: 'Active'
+        };
+        result = await authService.savePlan(payload);
+        if (result.success) {
+          addToast?.('success', 'New plan created successfully!');
+          closeModal();
+          loadPlans();
+        } else {
+          addToast?.('error', result.error || 'Failed to create plan');
+        }
+      }
+    } catch (err) {
+      console.error('Error submitting plan:', err);
+      addToast?.('error', editingPlan ? 'Failed to update plan' : 'Failed to create plan');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handlePlanDelete = useCallback(async (planId) => {
+    setIsLoading(true);
+    try {
+      const result = await authService.deletePlan(planId);
+      if (result.success) {
+        addToast?.('success', 'Plan deleted successfully!');
+        loadPlans();
+      } else {
+        addToast?.('error', result.error || 'Failed to delete plan');
+      }
+    } catch (err) {
+      console.error('Error deleting plan:', err);
+      addToast?.('error', 'Failed to delete plan');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [addToast, loadPlans]);
 
   return {
     state: {
       rechargePlans,
       showPlanModal,
-      newPlanForm
+      newPlanForm,
+      isLoading,
+      error,
+      editingPlan
     },
     actions: {
       setRechargePlans,
-      setShowPlanModal,
+      setShowPlanModal: (val) => { if (!val) closeModal(); else setShowPlanModal(val); },
       setNewPlanForm,
-      handlePlanSubmit
+      handlePlanSubmit,
+      handlePlanDelete,
+      openEditModal,
+      closeModal,
+      loadPlans
     }
   };
 };

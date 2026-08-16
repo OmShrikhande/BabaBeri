@@ -26,7 +26,7 @@ const VipLevels = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [formData, setFormData] = useState({
-    planName: '', coinsRequired: '', validFor: '',
+    planName: '', needCoins: '', validFor: '',
     vipFriendCount: '', invisibleMode: false, avatarImage: null
   });
 
@@ -110,7 +110,7 @@ const VipLevels = () => {
     f.sort((a, b) => {
       let av, bv;
       if (sortField === 'planName') { av = (a.planName || a.name || '').toLowerCase(); bv = (b.planName || b.name || '').toLowerCase(); }
-      else if (sortField === 'coinsRequired') { av = Number(a.coinsRequired || a.coins || 0); bv = Number(b.coinsRequired || b.coins || 0); }
+      else if (sortField === 'coinsRequired') { av = Number(a.needCoins || a.coins || 0); bv = Number(b.needCoins || b.coins || 0); }
       else if (sortField === 'validFor') { av = Number(a.validFor || a.validity || 0); bv = Number(b.validFor || b.validity || 0); }
       else if (sortField === 'vipFriendCount') { av = Number(a.vipFriendCount || a.friendCount || 0); bv = Number(b.vipFriendCount || b.friendCount || 0); }
       else return 0;
@@ -122,14 +122,14 @@ const VipLevels = () => {
 
   const filteredMembers = React.useMemo(() => {
     let filtered = vipMembers.filter(member => {
-      const matchesSearch = 
+      const matchesSearch =
         (member.fullName || member.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (member.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (member.userId || member.id || '').toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesLevel = selectedLevel === 'all' || 
+
+      const matchesLevel = selectedLevel === 'all' ||
         (member.vipLevel || member.planName || '').toLowerCase() === selectedLevel.toLowerCase();
-      
+
       return matchesSearch && matchesLevel;
     });
 
@@ -150,7 +150,7 @@ const VipLevels = () => {
       } else {
         return 0;
       }
-      
+
       if (typeof av === 'string') {
         return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
       }
@@ -167,7 +167,7 @@ const VipLevels = () => {
         const level = member.vipLevel || member.planName || 'Unknown';
         levelCounts[level] = (levelCounts[level] || 0) + 1;
       });
-      
+
       return {
         total: vipMembers.length,
         filtered: filteredMembers.length,
@@ -180,7 +180,7 @@ const VipLevels = () => {
     } else {
       return {
         total: plans.length,
-        avgCoins: plans.length ? Math.round(plans.reduce((s, p) => s + Number(p.coinsRequired || p.coins || 0), 0) / plans.length) : 0,
+        avgCoins: plans.length ? Math.round(plans.reduce((s, p) => s + Number(p.needCoins || p.coins || 0), 0) / plans.length) : 0,
         invisibleCount: plans.filter(p => p.invisibleMode).length,
         avgValidity: plans.length ? Math.round(plans.reduce((s, p) => s + Number(p.validFor || p.validity || 0), 0) / plans.length) : 0
       };
@@ -383,7 +383,7 @@ const VipLevels = () => {
               <div>
                 <p className="text-[#F72585] font-medium text-sm mb-1">Note</p>
                 <p className="text-gray-300 text-sm leading-relaxed">
-                  {activeView === 'members' 
+                  {activeView === 'members'
                     ? 'View all VIP members grouped by their subscription levels. Members are ranked based on their VIP tier and activity. Note: If no data appears, the VIP members API endpoint may need to be implemented on the backend.'
                     : 'VIP plans grant users special privileges in the app. Invisible Mode hides the user from public listings. VIP a Friend allows users to grant VIP status to a set number of friends.'
                   }
@@ -529,7 +529,7 @@ const VipLevels = () => {
             onToggle={setActiveView}
             className="w-full sm:w-auto"
           />
-          
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 text-sm text-gray-400 w-full lg:w-auto">
             <div className="flex items-center gap-2">
               <span>Showing:</span>
@@ -591,7 +591,7 @@ const VipLevels = () => {
                     {filteredMembers.map((member, idx) => {
                       const expiryDate = new Date(member.expiryDate || member.validUntil);
                       const isExpired = expiryDate < new Date();
-                      
+
                       return (
                         <tr key={member.id || idx} className="border-b border-gray-800 last:border-b-0 hover:bg-[#1A1A1A] transition-colors group">
                           {/* # */}
@@ -706,7 +706,7 @@ const VipLevels = () => {
                           <div className="flex items-center gap-1.5">
                             <Coins className="w-4 h-4 text-yellow-400 flex-shrink-0" />
                             <span className="text-yellow-400 font-semibold text-sm">
-                              {(plan.coinsRequired || plan.coins || 0).toLocaleString()}
+                              {(plan.needCoins || plan.coins || 0).toLocaleString()}
                             </span>
                           </div>
                         </td>

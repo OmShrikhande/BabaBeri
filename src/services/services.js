@@ -372,6 +372,108 @@ class AuthService {
         return { success: false, error: error.message || 'Failed to fetch plans.' };
       }
     }
+
+    // Save a new recharge plan
+    async savePlan(planData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RECHARGE_PLAN_CREATE}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'POST',
+          body: JSON.stringify(planData)
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to save plan: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Save plan error:', error);
+        return { success: false, error: error.message || 'Failed to save plan.' };
+      }
+    }
+
+    // Update an existing recharge plan
+    async updatePlan(planData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RECHARGE_PLAN_UPDATE}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'PUT',
+          body: JSON.stringify(planData)
+        });
+
+        const raw = await response.text().catch(() => '');
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update plan: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+        
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Update plan error:', error);
+        return { success: false, error: error.message || 'Failed to update plan.' };
+      }
+    }
+
+    // Delete a recharge plan by ID
+    async deletePlan(planId) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.RECHARGE_PLAN_DELETE}?id=${planId}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'DELETE'
+        });
+
+        const raw = await response.text().catch(() => '');
+
+        if (response.status === 403) {
+          return { success: false, error: 'Permission denied: the server has not granted delete access for this endpoint. Please contact the backend administrator.' };
+        }
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete plan: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+
+        return { success: true, data: data };
+      } catch (error) {
+        console.error('Delete plan error:', error);
+        return { success: false, error: error.message || 'Failed to delete plan.' };
+      }
+    }
     // Save Tiers (Goals)
     async saveTiers(tierData) {
       const token = this.getToken();

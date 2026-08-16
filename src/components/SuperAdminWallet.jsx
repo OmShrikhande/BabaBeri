@@ -184,7 +184,7 @@ const SuperAdminWallet = ({ currentUser }) => {
 
         <button
           onClick={() => setShowAddCoinsModal(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:from-[#F72585]/80 hover:to-[#7209B7]/80 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          className="md:hidden flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:from-[#F72585]/80 hover:to-[#7209B7]/80 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
         >
           <Plus className="w-4 h-4" />
           Add Coins

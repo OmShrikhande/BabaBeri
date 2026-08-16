@@ -194,8 +194,10 @@ const HostDetails = () => {
       )}
 
       {/* Right Sidebar */}
-      <div className={`fixed inset-0 bg-gray-900 z-50 overflow-y-auto ${isSidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="p-6 max-w-4xl mx-auto">
+      <div className={`fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="absolute inset-0" onClick={closeSidebar} />
+        <div className={`relative bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transition-all duration-300 transform ${isSidebarOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
+          <div className="p-6 overflow-y-auto flex-1">
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-white">Host Details</h2>
                 <button 
@@ -343,6 +345,7 @@ const HostDetails = () => {
                     </div>
                 </div>
             ) : null}
+          </div>
         </div>
       </div>
     </div>

@@ -179,7 +179,7 @@ const Wallet = ({ currentUser }) => {
           <WalletSummary
             walletSummary={walletData.walletSummary}
             loadingWallet={walletData.loadingWallet}
-            onAddCredit={creditMgmt.openCreateCreditModal}
+            onAddCredit={() => setShowAddCoinsModal(true)}
             currentUser={currentUser}
             onAddCoins={() => setShowAddCoinsModal(true)}
           />
@@ -188,7 +188,7 @@ const Wallet = ({ currentUser }) => {
             loadingCredits={walletData.loadingCredits}
             deletingCreditId={creditMgmt.deletingCreditId}
             formattedLastUpdated={formattedLastUpdated}
-            onAddClick={creditMgmt.openCreateCreditModal}
+            onAddClick={() => setShowAddCoinsModal(true)}
             onEditClick={() => addToast('Editing is not currently supported', 'info')}
             onDeleteClick={() => addToast('Deleting is not currently supported', 'info')}
           />

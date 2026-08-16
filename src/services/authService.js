@@ -216,6 +216,17 @@ class AuthService {
     }
   }
 
+  // Get master agencies for the logged-in admin
+  async getMasterAgenciesForLoggedInAdmin() {
+    const userInfo = this.getUserInfo();
+    const code = this.extractUserCode(userInfo);
+    if (!code) {
+      return { success: false, error: 'Admin code not found.' };
+    }
+    return this.getAllSubUserByCode(code, 'MASTER_AGENCY');
+  }
+
+
   // Make authenticated API requests
   async makeAuthenticatedRequest(url, options = {}) {
     const token = this.getToken();

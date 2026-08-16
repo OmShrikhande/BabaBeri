@@ -21,15 +21,22 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
     const fetchAgencies = async () => {
       console.log('Starting to fetch agencies...');
       setLoading(true);
-      const token = authService.getToken();
-      console.log('Auth token:', token ? 'Present' : 'Not found');
-      const result = await authService.getUsersByRole('AGENCY');
+      const role = authService.getUserType();
+      const userInfo = authService.getUserInfo();
+      const adminCode = authService.extractUserCode(userInfo);
+      
+      let result;
+      if (role === 'admin' && adminCode) {
+        result = await authService.getAllSubUserByCode(adminCode, 'AGENCY');
+      } else {
+        result = await authService.getUsersByRole('AGENCY');
+      }
       console.log('API result:', result);
       if (result.success && Array.isArray(result.data)) {
         console.log('Fetched agencies:', result.data);
         const transformedAgencies = result.data.map(agency => ({
           name: agency.name,
-          id: agency.code || agency.id,
+          id: agency.hosttoagnc || agency.code,
           owner: agency.ownername || '-', // Default owner since not in API
           ownerId: agency.owner || null, // Default since not in API
           hosts: agency.hosts || "-", // Default empty array
@@ -57,7 +64,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
 
   const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         agency.id.toLowerCase().includes(searchTerm.toLowerCase());
+      agency.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTier = filterTier === 'all' || agency.tier === filterTier;
     return matchesSearch && matchesTier;
   });
@@ -93,9 +100,9 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
 
   if (viewingAgencyId) {
     return (
-      <AgencyDetail 
-        agencyId={viewingAgencyId} 
-        onBack={() => setViewingAgencyId(null)} 
+      <AgencyDetail
+        agencyId={viewingAgencyId}
+        onBack={() => setViewingAgencyId(null)}
       />
     );
   }
@@ -111,7 +118,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-white">Agencies</h1>
           </div>
-          
+
           {/* Search and Filter Bar */}
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
             <div className="relative">
@@ -124,7 +131,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
                 className="w-full sm:w-80 pl-10 pr-4 py-2 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585]"
               />
             </div>
-            
+
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <select
@@ -157,7 +164,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
           //       </div>
           //     </div>
           //   </div>
-            
+
           //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
           //     <div className="flex items-center space-x-3">
           //       <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
@@ -169,7 +176,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
           //       </div>
           //     </div>
           //   </div>
-            
+
           //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
           //     <div className="flex items-center space-x-3">
           //       <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center">
@@ -183,7 +190,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
           //       </div>
           //     </div>
           //   </div>
-            
+
           //   <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl p-6">
           //     <div className="flex items-center space-x-3">
           //       <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -212,7 +219,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
                 Manage and monitor all registered agencies
               </p> */}
             </div>
-            
+
             <div className="overflow-x-auto">
               <div className="min-w-[2000px]">
                 <table className="w-full">
@@ -236,7 +243,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
                   </thead>
                   <tbody className="divide-y divide-gray-800">
                     {filteredAgencies.map((agency) => (
-                      <tr 
+                      <tr
                         key={agency.id}
                         className="hover:bg-[#1A1A1A] transition-colors cursor-pointer group"
                         onClick={() => handleViewAgency(agency.id)}
@@ -312,7 +319,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
 
                         {/* Joining Date */}
                         <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.joiningdate|| '--'}</span>
+                          <span className="text-gray-300 text-sm">{agency.joiningdate || '--'}</span>
                         </td>
 
 
@@ -332,13 +339,13 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
                             </button>
                           </div>
                         </td>
-                      </tr> 
+                      </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
-            
+
             {filteredAgencies.length === 0 && !loading && (
               <div className="py-12 text-center">
                 <p className="text-gray-400">No agencies found matching your search.</p>

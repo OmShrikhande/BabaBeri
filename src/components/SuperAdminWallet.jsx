@@ -9,6 +9,7 @@ const SuperAdminWallet = ({ currentUser }) => {
     totalDebited: 0,
     lastUpdated: null
   });
+  const [diamonds, setDiamonds] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddCoinsModal, setShowAddCoinsModal] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
@@ -30,11 +31,19 @@ const SuperAdminWallet = ({ currentUser }) => {
   const fetchWalletData = async () => {
     try {
       setIsLoading(true);
-      const response = await authService.getDiamondWalletSummary();
-      if (response.success) {
-        setWalletData(response.data);
+      const [walletRes, diamondsRes] = await Promise.all([
+        authService.getDiamondWalletSummary(),
+        authService.getDiamondCredits()
+      ]);
+
+      if (walletRes.success) {
+        setWalletData(walletRes.data);
       } else {
         setError('Failed to fetch wallet data');
+      }
+
+      if (diamondsRes.success) {
+        setDiamonds(diamondsRes.data?.totalCREDIT ?? diamondsRes.data?.total ?? 0);
       }
     } catch (error) {
       console.error('Error fetching wallet data:', error);
@@ -157,38 +166,52 @@ const SuperAdminWallet = ({ currentUser }) => {
   return (
     <>
       {/* Wallet Display */}
-      <div className="flex items-center gap-3 bg-white/5 px-4 py-3 rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 group">
+      <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300">
+        {/* Coins Section */}
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg group-hover:scale-110 transition-transform duration-300">
-            <Wallet className="w-5 h-5 text-white" />
+          <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
+            <Wallet className="w-4 h-4 text-white" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs text-gray-400 font-medium">Super Admin Wallet</span>
-            <div className="flex items-center gap-2">
-              {isLoading ? (
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm text-gray-300">Loading...</span>
-                </div>
-              ) : (
-                <>
-                  <span className="text-lg font-bold text-yellow-400">
-                    {walletData.currentBalance.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-gray-400">coins</span>
-                </>
-              )}
-            </div>
+            <span className="text-[10px] text-gray-400 font-medium leading-none mb-1">Coins</span>
+            {isLoading ? (
+              <span className="text-xs text-gray-500">...</span>
+            ) : (
+              <span className="text-sm font-bold text-yellow-400 leading-none">
+                {walletData.currentBalance.toLocaleString()}
+              </span>
+            )}
           </div>
         </div>
 
-        <button
+        {/* Divider */}
+        <div className="h-6 w-[1px] bg-white/10" />
+
+        {/* Diamonds Section */}
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg">
+            <span className="text-white text-xs font-bold leading-none">💎</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-gray-400 font-medium leading-none mb-1">Diamonds</span>
+            {isLoading ? (
+              <span className="text-xs text-gray-500">...</span>
+            ) : (
+              <span className="text-sm font-bold text-blue-400 leading-none">
+                {diamonds.toLocaleString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Add Coins Button */}
+        {/* <button
           onClick={() => setShowAddCoinsModal(true)}
-          className="md:hidden flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:from-[#F72585]/80 hover:to-[#7209B7]/80 text-white text-sm font-medium rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          className="flex items-center justify-center p-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:from-[#F72585]/80 hover:to-[#7209B7]/80 text-white rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg"
+          title="Add Coins"
         >
           <Plus className="w-4 h-4" />
-          Add Coins
-        </button>
+        </button> */}
       </div>
 
       {/* Add Coins Modal */}

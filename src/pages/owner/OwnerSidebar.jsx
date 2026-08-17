@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
-import { 
-  LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck, 
-  Eye, Mic, Building2, Crown, Gift, Trophy, UserX, 
+import {
+  LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck,
+  Eye, Mic, Building2, Crown, Gift, Trophy, UserX,
   Flag, Percent, LogOut, X, UserRoundPlus
 } from 'lucide-react';
 import { navigationItems } from '../../data/dashboardData';
@@ -18,13 +18,13 @@ const OwnerSidebar = ({ isOpen, toggleSidebar, currentUser, onLogout }) => {
   return (
     <>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
       <aside className={`
-        fixed left-0 top-0 h-full w-72 sm:w-80 bg-[#121212] transform transition-transform duration-300 z-50 flex flex-col
+        fixed left-0 top-0 h-full w-72 sm:w-80 bg-black/60 transform transition-transform duration-300 z-50 flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         lg:relative lg:flex shadow-2xl lg:shadow-none border-r border-gray-800
       `}>
@@ -50,11 +50,11 @@ const OwnerSidebar = ({ isOpen, toggleSidebar, currentUser, onLogout }) => {
                   <NavLink
                     to={item.path}
                     end={item.path === `/${APP_CONFIG.OWNER_SECRET_PATH}`}
-                    onClick={() => { if(isOpen) toggleSidebar(); }}
+                    onClick={() => { if (isOpen) toggleSidebar(); }}
                     className={({ isActive }) => `
                       w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg border-l-2 border-white' 
+                      ${isActive
+                        ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg border-l-2 border-white'
                         : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                       }
                     `}
@@ -67,7 +67,7 @@ const OwnerSidebar = ({ isOpen, toggleSidebar, currentUser, onLogout }) => {
             })}
           </ul>
         </nav>
-        
+
         <div className="p-4 border-t border-gray-800">
           <div className="mb-4 p-3 bg-[#1A1A1A] rounded-lg border border-gray-700">
             <p className="text-sm font-semibold text-white truncate">{currentUser?.username}</p>

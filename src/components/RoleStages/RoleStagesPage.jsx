@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, ArrowLeft, Save, Loader2, Shield, Target, CheckCircle, XCircle, X } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, Loader2, Shield, Target, CheckCircle, XCircle, X, Percent } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../services/services';
 import RoleStagesList from './RoleStagesList';
 
 const Toast = ({ message, type, onClose }) => (
-  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${
-    type === 'success' 
-      ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md' 
-      : type === 'info'
+  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${type === 'success'
+    ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md'
+    : type === 'info'
       ? 'bg-[#0F172A]/90 border-blue-500/50 text-blue-400 backdrop-blur-md'
       : 'bg-[#0F172A]/90 border-red-500/50 text-red-400 backdrop-blur-md'
-  }`}>
+    }`}>
     {type === 'success' ? <CheckCircle className="w-5 h-5" /> : type === 'info' ? <Shield className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
     <p className="text-sm font-bold tracking-wide">{message}</p>
     <button onClick={onClose} className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors">
@@ -20,6 +20,7 @@ const Toast = ({ message, type, onClose }) => (
 );
 
 const RoleStagesPage = () => {
+  const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +80,7 @@ const RoleStagesPage = () => {
 
   const handleConfirmDelete = async () => {
     if (!stageToDelete) return;
-    
+
     setIsLoading(true);
     try {
       const payload = {
@@ -92,7 +93,7 @@ const RoleStagesPage = () => {
       };
 
       const result = await authService.deleteTier(stageToDelete.id, payload);
-      
+
       if (result.success) {
         showNotification('Stage deleted successfully');
         setShowDeleteConfirm(false);
@@ -144,7 +145,7 @@ const RoleStagesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       // Ensure minValues are numbers
       const payload = {
@@ -162,7 +163,7 @@ const RoleStagesPage = () => {
       } else {
         result = await authService.saveTiers(payload);
       }
-      
+
       if (result.success) {
         showNotification(editingStage ? 'Stage updated successfully' : 'Stage created successfully');
         setIsCreating(false);
@@ -192,15 +193,15 @@ const RoleStagesPage = () => {
     const existingStagesForRole = stages.filter(s => s.goalFor === formData.goalFor);
 
     return (
-      <div className="p-6 max-w-[1600px] mx-auto">
+      <div className="p-6 max-w-[1600px] mx-auto bg-black/60 min-h-full">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => {
                 setIsCreating(false);
                 setEditingStage(null);
               }}
-              className="p-2.5 rounded-xl bg-[#1A1A1A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition-all border border-white/5"
+              className="p-2.5 rounded-xl bg-[#1A1A1A] hover:bg-black/80 text-gray-400 hover:text-white transition-all border border-white/5"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -219,14 +220,14 @@ const RoleStagesPage = () => {
           {/* Form Section */}
           <div className="xl:col-span-7 space-y-8">
             <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+              <div className="bg-black/40 rounded-2xl p-8 border border-white/10 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#F72585]/5 blur-3xl rounded-full -mr-16 -mt-16"></div>
-                
+
                 <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                   <span className="w-1.5 h-6 bg-[#F72585] rounded-full"></span>
                   Configuration Details
                 </h2>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Stage Name</label>
@@ -236,10 +237,11 @@ const RoleStagesPage = () => {
                         value={formData.name}
                         onChange={handleInputChange}
                         className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all appearance-none cursor-pointer hover:border-white/20"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
                       >
-                        <option value="Silver">Silver</option>
-                        <option value="Gold">Gold</option>
-                        <option value="Platinum">Platinum</option>
+                        <option value="Silver" style={{ backgroundColor: '#141414' }}>Silver</option>
+                        <option value="Gold" style={{ backgroundColor: '#141414' }}>Gold</option>
+                        <option value="Platinum" style={{ backgroundColor: '#141414' }}>Platinum</option>
                       </select>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                         <Plus className="w-4 h-4 rotate-45" />
@@ -254,12 +256,13 @@ const RoleStagesPage = () => {
                         name="goalFor"
                         value={formData.goalFor}
                         onChange={handleInputChange}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all appearance-none cursor-pointer hover:border-white/20"
+                        className="w-full bg-black/80 border border-white/10 rounded-xl px-5 py-4 text-white focus:outline-none focus:border-[#F72585] transition-all appearance-none cursor-pointer hover:border-white/20"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
                       >
-                        <option value="AGENCY">Agency</option>
-                        <option value="HOST">Host</option>
-                        <option value="MASTER_AGENCY">Master Agency</option>
-                        <option value="ADMIN">Admin</option>
+                        <option value="ADMIN" style={{ backgroundColor: '#141414' }}>Admin</option>
+                        <option value="MASTER_AGENCY" style={{ backgroundColor: '#141414' }}>Master Agency</option>
+                        <option value="AGENCY" style={{ backgroundColor: '#141414' }}>Agency</option>
+                        {/* <option value="HOST">Host</option> */}
                       </select>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                         <Plus className="w-4 h-4 rotate-45" />
@@ -269,62 +272,54 @@ const RoleStagesPage = () => {
                 </div>
               </div>
 
-              <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-white/5 shadow-2xl">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-black/40 rounded-2xl p-8 border border-white/10 shadow-2xl">
+                <div className="mb-8">
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <span className="w-1.5 h-6 bg-[#7209B7] rounded-full"></span>
                     Target Goals
                   </h2>
                 </div>
 
-                <div className="space-y-4">
-                  {formData.goals.map((goal, index) => (
-                    <div key={index} className="flex items-center gap-6 bg-black/30 p-5 rounded-2xl border border-white/5 group transition-all hover:border-white/10">
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Metric Type</label>
-                          <select
-                            value={goal.goalType}
-                            onChange={(e) => handleGoalChange(index, 'goalType', e.target.value)}
-                            className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all"
-                          >
-                            <option value="DIAMOND">Diamond</option>
-                            <option value="CASHOUT">Cashout</option>
-                          </select>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Minimum Value</label>
-                          <div className="relative">
-                            <input
-                              type="number"
-                              value={goal.minValue}
-                              onChange={(e) => handleGoalChange(index, 'minValue', e.target.value)}
-                              placeholder="0"
-                              className="w-full bg-[#1A1A1A] border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all font-mono"
-                              required
-                            />
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-600 uppercase"></div>
-                          </div>
-                        </div>
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Diamonds */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+                      💎 Diamonds (Minimum Value)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.goals.find(g => g.goalType === 'DIAMOND')?.minValue ?? ''}
+                      onChange={(e) => {
+                        const idx = formData.goals.findIndex(g => g.goalType === 'DIAMOND');
+                        if (idx !== -1) handleGoalChange(idx, 'minValue', e.target.value);
+                      }}
+                      placeholder="0"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all font-mono"
+                      style={{ "backgroundColor": "rgba(0,0,0,0.8)" }}
+                      required
+                    />
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => removeGoal(index)}
-                        className="p-3 rounded-xl text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
-                        title="Remove Metric"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {formData.goals.length === 0 && (
-                    <div className="text-center py-12 text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-2xl bg-white/[0.02]">
-                      No metrics defined. Add a goal to continue.
-                    </div>
-                  )}
+                  {/* Cashout */}
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
+                      💰 Cashout (Minimum Value)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.goals.find(g => g.goalType === 'CASHOUT')?.minValue ?? ''}
+                      onChange={(e) => {
+                        const idx = formData.goals.findIndex(g => g.goalType === 'CASHOUT');
+                        if (idx !== -1) handleGoalChange(idx, 'minValue', e.target.value);
+                      }}
+                      placeholder="0"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white text-sm focus:outline-none focus:border-[#F72585] transition-all font-mono"
+                      style={{ "backgroundColor": "rgba(0,0,0,0.8)" }}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -358,7 +353,7 @@ const RoleStagesPage = () => {
 
           {/* Preview Section */}
           <div className="xl:col-span-5 space-y-6">
-            <div className="bg-[#1A1A1A] rounded-2xl p-6 border border-white/5 h-full min-h-[500px]">
+            <div className="bg-black/40 rounded-2xl p-6 border border-white/5 h-full min-h-[500px]">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-white font-black tracking-tight">Active {formData.goalFor} Stages</h3>
@@ -375,10 +370,9 @@ const RoleStagesPage = () => {
                     <div key={stage.id} className="relative group overflow-hidden rounded-2xl border border-white/5 bg-black/20 p-5 hover:border-white/10 transition-all">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${
-                            stage.name === 'Platinum' ? 'bg-blue-400' : 
+                          <div className={`w-2 h-2 rounded-full ${stage.name === 'Platinum' ? 'bg-blue-400' :
                             stage.name === 'Gold' ? 'bg-yellow-500' : 'bg-slate-400'
-                          }`}></div>
+                            }`}></div>
                           <span className="text-white font-bold">{stage.name}</span>
                         </div>
                         <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">ID: {stage.id}</span>
@@ -411,12 +405,12 @@ const RoleStagesPage = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-black/60 min-h-full">
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
       <div className="flex justify-between items-center mb-8">
@@ -424,15 +418,24 @@ const RoleStagesPage = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Role Stages</h1>
           <p className="text-gray-400">Manage achievement stages and goals for different roles</p>
         </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Create New Stage
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('../role-percentage')}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-200 rounded-lg font-semibold hover:bg-gray-700 transition-colors border border-gray-700"
+          >
+            <Percent className="w-4 h-4" />
+            Role Percentage
+          </button>
+          <button
+            onClick={() => setIsCreating(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Create New Stage
+          </button>
+        </div>
       </div>
-      
+
       {isLoading && stages.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-10 h-10 text-[#F72585] animate-spin mb-4" />
@@ -441,7 +444,7 @@ const RoleStagesPage = () => {
       ) : stages.length > 0 ? (
         <RoleStagesList stages={stages} onEdit={handleEdit} onDelete={handleDelete} />
       ) : (
-        <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-8 text-center">
+        <div className="bg-black/20 rounded-xl border border-white/5 p-8 text-center">
           <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500">
             <Plus className="w-8 h-8" />
           </div>
@@ -459,7 +462,7 @@ const RoleStagesPage = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
+          <div
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => !isLoading && setShowDeleteConfirm(false)}
           ></div>
@@ -472,7 +475,7 @@ const RoleStagesPage = () => {
               <p className="text-gray-400 text-sm mb-8 leading-relaxed">
                 Are you sure you want to delete the <span className="text-white font-bold">{stageToDelete?.name}</span> stage for <span className="text-white font-bold">{stageToDelete?.goalFor}</span>? This action cannot be undone.
               </p>
-              
+
               <div className="flex gap-4 w-full">
                 <button
                   onClick={() => setShowDeleteConfirm(false)}

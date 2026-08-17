@@ -301,8 +301,8 @@ export const rankingDurations = [
 ];
 
 export const rankingTypes = [
-  { id: 'hosts', label: 'Hosts List', icon: 'Users' },
-  { id: 'supporters', label: 'Supporters List', icon: 'Heart' }
+  { id: 'hosts', label: 'Hosts', icon: 'Users' },
+  { id: 'supporters', label: 'Supporters', icon: 'Heart' }
 ];
 
 // Helper function to get rank badge color

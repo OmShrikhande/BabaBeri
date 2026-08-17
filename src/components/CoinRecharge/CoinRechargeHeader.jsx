@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Coins, Edit, Wallet } from 'lucide-react';
+import { Coins, Edit, Wallet, MinusCircle } from 'lucide-react';
 import authService from '../../services/authService';
 
-const CoinRechargeHeader = ({ currentUser, onNavigateToWallet }) => {
+const CoinRechargeHeader = ({ currentUser, onNavigateToWallet, onDeductClick }) => {
   const [inrValue, setInrValue] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
 
@@ -75,8 +75,15 @@ const CoinRechargeHeader = ({ currentUser, onNavigateToWallet }) => {
           </button>
         </div>
         <button
+          onClick={onDeductClick}
+          className="text-red-400 hover:text-red-300 border border-red-800 bg-red-900/20 hover:bg-red-900/40 rounded-lg px-4 py-2 text-sm flex items-center gap-2 transition-colors h-[38px]"
+        >
+          <MinusCircle className="w-4 h-4" />
+          Deduct Coins
+        </button>
+        <button
           onClick={onNavigateToWallet}
-          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300"
+          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-sm font-semibold hover:glow-pink transition-all duration-300 h-[38px]"
         >
           <Wallet className="w-4 h-4 mr-2" />
           Wallet

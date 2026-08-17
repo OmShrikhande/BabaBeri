@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Diamond, Coins, Trophy, Crown, Medal, Award, ChevronUp, ChevronDown } from 'lucide-react';
+import { Diamond, Coins, Trophy, Crown, Medal, Award, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getRankBadgeColor, getLevelBadgeColor } from '../data/rankingData';
+
+const ROWS_PER_PAGE = 10;
 
 const RankingTable = ({ data, type, searchTerm }) => {
   const [sortField, setSortField] = useState('rank');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -51,6 +54,10 @@ const RankingTable = ({ data, type, searchTerm }) => {
     return filtered;
   }, [data, searchTerm, sortField, sortDirection, type]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedData.length / ROWS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const pagedData = filteredAndSortedData.slice((safePage - 1) * ROWS_PER_PAGE, safePage * ROWS_PER_PAGE);
+
   const getRankIcon = (rank) => {
     if (rank === 1) return <Crown className="w-4 h-4 text-yellow-400" />;
     if (rank === 2) return <Medal className="w-4 h-4 text-gray-400" />;
@@ -83,8 +90,9 @@ const RankingTable = ({ data, type, searchTerm }) => {
   );
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[700px] border-collapse">
+    <div className="flex flex-col h-full">
+      <div className="overflow-x-auto flex-1">
+        <table className="w-full min-w-[700px] border-collapse">
         <thead>
           <tr className="border-b border-gray-700 bg-[#0F0F0F]">
             <SortTh field="rank" className="w-20 pl-6">Rank</SortTh>
@@ -97,7 +105,7 @@ const RankingTable = ({ data, type, searchTerm }) => {
           </tr>
         </thead>
         <tbody>
-          {filteredAndSortedData.map((item) => (
+          {pagedData.map((item) => (
             <tr
               key={item.id}
               className="border-b border-gray-800 hover:bg-[#1A1A1A] transition-colors duration-150 group"
@@ -170,6 +178,49 @@ const RankingTable = ({ data, type, searchTerm }) => {
           ))}
         </tbody>
       </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700 bg-[#0D0D0D] flex-shrink-0">
+          <span className="text-sm text-gray-400">
+            Page {safePage} of {totalPages} &mdash; {filteredAndSortedData.length} total
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={safePage === 1}
+              className="p-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const start = Math.max(1, Math.min(safePage - 2, totalPages - 4));
+              const page = start + i;
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                    page === safePage
+                      ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white'
+                      : 'border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500'
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={safePage === totalPages}
+              className="p-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

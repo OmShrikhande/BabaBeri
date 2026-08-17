@@ -129,8 +129,8 @@ const Ranking = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-y-auto">
-      <div className="min-h-full flex flex-col">
+    <div className="flex-1 bg-black/60 p-6 flex flex-col overflow-hidden h-full">
+      <div className="flex flex-col flex-1 min-h-0">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
@@ -292,7 +292,7 @@ const Ranking = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {(() => {
             const stats = getStats();
             return (
@@ -347,10 +347,10 @@ const Ranking = () => {
               </>
             );
           })()}
-        </div>
+        </div> */}
 
         {/* Table Container */}
-        <div className="flex-1 bg-[#121212] rounded-lg border border-gray-700 overflow-hidden flex flex-col">
+        <div className="flex-1 bg-[#0D0D0D] rounded-lg border border-gray-700 flex flex-col min-h-0 overflow-hidden">
           {/* Table Header */}
           <div className="p-4 border-b border-gray-700">
             <div className="flex items-center justify-between">
@@ -364,16 +364,17 @@ const Ranking = () => {
           </div>
 
           {/* Loading State */}
-          {isLoading ? (
-            <RankingTableSkeleton />
-          ) : (
-            /* Table */
-            <RankingTable
-              data={getCurrentData()}
-              type={activeType}
-              searchTerm={searchTerm}
-            />
-          )}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {isLoading ? (
+              <RankingTableSkeleton />
+            ) : (
+              <RankingTable
+                data={getCurrentData()}
+                type={activeType}
+                searchTerm={searchTerm}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

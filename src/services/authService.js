@@ -34,11 +34,11 @@ class AuthService {
         console.error('Failed to parse login response:', e);
         throw new Error('Invalid response format from server');
       }
-      
+
       if (token && typeof token === 'string' && token.split('.').length === 3) {
         this.token = token;
         sessionStorage.setItem(TOKEN_CONFIG.STORAGE_KEY, token);
-        
+
         // Store user info if available
         if (data.user || data.userInfo || data.profile) {
           const userInfo = data.user || data.userInfo || data.profile;
@@ -230,7 +230,7 @@ class AuthService {
   // Make authenticated API requests
   async makeAuthenticatedRequest(url, options = {}) {
     const token = this.getToken();
-    
+
     if (!token) {
       throw new Error('No authentication token available');
     }
@@ -343,13 +343,13 @@ class AuthService {
   // Decode JWT token (basic implementation)
   decodeToken(token = null) {
     const tokenToUse = token || this.getToken();
-    
+
     if (!tokenToUse) return null;
 
     try {
       const base64Url = tokenToUse.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
 
@@ -364,7 +364,7 @@ class AuthService {
   isTokenExpired(token = null) {
     const decoded = this.decodeToken(token);
     if (!decoded || !decoded.exp) return true;
-    
+
     const currentTime = Date.now() / 1000;
     return decoded.exp < currentTime;
   }
@@ -681,7 +681,7 @@ class AuthService {
 
     const role = normalizeUserType(this.getUserType());
     console.log('Update Seller Activation - Role:', role, 'Expected:', [USER_TYPES.ADMIN, USER_TYPES.SUPER_ADMIN]);
-    
+
     if (role !== USER_TYPES.ADMIN && role !== USER_TYPES.SUPER_ADMIN) {
       return { success: false, status: 403, error: 'Forbidden: Only Admin or Super Admin can update seller activation.' };
     }
@@ -1415,7 +1415,7 @@ class AuthService {
   async getAgencyHierarchy(userId) {
     const res = await this.getUserById(userId);
     if (!res.success) return res;
-    
+
     const user = res.data;
     return {
       success: true,
@@ -1430,7 +1430,7 @@ class AuthService {
   async moveAgency({ userId, newMasterAgencyId }) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    
+
     // Using the same endpoint as moveMasterAgency: /auth/superadmin/changeowner
     const url = `${API_CONFIG.BASE_URL}/auth/superadmin/changeowner?code=${encodeURIComponent(userId)}&ownercode=${encodeURIComponent(newMasterAgencyId)}`;
 
@@ -1457,7 +1457,7 @@ class AuthService {
   async getHostHierarchy(userId) {
     const res = await this.getUserById(userId);
     if (!res.success) return res;
-    
+
     const user = res.data;
     return {
       success: true,
@@ -1473,7 +1473,7 @@ class AuthService {
   async moveHost({ userId, newAgencyId }) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    
+
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHANGE_OWNER}?code=${encodeURIComponent(userId)}&ownercode=${encodeURIComponent(newAgencyId)}`;
 
     try {
@@ -1504,17 +1504,17 @@ class AuthService {
   async getRateList(id) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    
+
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_RATE_LIST}?id=${id}`;
 
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || `Failed to fetch rate list: ${response.status}`);
       }
-      
+
       return { success: true, data };
     } catch (error) {
       console.error('Get rate list error:', error);
@@ -1526,13 +1526,13 @@ class AuthService {
   async changeRate(id, rate) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
-    
+
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHANGE_RATE}?id=${id}&rate=${rate}`;
 
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
       const raw = await response.text().catch(() => '');
-      
+
       let data = null;
       try {
         data = JSON.parse(raw);
@@ -1543,7 +1543,7 @@ class AuthService {
       if (!response.ok) {
         throw new Error(data.message || `Failed to change rate: ${response.status}`);
       }
-      
+
       return { success: true, data };
     } catch (error) {
       console.error('Change rate error:', error);
@@ -1569,7 +1569,7 @@ class AuthService {
     }
   }
 
-  // Update user status (Active / Pending / Deactivate / Ban)
+  // Update user status (Active / Pending / Deactivate / Blocked)
   async updateUserStatus(userCode, status) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated.' };
@@ -1584,6 +1584,24 @@ class AuthService {
     } catch (error) {
       console.error('Update status error:', error);
       return { success: false, error: error.message || 'Failed to update status.' };
+    }
+  }
+
+  // Ban user with reason and duration
+  async banUser({ userCode, reason, duration }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const url = `${API_CONFIG.BASE_URL}/auth/api/updatestatus?usercode=${encodeURIComponent(userCode)}&status=Blocked&reason=${encodeURIComponent(reason)}&duration=${encodeURIComponent(duration)}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to ban user: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Ban user error:', error);
+      return { success: false, error: error.message || 'Failed to ban user.' };
     }
   }
 

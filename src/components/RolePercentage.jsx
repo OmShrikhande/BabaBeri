@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Percent, Edit2, Save, X, AlertCircle, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
 import authService from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const ROLE_LABELS = {
   ADMIN: 'Admin',
@@ -12,7 +13,7 @@ const ROLE_LABELS = {
 
 const getRoleColor = (role) => {
   const r = (role || '').toUpperCase();
-  if (r.includes('HOST')) return 'from-[#F72585] to-[#7209B7]';
+  // if (r.includes('HOST')) return 'from-[#F72585] to-[#7209B7]';
   if (r.includes('MASTER')) return 'from-[#4361EE] to-[#4CC9F0]';
   if (r.includes('AGENCY')) return 'from-[#7209B7] to-[#4361EE]';
   if (r.includes('ADMIN')) return 'from-gray-600 to-gray-500';
@@ -35,6 +36,7 @@ const ToastNotif = ({ toast, onDismiss }) => {
 };
 
 const RolePercentage = () => {
+  const navigate = useNavigate();
   const [percentages, setPercentages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,7 +102,7 @@ const RolePercentage = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-6">
+      <div className="flex-1 overflow-y-auto bg-black/60 p-6 min-h-full">
         <h1 className="text-2xl font-bold text-white mb-6">Role Percentages</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(4)].map((_, i) => (
@@ -116,7 +118,7 @@ const RolePercentage = () => {
 
   if (error) {
     return (
-      <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-6">
+      <div className="flex-1 overflow-y-auto bg-black/60 p-6 min-h-full">
         <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400" />
@@ -131,16 +133,21 @@ const RolePercentage = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#1A1A1A]">
+    <div className="flex-1 overflow-y-auto bg-black/60 min-h-full">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">Role Percentages</h1>
             <p className="text-gray-400 text-sm mt-1">Manage commission percentages for each role</p>
           </div>
-          <button onClick={fetchPercentages} className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-all border border-gray-700 flex items-center gap-2 text-sm">
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => navigate('../role-stages')} className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-all border border-gray-700 flex items-center gap-2 text-sm">
+              Goals and stages
+            </button>
+            <button onClick={fetchPercentages} className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-all border border-gray-700 flex items-center gap-2 text-sm">
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </button>
+          </div>
         </div>
 
         {percentages.length === 0 ? (

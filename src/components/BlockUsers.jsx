@@ -57,7 +57,7 @@ const BlockUsers = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await services.getAllUsers();
+      const res = await authService.getActiveHosts({ status: 'blocked' });
       if (res.success) {
         setUsers(Array.isArray(res.data) ? res.data : []);
       } else {
@@ -82,20 +82,6 @@ const BlockUsers = () => {
     );
   }, [users, searchTerm]);
 
-  const handleBlock = async (user) => {
-    const code = user.code || user.userCode;
-    if (!code) return;
-    setStatusActionLoading(p => ({ ...p, [code]: true }));
-    try {
-      const res = await authService.updateUserStatus(code, 'Ban');
-      if (res.success) {
-        setUsers(prev => prev.map(u => (u.code === code || u.userCode === code) ? { ...u, status: 'Ban' } : u));
-        showToast(`${user.username || code} has been banned.`);
-      } else { showToast(res.error || 'Failed to ban user.', 'error'); }
-    } catch { showToast('Failed to ban user.', 'error'); }
-    finally { setStatusActionLoading(p => ({ ...p, [code]: false })); }
-  };
-
   const handleUnblock = async (user) => {
     const code = user.code || user.userCode;
     if (!code) return;
@@ -103,7 +89,7 @@ const BlockUsers = () => {
     try {
       const res = await authService.updateUserStatus(code, 'Active');
       if (res.success) {
-        setUsers(prev => prev.map(u => (u.code === code || u.userCode === code) ? { ...u, status: 'Active' } : u));
+        setUsers(prev => prev.filter(u => u.code !== code && u.userCode !== code));
         showToast(`${user.username || code} has been unblocked.`);
       } else { showToast(res.error || 'Failed to unblock user.', 'error'); }
     } catch { showToast('Failed to unblock user.', 'error'); }
@@ -112,8 +98,8 @@ const BlockUsers = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-6">
-        <h1 className="text-2xl font-bold text-white mb-6">Block Users</h1>
+      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-6">
+        <h1 className="text-2xl font-bold text-white mb-6">Banned Users</h1>
         <div className="space-y-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-[#121212] rounded-xl border border-gray-800 p-4 animate-pulse">
@@ -133,7 +119,7 @@ const BlockUsers = () => {
 
   if (error) {
     return (
-      <div className="flex-1 overflow-y-auto bg-[#1A1A1A] p-6">
+      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-6">
         <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400" />
@@ -148,11 +134,11 @@ const BlockUsers = () => {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#1A1A1A]">
+    <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Block Users</h1>
+            <h1 className="text-2xl font-bold text-white">Banned Users</h1>
             <p className="text-gray-400 text-sm mt-1">{filteredUsers.length} users found</p>
           </div>
           <button onClick={fetchUsers} className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-all border border-gray-700 flex items-center gap-2 text-sm">
@@ -194,7 +180,6 @@ const BlockUsers = () => {
                 <tbody>
                   {filteredUsers.map((user) => {
                     const code = user.code || user.userCode || user.id;
-                    const isBanned = (user.status || '').toLowerCase() === 'ban';
                     const isLoading = statusActionLoading[code];
                     const initial = (user.username || user.name || '?')[0].toUpperCase();
                     return (
@@ -224,19 +209,11 @@ const BlockUsers = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          {isBanned ? (
-                            <button onClick={() => handleUnblock(user)} disabled={isLoading}
-                              className="text-green-400 hover:text-green-300 border border-green-800 bg-green-900/20 hover:bg-green-900/40 rounded-lg px-3 py-1.5 text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50">
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              {isLoading ? 'Unblocking...' : 'Unblock'}
-                            </button>
-                          ) : (
-                            <button onClick={() => handleBlock(user)} disabled={isLoading}
-                              className="text-red-400 hover:text-red-300 border border-red-800 bg-red-900/20 hover:bg-red-900/40 rounded-lg px-3 py-1.5 text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50">
-                              <Ban className="w-3.5 h-3.5" />
-                              {isLoading ? 'Blocking...' : 'Block'}
-                            </button>
-                          )}
+                          <button onClick={() => handleUnblock(user)} disabled={isLoading}
+                            className="text-green-400 hover:text-green-300 border border-green-800 bg-green-900/20 hover:bg-green-900/40 rounded-lg px-3 py-1.5 text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {isLoading ? 'Unbanning...' : 'Unban'}
+                          </button>
                         </td>
                       </tr>
                     );

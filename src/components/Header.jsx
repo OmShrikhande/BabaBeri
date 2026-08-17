@@ -25,8 +25,8 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
   const pathSegments = location.pathname.split('/').filter(p => p);
 
   return (
-    <header 
-      className="bg-[#1A1A1A] border-b border-gray-800 px-6 py-4 lg:hidden"
+    <header
+      className="bg-black/60 border-b border-gray-800 px-6 py-4"
       role="banner"
     >
       <div className="flex items-center justify-between">
@@ -34,12 +34,12 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleSidebar}
-            className="text-gray-400 hover:text-white transition-colors p-2"
+            className="text-gray-400 hover:text-white transition-colors p-2 lg:hidden"
             aria-label="Open navigation menu"
           >
             <Menu className="w-6 h-6" />
           </button>
-          
+
           <div className="hidden sm:flex items-center space-x-2 text-sm">
             <Link to="/" className="text-gray-400 hover:text-white font-medium capitalize">
               {pathSegments[0] || 'Home'}
@@ -91,11 +91,11 @@ const Header = ({ toggleSidebar, currentUser, onLogout, onProfileClick }) => {
                 w-8 h-8 rounded-lg flex items-center justify-center
                 ${currentUser?.userType === 'super-admin' ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' :
                   currentUser?.userType === 'admin' ? 'bg-gradient-to-r from-[#7209B7] to-[#4361EE]' :
-                  'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
+                    'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
               `}>
                 {currentUser?.userType === 'super-admin' ? <Crown className="w-4 h-4 text-white" /> :
-                 currentUser?.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
-                 <User className="w-4 h-4 text-white" />}
+                  currentUser?.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
+                    <User className="w-4 h-4 text-white" />}
               </div>
               <span className="text-sm font-medium hidden sm:block">{currentUser?.username}</span>
             </button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { 
+import {
   Users, Building, UserCheck, Coins, Gem, Activity, Mic, DollarSign, Hash
 } from 'lucide-react';
 
@@ -9,7 +9,7 @@ const iconMap = {
 
 const MetricsCard = ({ title, value, icon, color = 'pink', className = '' }) => {
   const IconComponent = iconMap[icon];
-  
+
   const colorClasses = {
     pink: 'from-[#F72585] to-[#ff4db8] glow-pink',
     purple: 'from-[#7209B7] to-[#9d4edd] glow-purple',
@@ -29,7 +29,7 @@ const MetricsCard = ({ title, value, icon, color = 'pink', className = '' }) => 
   };
 
   return (
-    <div 
+    <div
       className={`
         bg-[#1A1A1A] rounded-xl p-6 border border-gray-800 
         hover-glow transition-all duration-300 cursor-pointer
@@ -40,7 +40,7 @@ const MetricsCard = ({ title, value, icon, color = 'pink', className = '' }) => 
     >
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p 
+          <p
             id={`card-title-${title.replace(/\s+/g, '-').toLowerCase()}`}
             className="text-gray-400 text-sm font-medium mb-2"
           >
@@ -50,19 +50,19 @@ const MetricsCard = ({ title, value, icon, color = 'pink', className = '' }) => 
             {formatValue(value)}
           </p>
         </div>
-        
+
         {IconComponent && (
           <div className={`
             p-3 rounded-lg bg-gradient-to-r ${colorClasses[color]}
           `}>
-            <IconComponent 
-              className="w-6 h-6 text-white" 
+            <IconComponent
+              className="w-6 h-6 text-white"
               aria-hidden="true"
             />
           </div>
         )}
       </div>
-      
+
       {/* Optional trend indicator */}
       <div className="flex items-center mt-3 text-sm">
         <span className="text-green-400 font-medium">+12.5%</span>

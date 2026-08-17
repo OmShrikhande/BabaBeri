@@ -21,14 +21,14 @@ const AdminLayout = () => {
     { path: '/admin/agencies', label: 'Agencies', icon: Users },
     { path: '/admin/host-details', label: 'Host Details', icon: Mic },
     { path: '/admin/coin-recharge', label: 'Coin Recharge', icon: CreditCard },
-    { path: '/admin/block-users', label: 'Block Users', icon: Ban },
+    { path: '/admin/block-users', label: 'Banned Users', icon: Ban },
   ];
 
   return (
     <div className="flex h-screen bg-[#1A1A1A] overflow-hidden">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -62,8 +62,8 @@ const AdminLayout = () => {
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) => `
                     w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300
-                    ${isActive 
-                      ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg border-l-2 border-white' 
+                    ${isActive
+                      ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg border-l-2 border-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }
                   `}
@@ -75,7 +75,7 @@ const AdminLayout = () => {
             ))}
           </ul>
         </nav>
-        
+
         <div className="p-4 border-t border-gray-800">
           <div className="mb-4 p-3 bg-[#1A1A1A] rounded-lg border border-gray-700">
             <p className="text-sm font-semibold text-white truncate">{currentUser?.username}</p>
@@ -92,11 +92,11 @@ const AdminLayout = () => {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header 
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+        <Header
+          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           currentUser={currentUser}
           onLogout={handleLogout}
-          onProfileClick={() => navigate('/ownerarea/profile')} 
+          onProfileClick={() => navigate('/ownerarea/profile')}
         />
         <div className="flex-1 overflow-y-auto bg-[#1A1A1A]">
           <Outlet />

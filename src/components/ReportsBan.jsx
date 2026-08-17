@@ -3,6 +3,7 @@ import { Search, Flag, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'l
 import services from '../services/services';
 import authService from '../services/authService';
 import ConfirmDialog from './RoleStages/ConfirmDialog';
+import BanDialog from './RoleStages/BanDialog';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -16,6 +17,7 @@ const ReportsBan = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [banDialogUser, setBanDialogUser] = useState(null);
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ const ReportsBan = () => {
         setLoading(true);
         setError(null);
 
-        const response = await services.getAllUsers();
+        const response = await authService.getAllHosts();
 
         if (ignore) return;
 
@@ -78,7 +80,17 @@ const ReportsBan = () => {
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter((user) => user.status?.toLowerCase() === statusFilter.toLowerCase());
+      filtered = filtered.filter((user) => {
+        const uStatus = user.status?.toLowerCase();
+        const fStatus = statusFilter.toLowerCase();
+        if (fStatus === 'deactive' || fStatus === 'deactivate') {
+          return uStatus === 'deactive' || uStatus === 'deactivate';
+        }
+        if (fStatus === 'blocked' || fStatus === 'ban') {
+          return uStatus === 'blocked' || uStatus === 'ban';
+        }
+        return uStatus === fStatus;
+      });
     }
 
     setFilteredUsers(filtered);
@@ -97,21 +109,48 @@ const ReportsBan = () => {
   };
 
   const handleStatusChange = (user, newStatus) => {
-    setConfirmDialog({
-      user,
-      newStatus,
-      title: 'Change Status',
-      message: `Change status to ${newStatus} for ${user.name || user.username}?`
-    });
+    if (newStatus === 'Blocked') {
+      setBanDialogUser(user);
+    } else {
+      setConfirmDialog({
+        user,
+        newStatus,
+        title: 'Change Status',
+        message: `Change status to ${newStatus} for ${user.name || user.username}?`
+      });
+    }
   };
 
   const handleBanClick = (user) => {
-    setConfirmDialog({
-      user,
-      newStatus: 'ban',
-      title: 'Ban User',
-      message: `Are you sure you want to ban ${user.name || user.username}? This action can be reversed later.`
-    });
+    setBanDialogUser(user);
+  };
+
+  const handleConfirmBan = async ({ reason, duration }) => {
+    if (!banDialogUser) return;
+    const user = banDialogUser;
+
+    try {
+      const response = await authService.banUser({
+        userCode: user.code,
+        reason,
+        duration
+      });
+
+      if (response.success) {
+        // Update local state optimistically
+        setUsers((prev) =>
+          prev.map((u) => (u.code === user.code ? { ...u, status: 'Blocked' } : u))
+        );
+        showToast(`User banned successfully`, 'success');
+      } else {
+        throw new Error(response.error || 'Failed to ban user');
+      }
+    } catch (err) {
+      console.error('Error banning user:', err);
+      showToast(err.message || 'Failed to ban user', 'error');
+    } finally {
+      setBanDialogUser(null);
+    }
   };
 
   const handleConfirmStatusChange = async () => {
@@ -121,7 +160,7 @@ const ReportsBan = () => {
 
     try {
       const response = await authService.makeAuthenticatedRequest(
-        `https://proxstreamapi.in/auth/api/updatestatus?usercode=${user.code}&status=${newStatus.toUpperCase()}`,
+        `https://proxstreamapi.in/auth/api/updatestatus?usercode=${user.code}&status=${newStatus}`,
         { method: 'PUT' }
       );
 
@@ -132,7 +171,15 @@ const ReportsBan = () => {
         );
         showToast(`Status updated to ${newStatus} successfully`, 'success');
       } else {
-        throw new Error('Failed to update status');
+        const errorText = await response.text().catch(() => '');
+        let errorMessage = 'Failed to update status';
+        try {
+          const parsed = JSON.parse(errorText);
+          errorMessage = parsed.message || parsed.error || errorMessage;
+        } catch (e) {
+          if (errorText) errorMessage = errorText;
+        }
+        throw new Error(errorMessage);
       }
     } catch (err) {
       console.error('Error updating status:', err);
@@ -162,8 +209,8 @@ const ReportsBan = () => {
     const s = status?.toLowerCase();
     if (s === 'active') return 'bg-green-900/30 text-green-400 border-green-800/50';
     if (s === 'pending') return 'bg-yellow-900/30 text-yellow-400 border-yellow-800/50';
-    if (s === 'deactivate') return 'bg-gray-900/30 text-gray-400 border-gray-800/50';
-    if (s === 'ban') return 'bg-red-900/30 text-red-400 border-red-800/50';
+    if (s === 'deactivate' || s === 'deactive') return 'bg-gray-900/30 text-gray-400 border-gray-800/50';
+    if (s === 'ban' || s === 'blocked') return 'bg-red-900/30 text-red-400 border-red-800/50';
     return 'bg-gray-900/30 text-gray-400 border-gray-800/50';
   };
 
@@ -178,7 +225,7 @@ const ReportsBan = () => {
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#1A1A1A]">
+    <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full">
       <div className="p-6">
         {/* Page Header */}
         <div className="mb-6">
@@ -215,7 +262,7 @@ const ReportsBan = () => {
             />
           </div>
 
-          <select
+          {/* <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
             className="bg-[#0A0A0A] border border-gray-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7209B7]"
@@ -225,18 +272,18 @@ const ReportsBan = () => {
             <option value="AGENCY">AGENCY</option>
             <option value="MASTER_AGENCY">MASTER_AGENCY</option>
             <option value="ADMIN">ADMIN</option>
-          </select>
+          </select> */}
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#0A0A0A] border border-gray-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7209B7]"
+            className="bg-[#0A0A0A] border border-gray-800 rounded-lg px-2 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7209B7]"
           >
             <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="deactivate">Deactivate</option>
-            <option value="ban">Ban</option>
+            <option value="Active">Active</option>
+            <option value="Pending">Pending</option>
+            <option value="Deactive">Deactive</option>
+            <option value="Blocked">Blocked</option>
           </select>
         </div>
 
@@ -303,22 +350,27 @@ const ReportsBan = () => {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadgeColor(user.status)}`}>
-                            {user.status?.charAt(0).toUpperCase() + user.status?.slice(1)}
+                            {user.status}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <select
-                              value={user.status || 'active'}
+                              value={
+                                user.status?.toLowerCase() === 'active' ? 'Active' :
+                                  user.status?.toLowerCase() === 'pending' ? 'Pending' :
+                                    (user.status?.toLowerCase() === 'deactivate' || user.status?.toLowerCase() === 'deactive') ? 'Deactive' :
+                                      (user.status?.toLowerCase() === 'blocked' || user.status?.toLowerCase() === 'ban') ? 'Blocked' : 'Active'
+                              }
                               onChange={(e) => handleStatusChange(user, e.target.value)}
                               className="bg-[#0A0A0A] border border-gray-800 rounded-lg px-2 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#7209B7]"
                             >
-                              <option value="active">Active</option>
-                              <option value="pending">Pending</option>
-                              <option value="deactivate">Deactivate</option>
-                              <option value="ban">Ban</option>
+                              <option value="Active">Active</option>
+                              <option value="Pending">Pending</option>
+                              <option value="Deactive">Deactivate</option>
+                              <option value="Blocked">Blocked</option>
                             </select>
-                            {user.status?.toLowerCase() !== 'ban' && (
+                            {user.status?.toLowerCase() !== 'blocked' && user.status?.toLowerCase() !== 'ban' && (
                               <button
                                 onClick={() => handleBanClick(user)}
                                 className="bg-red-900/20 text-red-400 border border-red-800 rounded-lg px-3 py-1 text-sm hover:bg-red-900/40 transition-colors"
@@ -375,6 +427,14 @@ const ReportsBan = () => {
         message={confirmDialog?.message}
         onConfirm={handleConfirmStatusChange}
         onCancel={() => setConfirmDialog(null)}
+      />
+
+      {/* Ban Dialog */}
+      <BanDialog
+        open={!!banDialogUser}
+        user={banDialogUser}
+        onConfirm={handleConfirmBan}
+        onCancel={() => setBanDialogUser(null)}
       />
 
       {/* Toast */}

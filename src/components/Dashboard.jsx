@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { LogOut, Crown, Shield, User, ChevronDown, Bell,UserRoundPlus } from 'lucide-react';
+import { LogOut, Crown, Shield, User, ChevronDown, Bell, UserRoundPlus } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import EnhancedChartCard from './EnhancedChartCard';
 import FinancialMetricsCard from './FinancialMetricsCard';
@@ -449,7 +449,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
   ];
 
   return (
-    <main className="flex-1 p-4 sm:p-6 overflow-y-auto" role="main">
+    <main className="flex-1 p-4 sm:p-6 overflow-y-auto bg-black/70" role="main">
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -459,7 +459,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
               Welcome back{currentUser ? `, ${currentUser.username}` : ''}! Here's what's happening with your platform.
             </p>
           </div>
-          
+
           {/* User Info & Logout Button */}
           {currentUser && (
             <div className="flex items-center space-x-6">
@@ -490,11 +490,11 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
                     w-8 h-8 rounded-lg flex items-center justify-center
                     ${currentUser.userType === 'super-admin' ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' :
                       currentUser.userType === 'admin' ? 'bg-gradient-to-r from-[#7209B7] to-[#4361EE]' :
-                      'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
+                        'bg-gradient-to-r from-[#4361EE] to-[#4CC9F0]'}
                   `}>
                     {currentUser.userType === 'super-admin' ? <Crown className="w-4 h-4 text-white" /> :
-                     currentUser.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
-                     <User className="w-4 h-4 text-white" />}
+                      currentUser.userType === 'admin' ? <Shield className="w-4 h-4 text-white" /> :
+                        <User className="w-4 h-4 text-white" />}
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold text-white">{currentUser.username}</p>
@@ -528,7 +528,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
       </div>
 
       {/* Metrics Cards Grid */}
-      <section 
+      <section
         className="mb-8"
         aria-labelledby="metrics-heading"
       >
@@ -547,7 +547,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
       </section>
 
       {/* Financial Metrics Section */}
-      <section 
+      <section
         className="mb-8"
         aria-labelledby="financial-heading"
       >
@@ -579,7 +579,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
       )}
 
       {/* Analytics Section */}
-      <section 
+      <section
         className="mb-8"
         aria-labelledby="analytics-heading"
       >
@@ -621,9 +621,9 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
         </div>
       </section>
 
-  
 
-      
+
+
 
 
       {/* DP Verification Modal as full-page overlay */}

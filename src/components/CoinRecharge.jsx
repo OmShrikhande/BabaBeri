@@ -153,20 +153,10 @@ const CoinRecharge = ({ currentUser, onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div />
-        <button
-          onClick={() => setDeductModalOpen(true)}
-          className="text-red-400 hover:text-red-300 border border-red-800 bg-red-900/20 hover:bg-red-900/40 rounded-lg px-4 py-2 text-sm flex items-center gap-2 transition-colors"
-        >
-          <MinusCircle className="w-4 h-4" />
-          Deduct Coins
-        </button>
-      </div>
-
       <CoinRechargeHeader
         currentUser={currentUser}
         onNavigateToWallet={() => navigate('../wallet')}
+        onDeductClick={() => setDeductModalOpen(true)}
       />
 
       <HostRechargeSection

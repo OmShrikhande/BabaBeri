@@ -3,13 +3,12 @@ import { ArrowLeft, Gift, X, Upload, Loader2, CheckCircle, XCircle, Plus } from 
 import authService from '../../services/services';
 
 const Toast = ({ message, type, onClose }) => (
-  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${
-    type === 'success' 
-      ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md' 
+  <div className={`fixed top-6 right-6 z-[200] flex items-center gap-3 px-6 py-4 rounded-2xl border shadow-2xl animate-in slide-in-from-right-10 duration-300 ${type === 'success'
+      ? 'bg-[#0F172A]/90 border-emerald-500/50 text-emerald-400 backdrop-blur-md'
       : type === 'info'
-      ? 'bg-[#0F172A]/90 border-blue-500/50 text-blue-400 backdrop-blur-md'
-      : 'bg-[#0F172A]/90 border-red-500/50 text-red-400 backdrop-blur-md'
-  }`}>
+        ? 'bg-[#0F172A]/90 border-blue-500/50 text-blue-400 backdrop-blur-md'
+        : 'bg-[#0F172A]/90 border-red-500/50 text-red-400 backdrop-blur-md'
+    }`}>
     {type === 'success' ? <CheckCircle className="w-5 h-5" /> : type === 'info' ? <Gift className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
     <p className="text-sm font-bold tracking-wide">{message}</p>
     <button onClick={onClose} className="ml-2 p-1 hover:bg-white/10 rounded-lg transition-colors">
@@ -22,13 +21,13 @@ const GiftCard = ({ gift }) => {
   const imageUrl = gift.file || gift.imageurl || gift.image || gift.imageUrl || '';
   const price = gift.price || 0;
   const coins = gift.coins || 0;
-  
+
   return (
     <div className="bg-[#1A1A1A] rounded-2xl border border-white/5 overflow-hidden hover:border-[#F72585]/50 transition-all duration-300 hover:shadow-2xl hover:shadow-[#F72585]/20 hover:-translate-y-1 group">
       <div className="relative h-40 bg-black/40 overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt="Gift" 
+        <img
+          src={imageUrl}
+          alt="Gift"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           onError={(e) => {
             e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect width="200" height="200" fill="%231A1A1A"/%3E%3Ctext x="50%25" y="50%25" font-size="16" fill="%23666" text-anchor="middle" dy=".3em"%3ENo Image%3C/text%3E%3C/svg%3E';
@@ -40,19 +39,19 @@ const GiftCard = ({ gift }) => {
           </div>
         )}
       </div>
-      
+
       <div className="p-4 space-y-3">
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Price</span>
             <span className="text-lg font-black text-white">₹{price.toLocaleString()}</span>
-          </div>
-          
+          </div> */}
+
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400 font-medium">Coins</span>
             <span className="text-sm font-bold text-[#F72585]">{coins.toLocaleString()}</span>
           </div>
-          
+
           {gift.validity && (
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-400 font-medium">Validity</span>
@@ -95,8 +94,8 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ 
-      ...formData, 
+    onSubmit({
+      ...formData,
       file: selectedFile,
       price: 0,
       status: 1
@@ -119,7 +118,7 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             <h2 className="text-2xl font-black text-white tracking-tight">Add New Gift</h2>
             <p className="text-gray-400 text-sm font-medium mt-1">Upload image and set gift details</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
           >
@@ -140,7 +139,7 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 id="gift-image-upload"
                 required
               />
-              <label 
+              <label
                 htmlFor="gift-image-upload"
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-4 text-white hover:border-[#F72585] transition-all cursor-pointer flex items-center justify-between"
               >
@@ -152,9 +151,9 @@ const GiftFormModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
             </div>
             {previewUrl && (
               <div className="relative w-full h-48 bg-black/40 rounded-xl overflow-hidden border border-white/5">
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
+                <img
+                  src={previewUrl}
+                  alt="Preview"
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -244,14 +243,14 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
     setIsLoading(true);
     try {
       const response = await authService.getAllGifts();
-      
+
       if (response.success) {
         const rawList = Array.isArray(response.data) ? response.data : [];
-        
+
         const sortedGifts = rawList
           .filter(gift => gift.status === 1)
           .sort((a, b) => b.id - a.id);
-        
+
         setGifts(sortedGifts);
       } else {
         throw new Error(response.error || 'Failed to fetch gifts');
@@ -281,7 +280,7 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
       }
 
       const response = await authService.saveGift(formData);
-      
+
       if (response.success) {
         showNotification('Gift created successfully');
         setIsModalOpen(false);
@@ -302,7 +301,7 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
       <div className="max-w-[1600px] mx-auto">
         <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={onBack}
               className="p-2.5 rounded-xl bg-[#1A1A1A] hover:bg-[#2A2A2A] text-gray-400 hover:text-white transition-all border border-white/5"
             >
@@ -370,7 +369,7 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
           </button>
         )}
 
-        <GiftFormModal 
+        <GiftFormModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleCreateGift}
@@ -378,7 +377,7 @@ const GiftsPage = ({ onBack, onNavigateToBanners }) => {
         />
 
         {toast && (
-          <Toast 
+          <Toast
             message={toast.message}
             type={toast.type}
             onClose={() => setToast(null)}

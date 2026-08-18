@@ -5,7 +5,7 @@ const FIELD_LABELS = {
   host: 'Host',
   coins: 'Coins',
   status: 'Status',
-  createdAt: 'Date'
+  rechargedate: 'Date'
 };
 
 const normalizeHistoryRecord = (record) => ({
@@ -13,7 +13,8 @@ const normalizeHistoryRecord = (record) => ({
   coins: record.coins ?? record.amount ?? record.amt ?? record.totalCoins ?? 'N/A',
   status: record.status || record.result || '—',
   createdAt: record.createdAt || record.date || record.timestamp || record.updatedAt || '—',
-  reference: record.reference || record.txnId || record.transactionId || '—'
+  reference: record.reference || record.txnId || record.transactionId || '—',
+  rechargedate: record.rechargedate || '—',
 });
 
 const formatDate = (value) => {
@@ -133,11 +134,11 @@ const HistoryTab = ({ history, loadHistory, isLoading }) => {
                     {FIELD_LABELS.status}
                   </th>
                   <th scope="col" className="px-6 py-3">
-                    {FIELD_LABELS.createdAt}
+                    {FIELD_LABELS.rechargedate}
                   </th>
-                  <th scope="col" className="px-6 py-3">
+                  {/* <th scope="col" className="px-6 py-3">
                     Reference
-                  </th>
+                  </th> */}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800 text-sm text-gray-300">
@@ -158,11 +159,11 @@ const HistoryTab = ({ history, loadHistory, isLoading }) => {
                       </span>
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap">
-                      {formatDate(record.createdAt)}
+                      {formatDate(record.rechargedate)}
                     </td>
-                    <td className="px-6 py-3 text-xs text-gray-400 break-words">
+                    {/* <td className="px-6 py-3 text-xs text-gray-400 break-words">
                       {record.reference}
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>

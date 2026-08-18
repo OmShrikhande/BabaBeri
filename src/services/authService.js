@@ -957,6 +957,7 @@ class AuthService {
         totalCredited: data.totalCredited ?? data.totalCredit ?? 0,
         totalDebited: data.totalDebited ?? data.totalDebit ?? 0,
         currentBalance: data.currentBalance ?? 0,
+        diamondBalance: data.diamondBalance ?? 0,
         lastUpdated: data.lastUpdated ?? null
       };
       return { success: true, data: summary };

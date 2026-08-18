@@ -346,7 +346,7 @@ const Dashboard = ({ currentUser, onLogout, onNavigate }) => {
       color: 'blue'
     },
     {
-      title: 'Hosts',
+      title: 'Live Hosts',
       value: dynamicCounts.HOST ?? staticMetrics.hosts,
       icon: 'UserCheck',
       color: 'cyan'

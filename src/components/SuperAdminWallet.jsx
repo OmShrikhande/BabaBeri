@@ -38,11 +38,14 @@ const SuperAdminWallet = ({ currentUser }) => {
 
       if (walletRes.success) {
         setWalletData(walletRes.data);
+        if (typeof walletRes.data?.diamondBalance !== 'undefined') {
+          setDiamonds(walletRes.data.diamondBalance);
+        }
       } else {
         setError('Failed to fetch wallet data');
       }
 
-      if (diamondsRes.success) {
+      if (diamondsRes.success && (!walletRes.success || typeof walletRes.data?.diamondBalance === 'undefined')) {
         setDiamonds(diamondsRes.data?.totalCREDIT ?? diamondsRes.data?.total ?? 0);
       }
     } catch (error) {

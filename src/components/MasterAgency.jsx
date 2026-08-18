@@ -88,6 +88,9 @@ const MasterAgency = ({ onNavigateToDetail }) => {
               profilePic: item.profilePic || '',
               createdAt: new Date(item.createdAt),
               updatedAt: new Date(item.updatedAt),
+              joinDate: item.joinDate,
+              diamond: item.diamond,
+              slab: item.slab,
             }))
             : [];
           setApiMasterAgencies(mapped);
@@ -709,12 +712,12 @@ const MasterAgency = ({ onNavigateToDetail }) => {
 
                       {/* Over all diamonds (Placeholder) */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{masterAgency.diamond}</span>
                       </div>
 
                       {/* Current Stage (Placeholder) */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{masterAgency.currentStage}</span>
                       </div>
 
                       {/* Current Slab (Placeholder) */}
@@ -743,7 +746,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
 
                       {/* Joining Date (Placeholder) */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{masterAgency.joinDate}</span>
                       </div>
 
                       {/* Actions */}

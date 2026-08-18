@@ -139,13 +139,13 @@ const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Diamonds Cashout</h1>
         <div className="flex items-center gap-3">
-          <button
+          {/* <button
             onClick={() => onNavigateToDiamondsWallet && onNavigateToDiamondsWallet()}
             className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#4361EE] to-[#4CC9F0] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             <Wallet className="w-4 h-4 mr-2" />
             Wallet
-          </button>
+          </button> */}
           <button
             onClick={() => setConvertModalOpen(true)}
             className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg px-4 py-2 font-medium text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"

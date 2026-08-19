@@ -3,8 +3,19 @@ import { Users, Mic, DollarSign, Target } from 'lucide-react';
 import MetricsCard from './MetricsCard';
 import LoadingCard from './LoadingCard';
 import StatusBadge from './StatusBadge';
+import FinancialMetricsCard from './FinancialMetricsCard';
+import EnhancedChartCard from './EnhancedChartCard';
+import SupporterCard from './SupporterCard';
 import authService from '../services/authService';
 import services from '../services/services';
+import { supporterCardsData } from '../data/dashboardData';
+import {
+  aggregateDiamondRange,
+  formatMetricNumber,
+  normalizeCashoutHistory,
+  sumCashoutDiamonds,
+  sumCashoutCashAmount,
+} from '../utils/dashboardFinancials';
 
 const MasterAgencyDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -18,6 +29,21 @@ const MasterAgencyDashboard = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [goalData, setGoalData] = useState(null);
   const [goalLoading, setGoalLoading] = useState(true);
+
+  // Financial Overview State
+  const [totalCoinsSell, setTotalCoinsSell] = useState(null);
+  const [totalCoinsSellLoading, setTotalCoinsSellLoading] = useState(false);
+  const [financialSummary, setFinancialSummary] = useState({
+    totalProfit: null,
+    totalLoss: null,
+    totalDiamondCashout: null,
+    pendingCashouts: null,
+  });
+  const [financialLoading, setFinancialLoading] = useState(false);
+  const [supporterSummary, setSupporterSummary] = useState({
+    totalRecharge: null,
+    availableCoins: null,
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -34,7 +60,6 @@ const MasterAgencyDashboard = () => {
 
         const myCode = authService.extractUserCode(info);
 
-        // Fetch metrics
         const [agencyCount, hostCount, cashoutData, agenciesData] = await Promise.all([
           authService.countByRole('AGENCY'),
           authService.countByRole('HOST'),
@@ -112,6 +137,109 @@ const MasterAgencyDashboard = () => {
       ignore = true;
     };
   }, []);
+
+  // Fetch total coins sell
+  useEffect(() => {
+    let ignore = false;
+    const fetchTotalCoinsSell = async () => {
+      setTotalCoinsSellLoading(true);
+      try {
+        const res = await authService.getTotalSellCoins();
+        if (!ignore) setTotalCoinsSell(res.success ? (res.data?.totalSell ?? 0) : null);
+      } catch {
+        if (!ignore) setTotalCoinsSell(null);
+      } finally {
+        if (!ignore) setTotalCoinsSellLoading(false);
+      }
+    };
+    fetchTotalCoinsSell();
+    return () => { ignore = true; };
+  }, []);
+
+  // Fetch financial overview
+  useEffect(() => {
+    let ignore = false;
+    const fetchFinancialSummary = async () => {
+      setFinancialLoading(true);
+      try {
+        const year = new Date().getFullYear();
+        const [cashoutRes, rangeRes, pendingRes] = await Promise.all([
+          authService.getCashoutHistory(),
+          authService.getDiamondRange(`${year}-01-01`, `${year}-12-31`),
+          services.getPendingCashoutList(),
+        ]);
+        if (ignore) return;
+        const cashoutHistory = cashoutRes.success ? normalizeCashoutHistory(cashoutRes.data) : [];
+        const rangeTotals = rangeRes.success ? aggregateDiamondRange(rangeRes.data) : null;
+        const pendingList = pendingRes.success
+          ? (Array.isArray(pendingRes.data) ? pendingRes.data : pendingRes.data?.data || [])
+          : [];
+        setFinancialSummary({
+          totalProfit: rangeTotals?.profit ?? sumCashoutCashAmount(cashoutHistory),
+          totalLoss: rangeTotals?.loss ?? 0,
+          totalDiamondCashout: sumCashoutDiamonds(cashoutHistory) || rangeTotals?.cashout || 0,
+          pendingCashouts: pendingList.length,
+        });
+      } catch {
+        if (!ignore) setFinancialSummary({ totalProfit: null, totalLoss: null, totalDiamondCashout: null, pendingCashouts: null });
+      } finally {
+        if (!ignore) setFinancialLoading(false);
+      }
+    };
+    fetchFinancialSummary();
+    return () => { ignore = true; };
+  }, []);
+
+  // Supporter summary
+  useEffect(() => {
+    let ignore = false;
+    const fetchSupporterSummary = async () => {
+      try {
+        const [sellRes, coinsRes] = await Promise.all([
+          authService.getTotalSellCoins(),
+          authService.getTotalAvailableCoins(),
+        ]);
+        if (!ignore) {
+          setSupporterSummary({
+            totalRecharge: sellRes.success ? (sellRes.data?.totalSell ?? 0) : null,
+            availableCoins: coinsRes.success ? (coinsRes.data?.coins ?? 0) : null,
+          });
+        }
+      } catch {
+        if (!ignore) setSupporterSummary({ totalRecharge: null, availableCoins: null });
+      }
+    };
+    fetchSupporterSummary();
+    return () => { ignore = true; };
+  }, []);
+
+  const financialCards = [
+    {
+      title: 'Total Coins Sell',
+      value: totalCoinsSellLoading ? 'Loading...' : (totalCoinsSell !== null ? totalCoinsSell : 'N/A'),
+      formatted: totalCoinsSellLoading ? '' : (totalCoinsSell !== null ? Number(totalCoinsSell).toLocaleString() : '—'),
+      change: '', trend: '', icon: 'Coins', color: 'yellow'
+    },
+    {
+      title: 'Total Profit',
+      value: financialLoading ? 'Loading...' : (financialSummary.totalProfit ?? 'N/A'),
+      formatted: financialLoading ? '' : (financialSummary.totalProfit !== null ? formatMetricNumber(financialSummary.totalProfit) : '—'),
+      change: '', trend: financialSummary.totalProfit > 0 ? 'up' : '', icon: 'DollarSign', color: 'green'
+    },
+    {
+      title: 'Total Loss',
+      value: financialLoading ? 'Loading...' : (financialSummary.totalLoss ?? 'N/A'),
+      formatted: financialLoading ? '' : (financialSummary.totalLoss !== null ? formatMetricNumber(financialSummary.totalLoss) : '—'),
+      change: '', trend: financialSummary.totalLoss > 0 ? 'down' : '', icon: 'AlertTriangle', color: 'red'
+    },
+    {
+      title: 'Total Diamond Cashout',
+      value: financialLoading ? 'Loading...' : (financialSummary.totalDiamondCashout ?? 'N/A'),
+      formatted: financialLoading ? '' : (financialSummary.totalDiamondCashout !== null ? formatMetricNumber(financialSummary.totalDiamondCashout) : '—'),
+      change: financialSummary.pendingCashouts !== null ? `${financialSummary.pendingCashouts} pending` : '',
+      trend: '', icon: 'Gem', color: 'purple'
+    }
+  ];
 
   const handleRetry = () => {
     setError(null);
@@ -231,7 +359,7 @@ const MasterAgencyDashboard = () => {
         </div>
 
         {/* Metrics Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {loading ? (
             <>
               <LoadingCard />
@@ -261,6 +389,60 @@ const MasterAgencyDashboard = () => {
             </>
           )}
         </div>
+
+        {/* Financial Overview Section */}
+        {/* <section className="mb-8" aria-labelledby="ma-financial-heading">
+          <div className="mb-6">
+            <h2 id="ma-financial-heading" className="text-2xl font-bold text-white">Financial Overview</h2>
+            <p className="text-gray-400 mt-1">Track your revenue, profits, and financial performance</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {financialCards.map((card, index) => (
+              <FinancialMetricsCard
+                key={`ma-financial-${index}`}
+                title={card.title}
+                value={card.value}
+                formatted={card.formatted}
+                change={card.change}
+                trend={card.trend}
+                icon={card.icon}
+                color={card.color}
+                isLoading={financialLoading || totalCoinsSellLoading}
+              />
+            ))}
+          </div>
+        </section> */}
+
+        {/* Analytics & Insights Section */}
+        {/* <section className="mb-8" aria-labelledby="ma-analytics-heading">
+          <div className="mb-6">
+            <h2 id="ma-analytics-heading" className="text-2xl font-bold text-white">Analytics & Insights</h2>
+            <p className="text-gray-400 mt-1">Detailed analysis of coins and diamonds performance</p>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2">
+              <EnhancedChartCard />
+            </div>
+            <div className="space-y-6">
+              <SupporterCard
+                title="Total Coins Sold"
+                value={supporterSummary.totalRecharge !== null
+                  ? Number(supporterSummary.totalRecharge).toLocaleString()
+                  : supporterCardsData.totalRecharge.value}
+                icon={supporterCardsData.totalRecharge.icon}
+                color={supporterCardsData.totalRecharge.color}
+              />
+              <SupporterCard
+                title="Available Platform Coins"
+                value={supporterSummary.availableCoins !== null
+                  ? Number(supporterSummary.availableCoins).toLocaleString()
+                  : supporterCardsData.thisMonthRecharge.value}
+                icon={supporterCardsData.thisMonthRecharge.icon}
+                color={supporterCardsData.thisMonthRecharge.color}
+              />
+            </div>
+          </div>
+        </section> */}
 
         {/* My Agencies Table */}
         <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">

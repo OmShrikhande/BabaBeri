@@ -87,7 +87,7 @@ const BlockUsers = () => {
     if (!code) return;
     setStatusActionLoading(p => ({ ...p, [code]: true }));
     try {
-      const res = await authService.updateUserStatus(code, 'Active');
+      const res = await authService.unblockUser(code);
       if (res.success) {
         setUsers(prev => prev.filter(u => u.code !== code && u.userCode !== code));
         showToast(`${user.username || code} has been unblocked.`);

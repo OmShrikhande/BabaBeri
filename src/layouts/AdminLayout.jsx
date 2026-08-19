@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Menu, X, Users, Mic, Settings, UserPlus, Building, Ban, CreditCard } from 'lucide-react';
+import { LayoutDashboard, LogOut, Menu, X, Users, Mic, Settings, UserPlus, Building, Ban, CreditCard, BarChart2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 
@@ -15,7 +15,8 @@ const AdminLayout = () => {
   };
 
   const navItems = [
-    { path: '/admin', label: 'Goals', icon: LayoutDashboard },
+    { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/admin/financial', label: 'Financial Overview', icon: BarChart2 },
     { path: '/admin/move-create', label: 'Move & Create', icon: UserPlus },
     { path: '/admin/master-agency', label: 'MasterAgency', icon: Building },
     { path: '/admin/agencies', label: 'Agencies', icon: Users },

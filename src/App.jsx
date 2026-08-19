@@ -39,6 +39,7 @@ import Profile from './components/Profile';
 import AuthTest from './components/AuthTest';
 import MasterAgency from './components/MasterAgency';
 import HostDetails from './components/HostDetails';
+import UserDetailsList from './components/UserDetailsList';
 import RoleStagesPage from './components/RoleStages/RoleStagesPage';
 import UserActivation from './components/UserActivation';
 import AdminDashboard from './components/AdminDashboard';
@@ -50,6 +51,9 @@ import ReportsBan from './components/ReportsBan';
 import RolePercentage from './components/RolePercentage';
 import Createlayout from './components/Create/Createlayout';
 import GiftsAndBannersLayout from './components/Gifts_and_Banner';
+import AdminFinancialPage from './pages/admin/AdminFinancialPage';
+import MasterAgencyFinancialPage from './pages/masteragency/MasterAgencyFinancialPage';
+import AgencyFinancialPage from './pages/agency/AgencyFinancialPage';
 
 function App() {
   return (
@@ -86,7 +90,7 @@ function App() {
         <Route path="diamonds-wallet" element={<DiamondsCashout />} />
         <Route path="ranking" element={<Ranking />} />
         <Route path="role-stages" element={<RoleStagesPage />} />
-        <Route path="user-details" element={<HostDetails />} />
+        <Route path="user-details" element={<UserDetailsList />} />
         <Route path="vip-levels" element={<VipLevels />} />
         <Route path="gifts-banners" element={<GiftsAndBannersLayout />} />
         <Route path="block-users" element={<BlockUsers />} />
@@ -107,12 +111,8 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={
-          <div className="p-6">
-            <AdminGoals />
-            <AdminDashboard />
-          </div>
-        } />
+        <Route index element={<AdminDashboard />} />
+        <Route path="financial" element={<AdminFinancialPage />} />
         <Route path="move-create" element={<Createlayout />} />
         <Route path="master-agency" element={<MasterAgency />} />
         <Route path="master-agency/:masterAgencyId" element={<MasterAgencyDetail />} />
@@ -132,12 +132,8 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={
-          <div className="p-6">
-            <MasterAgencyGoals />
-            <MasterAgencyDashboard />
-          </div>
-        } />
+        <Route index element={<MasterAgencyDashboard />} />
+        <Route path="financial" element={<MasterAgencyFinancialPage />} />
         <Route path="create-agency" element={<div className="p-6"><MasterAgencyCreateAgency /></div>} />
         <Route path="agencies" element={<Agencies />} />
         <Route path="agencies/:agencyId" element={<AgencyDetail />} />
@@ -154,12 +150,8 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={
-          <div className="p-6">
-            <AgencyGoals />
-            <AgencyDashboard />
-          </div>
-        } />
+        <Route index element={<AgencyDashboard />} />
+        <Route path="financial" element={<AgencyFinancialPage />} />
         <Route path="host-details" element={<HostDetails />} />
         <Route path="coin-recharge" element={<CoinRecharge />} />
       </Route>

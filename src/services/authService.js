@@ -1836,6 +1836,131 @@ class AuthService {
       return { success: false, error: error.message || 'Failed to delete live form.' };
     }
   }
+
+  // Get all users (Super Admin only)
+  async getAllUsers() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ALL_USERS}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch all users: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      // Return the data directly if it's an array, or wrap it if it's inside a property
+      const rawList = Array.isArray(data) ? data : (data.data || data.users || []);
+
+      // Map API response to component expected format
+      const usersList = rawList.map(item => {
+        return {
+          ...item,
+          id: item.id || item._id,
+          name: item.name || item.username || item.fullName || 'Unknown',
+          username: item.username || item.name || item.fullName || 'Unknown',
+          code: item.code || item.userCode || item.usercode || String(item.id || item._id),
+          email: item.email || '',
+          role: item.role || item.userType || item.accountType || 'user',
+          status: item.status || 'active'
+        };
+      });
+
+      return { success: true, data: usersList };
+    } catch (error) {
+      console.error('Get all users error:', error);
+      return { success: false, error: error.message || 'Failed to fetch all users.' };
+    }
+  }
+
+  // Get user full data (Super Admin only)
+  async getUserFullData(code) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_FULL_DATA}?code=${encodeURIComponent(code)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user full data: ${response.status} ${response.statusText}\n${raw}`);
+      }
+
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Get user full data error:', error);
+      return { success: false, error: error.message || 'Failed to fetch user full data.' };
+    }
+  }
+
+  // Block user (Super Admin only)
+  async blockUser(code, reason) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BLOCK_USER}?code=${encodeURIComponent(code)}&reason=${encodeURIComponent(reason)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'POST' });
+      const raw = await response.text().catch(() => '');
+
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+
+      if (!response.ok) {
+        throw new Error(data?.message || `Failed to block user: ${response.status}`);
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Block user error:', error);
+      return { success: false, error: error.message || 'Failed to block user.' };
+    }
+  }
+
+  // Unblock user (Super Admin only)
+  async unblockUser(code) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UNBLOCK_USER}?code=${encodeURIComponent(code)}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'POST' });
+      const raw = await response.text().catch(() => '');
+
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+
+      if (!response.ok) {
+        throw new Error(data?.message || `Failed to unblock user: ${response.status}`);
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error('Unblock user error:', error);
+      return { success: false, error: error.message || 'Failed to unblock user.' };
+    }
+  }
 }
 
 // Export singleton instance

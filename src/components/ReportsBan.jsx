@@ -130,11 +130,7 @@ const ReportsBan = () => {
     const user = banDialogUser;
 
     try {
-      const response = await authService.banUser({
-        userCode: user.code,
-        reason,
-        duration
-      });
+      const response = await authService.blockUser(user.code, reason);
 
       if (response.success) {
         // Update local state optimistically

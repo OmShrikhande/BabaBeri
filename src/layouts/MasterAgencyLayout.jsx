@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, X, Users, Mic, Building, CreditCard } from 'lucide-react';
+import { LayoutDashboard, LogOut, X, Users, Mic, Building, CreditCard, BarChart2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 
@@ -15,7 +15,8 @@ const MasterAgencyLayout = () => {
   };
 
   const navItems = [
-    { path: '/master-agency', label: 'Goals', icon: LayoutDashboard },
+    { path: '/master-agency', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/master-agency/financial', label: 'Financial Overview', icon: BarChart2 },
     { path: '/master-agency/create-agency', label: 'Create Agencies', icon: Building },
     { path: '/master-agency/agencies', label: 'Agencies', icon: Users },
     { path: '/master-agency/host-details', label: 'Host Details', icon: Mic },

@@ -87,6 +87,12 @@ export const API_CONFIG = {
     GET_BY_CODE: '/auth/api/getByCode',
     // Get all users (Super Admin only)
     ALL_USERS: '/auth/api/allusers',
+    // Get user full data (Super Admin only)
+    USER_FULL_DATA: '/auth/api/user-full-data',
+    // Block user (Super Admin only)
+    BLOCK_USER: '/auth/superadmin/block-user',
+    // Unblock user (Super Admin only)
+    UNBLOCK_USER: '/auth/superadmin/unblock-user',
     // Top 10 Hosts by Diamond
     TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond',
 

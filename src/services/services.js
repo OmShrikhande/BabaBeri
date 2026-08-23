@@ -629,7 +629,37 @@ class AuthService {
       }
     }
 
-    // Get user full data (Super Admin only)
+    // Get all VIP users (Super Admin only)
+    async getVipUsers() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_VIP_USERS}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch VIP users: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+
+        // data shape: { success, total, members, friendBadges, users: [...] }
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get VIP users error:', error);
+        return { success: false, error: error.message || 'Failed to fetch VIP users.' };
+      }
+    }
+
+
     async getUserFullData(code) {
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };

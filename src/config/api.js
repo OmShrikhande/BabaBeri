@@ -95,6 +95,8 @@ export const API_CONFIG = {
     UNBLOCK_USER: '/auth/superadmin/unblock-user',
     // Top 10 Hosts by Diamond
     TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond',
+    // Get all VIP users (Super Admin only)
+    GET_VIP_USERS: '/auth/api/getvipusers',
 
     // Public live tracking
     DIAMOND_COUNT: '/public/diamond-count',

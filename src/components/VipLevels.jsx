@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Crown, Plus, Edit2, Trash2, Coins, Calendar, Eye, EyeOff, Users,
-  X, RefreshCw, Download, AlertCircle, ChevronUp, ChevronDown, Info, Award, TrendingUp
+  X, RefreshCw, Download, AlertCircle, ChevronUp, ChevronDown, Info, Award, TrendingUp, ShieldCheck
 } from 'lucide-react';
 import authService from '../services/authService';
+import services from '../services/services';
 import { API_CONFIG } from '../config/api.js';
 import ConfirmDialog from './RoleStages/ConfirmDialog';
 import SearchBar from './SearchBar';
@@ -16,10 +17,11 @@ const VipLevels = () => {
   const [error, setError] = useState(null);
   const [plans, setPlans] = useState([]);
   const [vipMembers, setVipMembers] = useState([]);
+  const [vipStats, setVipStats] = useState({ total: 0, members: 0, friendBadges: 0 });
   const [activeView, setActiveView] = useState('members');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState('planName');
+  const [sortField, setSortField] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
@@ -56,21 +58,22 @@ const VipLevels = () => {
     setLoading(true);
     setError(null);
     try {
-      // Note: API endpoint for VIP members not found in documentation
-      // Trying common endpoint patterns
-      const response = await authService.makeAuthenticatedRequest(
-        `${API_CONFIG.BASE_URL}/auth/api/getvipusers`, { method: 'GET' }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setVipMembers(Array.isArray(data) ? data : data?.data ?? []);
+      const result = await services.getVipUsers();
+      if (result.success) {
+        const data = result.data;
+        // API returns: { success, total, members, friendBadges, users: [...] }
+        setVipStats({
+          total: data.total ?? 0,
+          members: data.members ?? 0,
+          friendBadges: data.friendBadges ?? 0,
+        });
+        setVipMembers(Array.isArray(data.users) ? data.users : []);
       } else {
-        // If endpoint doesn't exist, show informative message
-        throw new Error('VIP members endpoint not available. Please contact backend team to implement /auth/api/getvipusers endpoint.');
+        throw new Error(result.error || 'Failed to load VIP members.');
       }
     } catch (err) {
-      setError(err.message || 'Failed to load VIP members. API endpoint may not be implemented yet.');
-      setVipMembers([]); // Set empty array to prevent further errors
+      setError(err.message || 'Failed to load VIP members.');
+      setVipMembers([]);
     } finally {
       setLoading(false);
       setLastUpdated(new Date());
@@ -126,30 +129,35 @@ const VipLevels = () => {
   const filteredMembers = React.useMemo(() => {
     let filtered = vipMembers.filter(member => {
       const matchesSearch =
-        (member.fullName || member.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (member.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (member.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (member.userId || member.id || '').toLowerCase().includes(searchTerm.toLowerCase());
+        (member.usercode || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (member.planName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (member.country || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesLevel = selectedLevel === 'all' ||
-        (member.vipLevel || member.planName || '').toLowerCase() === selectedLevel.toLowerCase();
+        (member.planName || member.vipType || '').toLowerCase() === selectedLevel.toLowerCase();
 
       return matchesSearch && matchesLevel;
     });
 
     filtered.sort((a, b) => {
       let av, bv;
-      if (sortField === 'fullName') {
-        av = (a.fullName || a.name || '').toLowerCase();
-        bv = (b.fullName || b.name || '').toLowerCase();
+      if (sortField === 'name') {
+        av = (a.name || '').toLowerCase();
+        bv = (b.name || '').toLowerCase();
       } else if (sortField === 'username') {
         av = (a.username || '').toLowerCase();
         bv = (b.username || '').toLowerCase();
-      } else if (sortField === 'vipLevel') {
-        av = (a.vipLevel || a.planName || '').toLowerCase();
-        bv = (b.vipLevel || b.planName || '').toLowerCase();
-      } else if (sortField === 'expiryDate') {
-        av = new Date(a.expiryDate || a.validUntil || 0).getTime();
-        bv = new Date(b.expiryDate || b.validUntil || 0).getTime();
+      } else if (sortField === 'planName') {
+        av = (a.planName || '').toLowerCase();
+        bv = (b.planName || '').toLowerCase();
+      } else if (sortField === 'endDate') {
+        av = new Date(a.endDate || 0).getTime();
+        bv = new Date(b.endDate || 0).getTime();
+      } else if (sortField === 'daysLeft') {
+        av = Number(a.daysLeft ?? 0);
+        bv = Number(b.daysLeft ?? 0);
       } else {
         return 0;
       }
@@ -165,20 +173,19 @@ const VipLevels = () => {
 
   const stats = React.useMemo(() => {
     if (activeView === 'members') {
-      const levelCounts = {};
+      const planCounts = {};
       vipMembers.forEach(member => {
-        const level = member.vipLevel || member.planName || 'Unknown';
-        levelCounts[level] = (levelCounts[level] || 0) + 1;
+        const plan = member.planName || 'Unknown';
+        planCounts[plan] = (planCounts[plan] || 0) + 1;
       });
 
       return {
-        total: vipMembers.length,
+        total: vipStats.total || vipMembers.length,
+        members: vipStats.members || vipMembers.length,
+        friendBadges: vipStats.friendBadges || 0,
         filtered: filteredMembers.length,
-        levelCounts,
-        activeMembers: vipMembers.filter(m => {
-          const expiry = new Date(m.expiryDate || m.validUntil);
-          return expiry > new Date();
-        }).length
+        planCounts,
+        activeMembers: vipMembers.filter(m => !m.expired).length
       };
     } else {
       return {
@@ -188,7 +195,7 @@ const VipLevels = () => {
         avgValidity: plans.length ? Math.round(plans.reduce((s, p) => s + Number(p.validFor || p.validity || 0), 0) / plans.length) : 0
       };
     }
-  }, [plans, vipMembers, filteredMembers, activeView]);
+  }, [plans, vipMembers, vipStats, filteredMembers, activeView]);
 
   const openCreate = () => {
     setEditingPlan(null);
@@ -443,7 +450,7 @@ const VipLevels = () => {
                 </div>
                 <div className="min-w-0">
                   <p className="text-gray-400 text-xs truncate">VIP Levels</p>
-                  <p className="text-white text-xl font-bold">{Object.keys(stats.levelCounts).length}</p>
+                  <p className="text-white text-xl font-bold">{Object.keys(stats.planCounts || {}).length}</p>
                 </div>
               </div>
             </div>
@@ -579,81 +586,113 @@ const VipLevels = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[700px] border-collapse">
+                <table className="w-full min-w-[1100px] border-collapse">
                   <thead>
                     <tr className="border-b border-gray-700 bg-[#0F0F0F]">
-                      <th className="text-left py-3 px-4 pl-6 text-gray-400 font-medium text-sm w-14">#</th>
-                      <SortTh field="fullName">Member</SortTh>
+                      <th className="text-left py-3 px-4 pl-6 text-gray-400 font-medium text-sm w-10">#</th>
+                      <SortTh field="name">Member</SortTh>
                       <SortTh field="username">Username</SortTh>
-                      <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">User ID</th>
-                      <SortTh field="vipLevel">VIP Level</SortTh>
-                      <SortTh field="expiryDate">Expiry Date</SortTh>
+                      <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">User Code</th>
+                      <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">Role</th>
+                      <SortTh field="planName">Plan</SortTh>
+                      <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">Start Date</th>
+                      <SortTh field="endDate">End Date</SortTh>
+                      <SortTh field="daysLeft">Days Left</SortTh>
+                      <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredMembers.map((member, idx) => {
-                      const expiryDate = new Date(member.expiryDate || member.validUntil);
-                      const isExpired = expiryDate < new Date();
+                    {filteredMembers.map((member, idx) => (
+                      <tr key={member.usercode || idx} className="border-b border-gray-800 last:border-b-0 hover:bg-[#1A1A1A] transition-colors group">
+                        {/* # */}
+                        <td className="py-3 px-4 pl-6 text-gray-500 text-sm w-10">{idx + 1}</td>
 
-                      return (
-                        <tr key={member.id || idx} className="border-b border-gray-800 last:border-b-0 hover:bg-[#1A1A1A] transition-colors group">
-                          {/* # */}
-                          <td className="py-3 px-4 pl-6 text-gray-500 text-sm w-14">{idx + 1}</td>
-
-                          {/* Member */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="relative flex-shrink-0">
-                                <img
-                                  src={member.avatar || member.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.fullName || member.name || 'User')}&background=F72585&color=fff&size=40`}
-                                  alt={member.fullName || member.name}
-                                  className="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-[#F72585] transition-colors"
-                                  onError={(e) => {
-                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.fullName || member.name || 'User')}&background=F72585&color=fff&size=40`;
-                                  }}
-                                />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-white font-medium text-sm truncate">{member.fullName || member.name || '—'}</p>
-                                <p className="text-xs text-gray-500">{member.country || 'Unknown'}</p>
-                              </div>
+                        {/* Member */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src={member.profilepic || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=F72585&color=fff&size=40`}
+                                alt={member.name}
+                                className="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-[#F72585] transition-colors"
+                                onError={(e) => {
+                                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name || 'User')}&background=F72585&color=fff&size=40`;
+                                }}
+                              />
                             </div>
-                          </td>
+                            <div className="min-w-0">
+                              <p className="text-white font-medium text-sm truncate">{member.name || '—'}</p>
+                              <p className="text-xs text-gray-500">{member.country || '—'}</p>
+                            </div>
+                          </div>
+                        </td>
 
-                          {/* Username */}
-                          <td className="py-3 px-4">
-                            <span className="text-[#F72585] text-sm font-medium">@{member.username || '—'}</span>
-                          </td>
+                        {/* Username */}
+                        <td className="py-3 px-4">
+                          <span className="text-[#F72585] text-sm font-medium">@{member.username || '—'}</span>
+                        </td>
 
-                          {/* User ID */}
-                          <td className="py-3 px-4">
-                            <span className="text-gray-400 font-mono text-xs bg-gray-800 px-2 py-1 rounded">
-                              {member.userId || member.id || '—'}
+                        {/* User Code */}
+                        <td className="py-3 px-4">
+                          <span className="text-gray-400 font-mono text-xs bg-gray-800 px-2 py-1 rounded">
+                            {member.usercode || '—'}
+                          </span>
+                        </td>
+
+                        {/* Role */}
+                        <td className="py-3 px-4">
+                          <span className="text-xs px-2 py-1 rounded-full bg-indigo-900/40 text-indigo-300 border border-indigo-700/50">
+                            {member.role || '—'}
+                          </span>
+                        </td>
+
+                        {/* Plan */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <Crown className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                            <span className={`text-xs px-2 py-1 rounded-full border ${getLevelBadgeColor(member.planName)}`}>
+                              {member.planName || '—'}
                             </span>
-                          </td>
+                          </div>
+                        </td>
 
-                          {/* VIP Level */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              <Crown className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-                              <span className={`text-xs px-2 py-1 rounded-full border ${getLevelBadgeColor(member.vipLevel || member.planName)}`}>
-                                {member.vipLevel || member.planName || 'Unknown'}
-                              </span>
-                            </div>
-                          </td>
+                        {/* Start Date */}
+                        <td className="py-3 px-4">
+                          <span className="text-gray-400 text-sm">
+                            {member.startDate ? new Date(member.startDate).toLocaleDateString() : '—'}
+                          </span>
+                        </td>
 
-                          {/* Expiry Date */}
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-1.5">
-                              <Calendar className={`w-4 h-4 flex-shrink-0 ${isExpired ? 'text-red-400' : 'text-blue-400'}`} />
-                              <span className={`text-sm ${isExpired ? 'text-red-400' : 'text-gray-300'}`}>
-                                {expiryDate.toLocaleDateString()}
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                        {/* End Date */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1.5">
+                            <Calendar className={`w-4 h-4 flex-shrink-0 ${member.expired ? 'text-red-400' : 'text-blue-400'}`} />
+                            <span className={`text-sm ${member.expired ? 'text-red-400' : 'text-gray-300'}`}>
+                              {member.endDate ? new Date(member.endDate).toLocaleDateString() : '—'}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Days Left */}
+                        <td className="py-3 px-4">
+                          <span className={`text-sm font-semibold ${
+                            member.expired ? 'text-red-400' :
+                            member.daysLeft <= 30 ? 'text-yellow-400' : 'text-green-400'
+                          }`}>
+                            {member.expired ? '—' : `${member.daysLeft ?? '—'}d`}
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 px-4">
+                          {member.expired ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-red-900/40 text-red-300 border border-red-700/50">Expired</span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-900/40 text-green-300 border border-green-700/50">Active</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

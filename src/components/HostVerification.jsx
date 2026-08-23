@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import HostTable from './HostTable';
 import Pagination from './Pagination';
 import authService from '../services/services';
 import { API_CONFIG } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 const HostVerification = () => {
   console.log('🔍 HostVerification component rendered at:', new Date().toISOString());
+
+  const { loading: authLoading } = useAuth();
 
   const [mode, setMode] = useState('pending');
   const [hosts, setHosts] = useState([]);
@@ -23,56 +26,43 @@ const HostVerification = () => {
   const [sidebarError, setSidebarError] = useState(null);
 
   // Fetch pending hosts data
-  useEffect(() => {
-    console.log('🔄 HostVerification useEffect triggered at:', new Date().toISOString());
+  const fetchPendingHosts = useCallback(async () => {
+    console.log('📡 Starting fetchPendingHosts function at:', new Date().toISOString());
+    try {
+      setLoading(true);
+      setError(null);
 
-    const fetchPendingHosts = async () => {
-      console.log('📡 Starting fetchPendingHosts function at:', new Date().toISOString());
-      try {
-        setLoading(true);
-        setError(null);
+      const token = authService.getToken();
+      if (!token) {
+        setError('Please login as a super admin to access this feature');
+        setLoading(false);
+        return;
+      }
 
-        // Check if user is authenticated first
-        // console.log('HostVerification - Checking authentication...');
-        // console.log('HostVerification - isAuthenticated:', authService.isAuthenticated());
-        // console.log('HostVerification - token exists:', !!authService.getToken());
-        // console.log('HostVerification - user type:', authService.getUserType());
+      const result = await authService.getPendingHosts();
 
-        if (!authService.isAuthenticated()) {
-          setError('Please login as a super admin to access this feature');
-          setLoading(false);
-          return;
-        }
-
-        // console.log('HostVerification - Calling getPendingHosts...');
-        const result = await authService.getPendingHosts();
-        // console.log('HostVerification - getPendingHosts result:', result);
-
-        if (result.success) {
-          // console.log('HostVerification - Success! Hosts loaded:', result.data?.length || 0);
-          setHosts(result.data || []);
-          setFilteredHosts(result.data || []);
-        } else {
-          // console.log('HostVerification - API call failed with error:', result.error);
-          // console.log('HostVerification - Full result:', result);
-          setError(result.error || 'Failed to fetch pending hosts');
-          setHosts([]);
-          setFilteredHosts([]);
-        }
-      } catch (err) {
-        // console.error('HostVerification - Error in fetchPendingHosts:', err);
-        // console.error('HostVerification - Error message:', err.message);
-        // console.error('HostVerification - Error stack:', err.stack);
-        setError(`Failed to fetch pending hosts: ${err.message}`);
+      if (result.success) {
+        setHosts(result.data || []);
+        setFilteredHosts(result.data || []);
+      } else {
+        setError(result.error || 'Failed to fetch pending hosts');
         setHosts([]);
         setFilteredHosts([]);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchPendingHosts();
+    } catch (err) {
+      setError(`Failed to fetch pending hosts: ${err.message}`);
+      setHosts([]);
+      setFilteredHosts([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    console.log('🔄 HostVerification useEffect triggered at:', new Date().toISOString());
+    fetchPendingHosts();
+  }, [authLoading, fetchPendingHosts]);
 
   // Filter hosts based on mode
   useEffect(() => {
@@ -273,7 +263,7 @@ const HostVerification = () => {
                   </div>
                   </div>
                   <button
-                    onClick={() => window.location.reload()}
+                    onClick={fetchPendingHosts}
                     className="mt-4 px-4 py-2 bg-[#F72585] text-white rounded-lg hover:bg-[#F72585]/80 transition-colors text-sm"
                   >
                     Retry

@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState, useDeferredValue } from 'react';
+import React, { useEffect, useMemo, useState, useDeferredValue, useCallback } from 'react';
 import { X, Search, CheckCircle2, XCircle, User2, MapPin, BadgeCheck } from 'lucide-react';
 import authService from '../services/authService.js';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * DpVerificationModal
@@ -24,6 +25,7 @@ const DpVerificationModal = ({
   onReject,
   fullPage = false, // new prop
 }) => {
+  const { loading: authLoading } = useAuth();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50); // tuned for responsiveness
@@ -36,61 +38,59 @@ const DpVerificationModal = ({
 
   const deferredSearch = useDeferredValue(search);
 
+  const loadPendingRequests = useCallback(async (activeRef) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await authService.getAllPendingProfilePics();
+      if (activeRef && !activeRef.current) return;
+      if (res?.success) {
+        const items = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        const mapped = (items || []).map((item) => {
+          const usercode = item?.usercode ?? '';
+          const fallbackId = item?.id != null ? String(item.id) : Math.random().toString(36).slice(2);
+          const id = usercode && String(usercode).trim() ? String(usercode) : `pending-${fallbackId}`;
+          return {
+            id,
+            username: usercode && String(usercode).trim() ? String(usercode) : `User ${item?.id ?? ''}`.trim(),
+            dp: item?.path || '',
+            region: 'Unknown',
+            request: 'DP Confirmation',
+            _raw: item,
+          };
+        });
+        setFetchedRequests(mapped);
+        setSelectedId(initialSelectedId ?? (mapped[0]?.id ?? null));
+        setPage(1);
+        setSearch('');
+      } else {
+        setError(res?.error || 'Failed to load pending profile pics.');
+        setFetchedRequests([]);
+      }
+    } catch (e) {
+      setError(e?.message || 'Failed to load pending profile pics.');
+      setFetchedRequests([]);
+    } finally {
+      if (!activeRef || activeRef.current) setLoading(false);
+    }
+  }, [initialSelectedId]);
+
   // Load pending requests when modal opens if parent didn't supply data
   useEffect(() => {
-    let active = true;
-    const load = async () => {
-      if (!isOpen) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await authService.getAllPendingProfilePics();
-        if (!active) return;
-        if (res?.success) {
-          const items = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-          // Map API payload -> UI structure
-          const mapped = (items || []).map((item) => {
-            const usercode = item?.usercode ?? '';
-            const fallbackId = item?.id != null ? String(item.id) : Math.random().toString(36).slice(2);
-            const id = usercode && String(usercode).trim() ? String(usercode) : `pending-${fallbackId}`;
-            return {
-              id, // used by UI selection and keys
-              username: usercode && String(usercode).trim() ? String(usercode) : `User ${item?.id ?? ''}`.trim(),
-              dp: item?.path || '',
-              region: 'Unknown',
-              request: 'DP Confirmation',
-              _raw: item,
-            };
-          });
-          setFetchedRequests(mapped);
-          // Reset selection when opening
-          setSelectedId(initialSelectedId ?? (mapped[0]?.id ?? null));
-          setPage(1);
-          setSearch('');
-        } else {
-          setError(res?.error || 'Failed to load pending profile pics.');
-          setFetchedRequests([]);
-        }
-      } catch (e) {
-        setError(e?.message || 'Failed to load pending profile pics.');
-        setFetchedRequests([]);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
+    const activeRef = { current: true };
 
-    // Only fetch if parent didn't provide requests
-    if (isOpen && (!requests || requests.length === 0)) {
-      load();
-    } else if (isOpen) {
-      // When using parent-supplied requests, still reset controls
+    if (!isOpen || authLoading) return () => { activeRef.current = false; };
+
+    if (!requests || requests.length === 0) {
+      loadPendingRequests(activeRef);
+    } else {
       setSelectedId(initialSelectedId ?? (requests[0]?.id ?? null));
       setPage(1);
       setSearch('');
     }
 
-    return () => { active = false; };
-  }, [isOpen, initialSelectedId, requests]);
+    return () => { activeRef.current = false; };
+  }, [isOpen, initialSelectedId, requests, authLoading, loadPendingRequests]);
 
   // Use parent-provided requests if available; otherwise use fetched
   const data = useMemo(() => (requests && requests.length ? requests : fetchedRequests), [requests, fetchedRequests]);

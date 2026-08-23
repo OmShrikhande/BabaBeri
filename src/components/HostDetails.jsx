@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
 import HostTable from './HostTable';
 import Pagination from './Pagination';
 import authService from '../services/services';
 import { API_CONFIG } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 const HostDetails = () => {
+  const { loading: authLoading } = useAuth();
   const [hosts, setHosts] = useState([]);
   const [filteredHosts, setFilteredHosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,39 +22,41 @@ const HostDetails = () => {
   const [sidebarError, setSidebarError] = useState(null);
 
   // Fetch hosts data
-  useEffect(() => {
-    const fetchHosts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchHosts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        if (!authService.isAuthenticated()) {
-          setError('Please login as a super admin to access this feature');
-          setLoading(false);
-          return;
-        }
+      const token = authService.getToken();
+      if (!token) {
+        setError('Please login as a super admin to access this feature');
+        setLoading(false);
+        return;
+      }
 
-        const result = await authService.getPendingHosts();
+      const result = await authService.getPendingHosts();
 
-        if (result.success) {
-          setHosts(result.data || []);
-          setFilteredHosts(result.data || []);
-        } else {
-          setError(result.error || 'Failed to fetch hosts');
-          setHosts([]);
-          setFilteredHosts([]);
-        }
-      } catch (err) {
-        setError(`Failed to fetch hosts: ${err.message}`);
+      if (result.success) {
+        setHosts(result.data || []);
+        setFilteredHosts(result.data || []);
+      } else {
+        setError(result.error || 'Failed to fetch hosts');
         setHosts([]);
         setFilteredHosts([]);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchHosts();
+    } catch (err) {
+      setError(`Failed to fetch hosts: ${err.message}`);
+      setHosts([]);
+      setFilteredHosts([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    fetchHosts();
+  }, [authLoading, fetchHosts]);
 
   // Filter for Accepted hosts
   useEffect(() => {
@@ -152,7 +156,7 @@ const HostDetails = () => {
                       </div>
                     </div>
                     <button
-                      onClick={() => window.location.reload()}
+                      onClick={fetchHosts}
                       className="mt-4 px-4 py-2 bg-[#F72585] text-white rounded-lg hover:bg-[#F72585]/80 transition-colors text-sm"
                     >
                       Retry

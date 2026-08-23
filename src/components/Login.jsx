@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, LayoutDashboard, AlertCircle } from 'lucide-react';
 import authService from '../services/authService';
+import { writeStoredUserInfo } from '../services/tokenStore';
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: '',
@@ -50,7 +51,7 @@ const Login = ({ onLogin }) => {
               ...(authService.getUserInfo() || {}),
               ...(typeof result.data === 'object' ? result.data : {})
             };
-            localStorage.setItem('userInfo', JSON.stringify(mergedInfo));
+            writeStoredUserInfo(mergedInfo);
           } catch (storageError) {
             console.error('Failed to cache user info after login:', storageError);
           }

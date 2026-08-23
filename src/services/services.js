@@ -1,9 +1,16 @@
 import { API_CONFIG, TOKEN_CONFIG, DEFAULT_HEADERS, USER_TYPES } from '../config/api.js';
 import { normalizeUserType } from '../utils/roleBasedAccess.js';
+import {
+  readStoredToken,
+  writeStoredToken,
+  clearStoredAuth,
+  readStoredUserInfo,
+  writeStoredUserInfo,
+} from './tokenStore.js';
 
 class AuthService {
   constructor() {
-    this.token = sessionStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+    this.token = readStoredToken();
   }
     // Login method
     async login(credentials) {
@@ -36,12 +43,12 @@ class AuthService {
         
         if (token && typeof token === 'string' && token.split('.').length === 3) {
           this.token = token;
-          sessionStorage.setItem(TOKEN_CONFIG.STORAGE_KEY, token);
+          writeStoredToken(token);
           
           // Store user info if available
           if (data.user || data.userInfo || data.profile) {
             const userInfo = data.user || data.userInfo || data.profile;
-            sessionStorage.setItem(TOKEN_CONFIG.USER_INFO_KEY, JSON.stringify(userInfo));
+            writeStoredUserInfo(userInfo);
           }
         } else {
           throw new Error('Invalid token received from server');
@@ -65,24 +72,37 @@ class AuthService {
     // Logout method
     logout() {
       this.token = null;
-      sessionStorage.removeItem(TOKEN_CONFIG.STORAGE_KEY);
-      sessionStorage.removeItem(TOKEN_CONFIG.USER_INFO_KEY);
+      clearStoredAuth();
+    }
+
+    syncTokenFromStorage() {
+      const stored = readStoredToken();
+      if (stored) {
+        this.token = stored;
+      }
+      return this.token || stored;
+    }
+
+    setToken(token) {
+      this.token = token || null;
+      writeStoredToken(token || null);
     }
   
     // Check if user is authenticated
     isAuthenticated() {
-      return !!this.token;
+      const token = this.getToken();
+      if (!token) return false;
+      return !this.isTokenExpired(token);
     }
   
     // Get stored token
     getToken() {
-      return this.token || sessionStorage.getItem(TOKEN_CONFIG.STORAGE_KEY);
+      return this.syncTokenFromStorage();
     }
   
     // Get stored user info
     getUserInfo() {
-      const userInfo = sessionStorage.getItem(TOKEN_CONFIG.USER_INFO_KEY);
-      return userInfo ? JSON.parse(userInfo) : null;
+      return readStoredUserInfo();
     }
   
     // Extract user code from various payload shapes
@@ -115,8 +135,8 @@ class AuthService {
     // Check if token is expired
     isTokenExpired(token = null) {
       const decoded = this.decodeToken(token);
-      if (!decoded || !decoded.exp) return true;
-      
+      if (!decoded || !decoded.exp) return false;
+
       const currentTime = Date.now() / 1000;
       return decoded.exp < currentTime;
     }

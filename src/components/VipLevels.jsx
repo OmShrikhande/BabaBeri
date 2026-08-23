@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Crown, Plus, Edit2, Trash2, Coins, Calendar, Eye, EyeOff, Users,
   X, RefreshCw, Download, AlertCircle, ChevronUp, ChevronDown, Info, Award, TrendingUp
@@ -8,8 +8,10 @@ import { API_CONFIG } from '../config/api.js';
 import ConfirmDialog from './RoleStages/ConfirmDialog';
 import SearchBar from './SearchBar';
 import ToggleButtonGroup from './ToggleButtonGroup';
+import { useAuth } from '../context/AuthContext';
 
 const VipLevels = () => {
+  const { loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [plans, setPlans] = useState([]);
@@ -30,7 +32,7 @@ const VipLevels = () => {
     vipFriendCount: '', invisibleMode: false, avatarImage: null
   });
 
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -48,9 +50,9 @@ const VipLevels = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchVipMembers = async () => {
+  const fetchVipMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -73,7 +75,7 @@ const VipLevels = () => {
       setLoading(false);
       setLastUpdated(new Date());
     }
-  };
+  }, []);
 
   const handleRefresh = () => {
     if (activeView === 'members') {
@@ -84,12 +86,13 @@ const VipLevels = () => {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     if (activeView === 'members') {
       fetchVipMembers();
     } else {
       fetchPlans();
     }
-  }, [activeView]);
+  }, [activeView, authLoading, fetchPlans, fetchVipMembers]);
 
   const handleSort = (field) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');

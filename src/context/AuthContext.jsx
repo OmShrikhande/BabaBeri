@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
+import servicesAuth from '../services/services';
+import { writeStoredUserInfo } from '../services/tokenStore';
 
 const AuthContext = createContext(null);
 
@@ -34,6 +36,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
+    // Keep both auth singletons in sync with sessionStorage
+    if (userData.token) {
+      authService.setToken(userData.token);
+      servicesAuth.setToken(userData.token);
+    }
+
     const userType = authService.getUserType();
     const formattedUser = {
       username: userData.username,
@@ -53,7 +61,7 @@ export const AuthProvider = ({ children }) => {
         loginTime: existingProfile.loginTime || formattedUser.loginTime,
         ...userData.apiData
       };
-      sessionStorage.setItem('userInfo', JSON.stringify(merged));
+      writeStoredUserInfo(merged);
     }
 
     setCurrentUser(formattedUser);
@@ -62,6 +70,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     authService.logout();
+    servicesAuth.logout();
     setCurrentUser(null);
     setIsAuthenticated(false);
   };

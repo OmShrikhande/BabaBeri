@@ -70,6 +70,7 @@ Quick reference for which APIs are broken, missing, mocked, or need backend/fron
 | **Pending cashout (duplicate)** | `GET /auth/superadmin/allpendingcashout` **and** `GET /auth/superadmin/getPendingcashoutList` | Two endpoints for same purpose. App uses **`getPendingcashoutList`** in most places. Consolidate on backend. |
 | **Create sub-admin** | `POST /auth/create-admin` | Same endpoint as create admin — **no role/sub-admin distinction** in request body. Verify backend behavior. |
 | **Host pending list** | `GET /api/liveusers/list` vs `GET /auth/api/alluserByRole?role=HOST` | Two different flows in `authService` vs `services.js`. Host Verification uses **`/api/liveusers/*`**. |
+| **Host approve (pending)** | `PUT /auth/superadmin/approve-reject-live-form?usercode=&status=APPROVED` | Returns **500 Internal Server Error** for pending hosts (tested: PX926). **Reject works (200).** Backend bug — frontend now shows a clear error message. |
 | **Host upgrade** | `POST /auth/upgrade` | Returns **403** for valid MA100 + unassigned hosts — backend permission or business rule needs clarification. |
 | **Logout** | `POST /auth/logout` | Returns **403** for tested JWT tokens. Frontend calls it best-effort, then clears session locally. |
 | **Gifts catalog (live API)** | `GET /gifts/catalog` | Returns **403** for super admin. Dashboard uses `GET /auth/superadmin/getallgifts` instead. |

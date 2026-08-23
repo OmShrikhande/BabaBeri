@@ -7,6 +7,10 @@ import {
   readStoredUserInfo,
   writeStoredUserInfo,
 } from './tokenStore.js';
+import {
+  normalizeLiveFormRecord,
+  parseApiErrorMessage,
+} from '../utils/liveUserUtils.js';
 
 class AuthService {
   constructor() {
@@ -243,21 +247,23 @@ class AuthService {
         // Map API response to component expected format
         const hostsList = rawList.map(item => {
           let avatarUrl = item.avatar || item.profilePic || item.image || item.photo || item.document1Path || '';
-          // Handle relative paths
           if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.startsWith('/')) {
             avatarUrl = `${API_CONFIG.BASE_URL}${avatarUrl}`;
           }
+
+          const usercode = String(item.usercode || item.userCode || item.code || '').trim();
 
           return {
             ...item,
             id: item.id || item._id,
             name: item.name || item.username || item.fullName || 'Unknown',
             email: item.email || '',
-            hostId: String(item.usercode || '0000'),
-            status: item.status?.toLowerCase() === 'reject' ? 'rejected' : item.status?.toLowerCase(), // Normalize status to lowercase
-            joinDate: item.joinDate || item.createdAt || item.registeredAt || item.dateOfBirth || new Date().toISOString(),
+            usercode,
+            hostId: usercode || String(item.id || ''),
+            status: item.status?.toLowerCase() === 'reject' ? 'rejected' : item.status?.toLowerCase(),
+            joinDate: item.joinDate || item.createdAt || item.registeredAt || item.joiningDate || item.dateOfBirth || new Date().toISOString(),
             avatar: avatarUrl,
-            nationality: item.nationality|| 'Unknown'
+            nationality: item.nationality || 'Unknown'
           };
         });
         
@@ -273,7 +279,7 @@ class AuthService {
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };
 
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_LIVE_FORM_STATUS}?code=${hostId}`;
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_LIVE_FORM_STATUS}?code=${encodeURIComponent(hostId)}`;
 
       try {
         const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
@@ -294,7 +300,7 @@ class AuthService {
           data.usercode = hostId;
         }
 
-        return { success: true, data: data };
+        return { success: true, data: normalizeLiveFormRecord(data, hostId) };
       } catch (error) {
         console.error('Get host details error:', error);
         return { success: false, error: error.message || 'Failed to fetch host details.' };
@@ -303,31 +309,52 @@ class AuthService {
 
     // Approve or Reject Host
     async approveRejectHost(hostId, status) {
-      console.log('Services: approveRejectHost called', { hostId, status });
+      const usercode = String(hostId || '').trim();
+      if (!usercode) {
+        return { success: false, error: 'Host user code is required.' };
+      }
+
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };
 
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_REJECT_LIVE_FORM}?usercode=${hostId}&status=${status}`;
-      console.log('Services: Making request to', url);
+      const normalizedStatus = String(status || '').trim().toUpperCase();
+      const statusParam = normalizedStatus === 'REJECT' || normalizedStatus === 'REJECTED'
+        ? 'REJECT'
+        : 'APPROVED';
+
+      const params = new URLSearchParams({
+        usercode,
+        status: statusParam,
+      });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_REJECT_LIVE_FORM}?${params.toString()}`;
 
       try {
         const response = await this.makeAuthenticatedRequest(url, { method: 'PUT' });
-        console.log('Services: Response status:', response.status);
         const raw = await response.text().catch(() => '');
-        console.log('Services: Response body:', raw);
 
         if (!response.ok) {
-           throw new Error(`Failed to update host status: ${response.status} ${response.statusText}\n${raw}`);
+          let message = parseApiErrorMessage(
+            raw,
+            `Failed to update host status: ${response.status} ${response.statusText}`
+          );
+
+          if (response.status === 500 && statusParam === 'APPROVED') {
+            message = 'Server error while approving this host. Reject still works, but approval is failing on the backend — please ask the backend team to fix /auth/superadmin/approve-reject-live-form for pending hosts.';
+          } else if (response.status === 400 && message.toLowerCase().includes('not found')) {
+            message = `Host form not found for user code "${usercode}". Make sure you are using the host user code (e.g. PX926), not the numeric row id.`;
+          }
+
+          throw new Error(message);
         }
 
         let data = null;
         try {
           data = JSON.parse(raw);
         } catch {
-           data = { message: raw };
+          data = { message: raw };
         }
 
-        return { success: true, data: data };
+        return { success: true, data: data || { message: 'Host status updated successfully.' } };
       } catch (error) {
         console.error('Approve/Reject host error:', error);
         return { success: false, error: error.message || 'Failed to update host status.' };
@@ -340,7 +367,7 @@ class AuthService {
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };
 
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PERMANENT_REJECT}?usercode=${hostId}&status=REJECT`;
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PERMANENT_REJECT}?usercode=${encodeURIComponent(hostId)}&status=REJECT`;
       console.log('Services: Making request to', url);
 
       try {

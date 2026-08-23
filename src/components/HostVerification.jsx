@@ -5,6 +5,7 @@ import Pagination from './Pagination';
 import authService from '../services/services';
 import { API_CONFIG } from '../config/api';
 import { useAuth } from '../context/AuthContext';
+import { resolveLiveUserCode } from '../utils/liveUserUtils';
 
 const HostVerification = () => {
   console.log('🔍 HostVerification component rendered at:', new Date().toISOString());
@@ -24,6 +25,8 @@ const HostVerification = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sidebarLoading, setSidebarLoading] = useState(false);
   const [sidebarError, setSidebarError] = useState(null);
+  const [clickedHost, setClickedHost] = useState(null);
+  const [actionPending, setActionPending] = useState(false);
 
   // Fetch pending hosts data
   const fetchPendingHosts = useCallback(async () => {
@@ -95,32 +98,39 @@ const HostVerification = () => {
   };
 
   const handleStatusChange = async (hostId, newStatus) => {
-    // hostId here is actually the usercode from selectedHost
-    const usercode = hostId;
+    const usercode = resolveLiveUserCode({ usercode: hostId, hostId }, clickedHost?.hostId);
+    if (!usercode) {
+      window.alert('Could not determine the host user code. Please reopen the host and try again.');
+      return false;
+    }
 
-    // Map UI status to API status
-    // Use APPROVED and REJECT as per API requirement
     const apiStatus = newStatus === 'accepted' ? 'APPROVED' : 'REJECT';
 
     try {
+      setActionPending(true);
       const result = await authService.approveRejectHost(usercode, apiStatus);
 
       if (result.success) {
-        // Update both the original data and filtered data
         const updateHost = (hosts) =>
           hosts.map(host =>
-            host.hostId === usercode ? { ...host, status: newStatus === 'accepted' ? 'approved' : 'rejected' } : host
+            resolveLiveUserCode(host) === usercode
+              ? { ...host, status: newStatus === 'accepted' ? 'approved' : 'rejected' }
+              : host
           );
 
         setHosts(prevHosts => updateHost(prevHosts));
         setFilteredHosts(prevFilteredHosts => updateHost(prevFilteredHosts));
-      } else {
-        // Show error (using alert for now as we don't have a toast system visible)
-        window.alert(result.error || 'Failed to update host status');
+        return true;
       }
+
+      window.alert(result.error || 'Failed to update host status');
+      return false;
     } catch (err) {
       console.error('Error updating status:', err);
-      window.alert('An error occurred while updating status');
+      window.alert(err.message || 'An error occurred while updating status');
+      return false;
+    } finally {
+      setActionPending(false);
     }
   };
 
@@ -129,6 +139,7 @@ const HostVerification = () => {
   };
 
   const handleRowClick = async (host) => {
+    setClickedHost(host);
     setIsSidebarOpen(true);
     setSidebarLoading(true);
     setSidebarError(null);
@@ -138,7 +149,7 @@ const HostVerification = () => {
       const result = await authService.getHostDetails(host.hostId);
       
       if (result.success) {
-        setSelectedHost(result.data);
+        setSelectedHost(normalizeSelectedHost(result.data, host));
       } else {
         setSidebarError(result.error || 'Failed to fetch host details');
       }
@@ -149,26 +160,25 @@ const HostVerification = () => {
     }
   };
 
-  const handleAccept = () => {
-    console.log('handleAccept clicked. selectedHost:', selectedHost);
-    if (selectedHost) {
-      console.log('Calling handleStatusChange for accept');
-      handleStatusChange(selectedHost.usercode, 'accepted');
-      closeSidebar();
-    } else {
-      console.error('No selectedHost found when handling accept');
-    }
+  const normalizeSelectedHost = (details, host) => ({
+    ...details,
+    usercode: resolveLiveUserCode(details, host?.hostId),
+  });
+
+  const handleAccept = async () => {
+    if (!selectedHost || actionPending) return;
+
+    const usercode = resolveLiveUserCode(selectedHost, clickedHost?.hostId);
+    const success = await handleStatusChange(usercode, 'accepted');
+    if (success) closeSidebar();
   };
 
-  const handleReject = () => {
-    console.log('handleReject clicked. selectedHost:', selectedHost);
-    if (selectedHost) {
-      console.log('Calling handleStatusChange for reject');
-      handleStatusChange(selectedHost.usercode, 'rejected');
-      closeSidebar();
-    } else {
-      console.error('No selectedHost found when handling reject');
-    }
+  const handleReject = async () => {
+    if (!selectedHost || actionPending) return;
+
+    const usercode = resolveLiveUserCode(selectedHost, clickedHost?.hostId);
+    const success = await handleStatusChange(usercode, 'rejected');
+    if (success) closeSidebar();
   };
 
   const handleClearForm = async () => {
@@ -461,15 +471,17 @@ const HostVerification = () => {
                         <div className="flex gap-4">
                           <button
                             onClick={handleReject}
-                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            disabled={actionPending}
+                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            Reject
+                            {actionPending ? 'Processing...' : 'Reject'}
                           </button>
                           <button
                             onClick={handleAccept}
-                            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                            disabled={actionPending}
+                            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                           >
-                            Accept
+                            {actionPending ? 'Processing...' : 'Accept'}
                           </button>
                         </div>
                         <button

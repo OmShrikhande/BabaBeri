@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, User, AlertCircle, CheckCircle, Loader2, PlusCircle, Users } from 'lucide-react';
+import { Building2, User, AlertCircle, CheckCircle, Loader2, PlusCircle, Users, Lock } from 'lucide-react';
 import authService from '../services/authService';
 
 const AgencyForm = ({ onCreated, disabled = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     userId: '',
-    masterAgencyCode: ''
+    masterAgencyCode: '',
+    password: ''
   });
   const [masterAgencies, setMasterAgencies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +28,6 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
       const result = await authService.getMasterAgencies();
       if (result.success) {
         const agencies = Array.isArray(result.data) ? result.data : result.data?.data || [];
-        // 👇 Log raw data so you can verify which field holds the code
-        console.log('Master agencies raw data: found');
         setMasterAgencies(agencies);
         if (agencies.length === 0) {
           console.warn('No master agencies found');
@@ -58,8 +57,8 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
     setError('');
     setSuccess('');
 
-    if (!formData.name.trim() || !formData.userId.trim() || !formData.masterAgencyCode.trim()) {
-      setError('All fields are required.');
+    if (!formData.name.trim() || !formData.userId.trim() || !formData.masterAgencyCode.trim() || !formData.password.trim()) {
+      setError('All fields are required including password.');
       setIsLoading(false);
       return;
     }
@@ -68,14 +67,15 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
       const result = await authService.createAgency({
         name: formData.name,
         userId: formData.userId,
-        masterAgencyCode: formData.masterAgencyCode
+        masterAgencyCode: formData.masterAgencyCode,
+        password: formData.password
       });
 
       if (result.success) {
         setSuccess(`Agency "${formData.name}" created successfully!`);
         const created = result.data;
         onCreated && onCreated(created);
-        setFormData({ name: '', userId: '', masterAgencyCode: '' });
+        setFormData({ name: '', userId: '', masterAgencyCode: '', password: '' });
       } else {
         setError(result.error || 'Failed to create agency.');
       }
@@ -86,6 +86,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="bg-[#121212] p-6 rounded-xl border border-gray-800">
@@ -159,6 +160,7 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
           </div>
         </div>
 
+
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">Host ID</label>
           <div className="relative">
@@ -175,6 +177,24 @@ const AgencyForm = ({ onCreated, disabled = false }) => {
             />
           </div>
           <p className="mt-1 text-xs text-gray-500">Host must not already belong to another agency.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#F72585] focus:ring-1 focus:ring-[#F72585] transition-colors"
+              placeholder="Enter agency password"
+              required
+              disabled={isLoading || disabled}
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-500">This password will be set for the new agency account.</p>
         </div>
 
         <button

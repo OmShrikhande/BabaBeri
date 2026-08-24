@@ -1303,8 +1303,8 @@ class AuthService {
     return fallback || `Request failed: ${response?.status || 'unknown'} ${response?.statusText || ''}`.trim();
   }
 
-  // Upgrade host to agency (POST /auth/upgrade?hostcode=&agencyname=&macode=)
-  async createAgency({ name, userId, masterAgencyCode }) {
+  // Upgrade host to agency (POST /auth/upgrade?hostcode=&agencyname=&macode=&password=)
+  async createAgency({ name, userId, masterAgencyCode, password }) {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
     if (this.isTokenExpired(token)) {
@@ -1315,9 +1315,14 @@ class AuthService {
     const hostcode = String(userId || '').trim();
     const agencyname = String(name || '').trim();
     const macode = String(masterAgencyCode || '').trim();
+    const pwd = String(password || '').trim();
 
     if (!hostcode || !agencyname || !macode) {
       return { success: false, error: 'Host ID, agency name, and master agency code are required.' };
+    }
+
+    if (!pwd) {
+      return { success: false, error: 'Password is required.' };
     }
 
     const hostCheck = await this.getUserByCode(hostcode);
@@ -1338,7 +1343,7 @@ class AuthService {
       };
     }
 
-    const params = new URLSearchParams({ hostcode, agencyname, macode });
+    const params = new URLSearchParams({ hostcode, agencyname, macode, password: pwd });
     const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPGRADE_HOST_TO_AGENCY}?${params.toString()}`;
 
     try {

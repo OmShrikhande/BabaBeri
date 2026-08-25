@@ -659,6 +659,142 @@ class AuthService {
       }
     }
 
+    /** GET /auth/superadmin/all-vip-plans — admin list of all VIP plans */
+    async getAllVipPlans() {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_ALL_VIP_PLANS}`;
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch VIP plans: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.plans)
+            ? data.plans
+            : Array.isArray(data?.data)
+              ? data.data
+              : [];
+        return { success: true, data: list, raw: data };
+      } catch (error) {
+        console.error('Get all VIP plans error:', error);
+        return { success: false, error: error.message || 'Failed to fetch VIP plans.' };
+      }
+    }
+
+    /**
+     * POST /auth/superadmin/create-vip-plan (multipart)
+     * Fields: planName, needCoins, superadminPercentage, validityDays, vipAFriend,
+     *         validFor, invisibleMode, planStatus, avatarFile
+     */
+    async createVipPlan(formFields, avatarFile) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const fd = new FormData();
+      Object.entries(formFields || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        fd.append(key, String(value));
+      });
+      if (avatarFile) fd.append('avatarFile', avatarFile);
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREATE_VIP_PLAN}`;
+      try {
+        // Do not set Content-Type — browser sets multipart boundary
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to create VIP plan: ${response.status} ${raw}`);
+        }
+        let data = null;
+        if (raw) {
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            data = { message: raw };
+          }
+        }
+        return { success: true, data };
+      } catch (error) {
+        console.error('Create VIP plan error:', error);
+        return { success: false, error: error.message || 'Failed to create VIP plan.' };
+      }
+    }
+
+    /**
+     * PUT /auth/superadmin/{id} — update VIP plan (JSON)
+     * Body: { planName, needCoins, validityDays, planStatus }
+     */
+    async updateVipPlan(planId, body) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+      if (!planId) return { success: false, error: 'Plan id is required.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_VIP_PLAN}/${planId}`;
+      try {
+        const response = await this.makeAuthenticatedRequest(url, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to update VIP plan: ${response.status} ${raw}`);
+        }
+        let data = null;
+        if (raw) {
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            data = { message: raw };
+          }
+        }
+        return { success: true, data };
+      } catch (error) {
+        console.error('Update VIP plan error:', error);
+        return { success: false, error: error.message || 'Failed to update VIP plan.' };
+      }
+    }
+
+    /** GET /api/vip-plans — public VIP plans for the app */
+    async getPublicVipPlans() {
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PUBLIC_VIP_PLANS}`;
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch public VIP plans: ${response.status} ${raw}`);
+        }
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        const list = Array.isArray(data?.plans) ? data.plans : Array.isArray(data) ? data : [];
+        return { success: true, data: list, raw: data };
+      } catch (error) {
+        console.error('Get public VIP plans error:', error);
+        return { success: false, error: error.message || 'Failed to fetch public VIP plans.' };
+      }
+    }
+
 
     async getUserFullData(code) {
       const token = this.getToken();

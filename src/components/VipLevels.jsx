@@ -30,22 +30,38 @@ const VipLevels = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [formData, setFormData] = useState({
-    planName: '', needCoins: '', validFor: '',
-    vipFriendCount: '', invisibleMode: false, avatarImage: null
+    planName: '',
+    needCoins: '',
+    superadminPercentage: '10',
+    validityDays: '30',
+    vipAFriend: '',
+    validFor: '30',
+    invisibleMode: false,
+    planStatus: 'ACTIVE',
+    avatarImage: null,
+  });
+
+  const emptyForm = () => ({
+    planName: '',
+    needCoins: '',
+    superadminPercentage: '10',
+    validityDays: '30',
+    vipAFriend: '',
+    validFor: '30',
+    invisibleMode: false,
+    planStatus: 'ACTIVE',
+    avatarImage: null,
   });
 
   const fetchPlans = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await authService.makeAuthenticatedRequest(
-        `${API_CONFIG.BASE_URL}/auth/api/getappvipplans`, { method: 'GET' }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setPlans(Array.isArray(data) ? data : data?.data ?? []);
+      const result = await services.getAllVipPlans();
+      if (result.success) {
+        setPlans(Array.isArray(result.data) ? result.data : []);
       } else {
-        throw new Error('Failed to fetch VIP plans');
+        throw new Error(result.error || 'Failed to fetch VIP plans');
       }
     } catch (err) {
       setError(err.message || 'Failed to load VIP plans');
@@ -118,7 +134,7 @@ const VipLevels = () => {
       if (sortField === 'planName') { av = (a.planName || a.name || '').toLowerCase(); bv = (b.planName || b.name || '').toLowerCase(); }
       else if (sortField === 'coinsRequired') { av = Number(a.needCoins || a.coins || 0); bv = Number(b.needCoins || b.coins || 0); }
       else if (sortField === 'validFor') { av = Number(a.validFor || a.validity || 0); bv = Number(b.validFor || b.validity || 0); }
-      else if (sortField === 'vipFriendCount') { av = Number(a.vipFriendCount || a.friendCount || 0); bv = Number(b.vipFriendCount || b.friendCount || 0); }
+      else if (sortField === 'vipFriendCount') { av = Number(a.vipAFriend || a.vipFriendCount || a.friendCount || 0); bv = Number(b.vipAFriend || b.vipFriendCount || b.friendCount || 0); }
       else return 0;
       if (typeof av === 'string') return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
       return sortDir === 'asc' ? av - bv : bv - av;
@@ -199,7 +215,7 @@ const VipLevels = () => {
 
   const openCreate = () => {
     setEditingPlan(null);
-    setFormData({ planName: '', coinsRequired: '', validFor: '', vipFriendCount: '', invisibleMode: false, avatarImage: null });
+    setFormData(emptyForm());
     setImagePreview(null);
     setShowModal(true);
   };
@@ -208,11 +224,14 @@ const VipLevels = () => {
     setEditingPlan(plan);
     setFormData({
       planName: plan.planName || plan.name || '',
-      coinsRequired: plan.coinsRequired || plan.coins || '',
-      validFor: plan.validFor || plan.validity || '',
-      vipFriendCount: plan.vipFriendCount || plan.friendCount || '',
-      invisibleMode: plan.invisibleMode || false,
-      avatarImage: null
+      needCoins: plan.needCoins ?? plan.coinsRequired ?? plan.coins ?? '',
+      superadminPercentage: plan.superadminPercentage ?? '10',
+      validityDays: plan.validityDays ?? plan.validFor ?? plan.validity ?? '30',
+      vipAFriend: plan.vipAFriend ?? plan.vipFriendCount ?? plan.friendCount ?? '',
+      validFor: plan.validFor ?? plan.validityDays ?? plan.validity ?? '30',
+      invisibleMode: Boolean(plan.invisibleMode),
+      planStatus: String(plan.planStatus || 'ACTIVE').toUpperCase(),
+      avatarImage: null,
     });
     setImagePreview(plan.image || plan.avatar || null);
     setShowModal(true);
@@ -229,38 +248,40 @@ const VipLevels = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.planName || !formData.coinsRequired || !formData.validFor) {
-      alert('Please fill in all required fields.');
+    if (!formData.planName || !formData.needCoins) {
+      alert('Please fill in plan name and coins required.');
       return;
     }
     setSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append('planName', formData.planName);
-      fd.append('needCoins', formData.coinsRequired);
-      fd.append('validFor', formData.validFor);
-      fd.append('vipAFriend', formData.vipFriendCount || 0);
-      fd.append('invisibleMode', String(formData.invisibleMode));
-      if (formData.avatarImage) fd.append('avatarFile', formData.avatarImage);
-
-      // Use fetch directly — do NOT use makeAuthenticatedRequest here.
-      // makeAuthenticatedRequest merges DEFAULT_HEADERS which sets 'Content-Type: application/json',
-      // which overrides the browser's auto-set 'multipart/form-data; boundary=...' and breaks the upload.
-      const token = authService.getToken();
-      const response = await fetch(`${API_CONFIG.BASE_URL}/auth/superadmin/create-vip-plan`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // ⚠️ Do NOT set Content-Type here — let the browser set it with the correct multipart boundary
-        },
-        body: fd
-      });
-
-      if (response.ok) { setShowModal(false); fetchPlans(); }
-      else {
-        const raw = await response.text().catch(() => '');
-        throw new Error(`Failed to save VIP plan: ${response.status} ${raw}`);
+      if (editingPlan?.id) {
+        // PUT /auth/superadmin/{id} — JSON update
+        const result = await services.updateVipPlan(editingPlan.id, {
+          planName: formData.planName,
+          needCoins: Number(formData.needCoins) || 0,
+          validityDays: Number(formData.validityDays || formData.validFor) || 30,
+          planStatus: String(formData.planStatus || 'ACTIVE').toUpperCase(),
+        });
+        if (!result.success) throw new Error(result.error || 'Failed to update VIP plan');
+      } else {
+        // POST /auth/superadmin/create-vip-plan — multipart create
+        const result = await services.createVipPlan(
+          {
+            planName: formData.planName,
+            needCoins: formData.needCoins,
+            superadminPercentage: formData.superadminPercentage || '10',
+            validityDays: formData.validityDays || formData.validFor || '30',
+            vipAFriend: formData.vipAFriend || '0',
+            validFor: formData.validFor || formData.validityDays || '30',
+            invisibleMode: String(Boolean(formData.invisibleMode)),
+            planStatus: String(formData.planStatus || 'ACTIVE').toUpperCase(),
+          },
+          formData.avatarImage || null,
+        );
+        if (!result.success) throw new Error(result.error || 'Failed to create VIP plan');
       }
+      setShowModal(false);
+      fetchPlans();
     } catch (err) {
       alert(err.message || 'Failed to save VIP plan');
     } finally {
@@ -303,13 +324,14 @@ const VipLevels = () => {
       window.URL.revokeObjectURL(url);
     } else {
       const csv = [
-        ['Plan Name', 'Coins Required', 'Valid (days)', 'VIP Friends', 'Invisible Mode'],
+        ['Plan Name', 'Coins Required', 'Valid (days)', 'VIP Friends', 'Invisible Mode', 'Status'],
         ...plans.map(p => [
           p.planName || p.name,
-          p.coinsRequired || p.coins,
-          p.validFor || p.validity,
-          p.vipFriendCount || p.friendCount || 0,
-          p.invisibleMode ? 'Yes' : 'No'
+          p.needCoins || p.coinsRequired || p.coins,
+          p.validityDays || p.validFor || p.validity,
+          p.vipAFriend || p.vipFriendCount || p.friendCount || 0,
+          p.invisibleMode ? 'Yes' : 'No',
+          p.planStatus || '',
         ])
       ].map(r => r.join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -720,6 +742,7 @@ const VipLevels = () => {
                       <SortTh field="validFor">Valid For</SortTh>
                       <SortTh field="vipFriendCount">VIP Friends</SortTh>
                       <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">Invisible</th>
+                      <th className="text-left py-3 px-4 text-gray-400 font-medium text-sm">Status</th>
                       <th className="text-left py-3 px-4 pr-6 text-gray-400 font-medium text-sm">Actions</th>
                     </tr>
                   </thead>
@@ -757,7 +780,7 @@ const VipLevels = () => {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-1.5">
                             <Calendar className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                            <span className="text-gray-300 text-sm">{plan.validFor || plan.validity || 0} days</span>
+                            <span className="text-gray-300 text-sm">{plan.validityDays || plan.validFor || plan.validity || 0} days</span>
                           </div>
                         </td>
 
@@ -765,7 +788,7 @@ const VipLevels = () => {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-1.5">
                             <Users className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                            <span className="text-gray-300 text-sm">{plan.vipFriendCount || plan.friendCount || 0}</span>
+                            <span className="text-gray-300 text-sm">{plan.vipAFriend || plan.vipFriendCount || plan.friendCount || 0}</span>
                           </div>
                         </td>
 
@@ -781,6 +804,19 @@ const VipLevels = () => {
                               <EyeOff className="w-4 h-4" />
                               <span className="text-xs">Off</span>
                             </div>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3 px-4">
+                          {String(plan.planStatus || 'ACTIVE').toUpperCase() === 'ACTIVE' ? (
+                            <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-green-900/20 text-green-400 border border-green-500/30">
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-gray-800 text-gray-400 border border-gray-600">
+                              {String(plan.planStatus || 'DEACTIVE')}
+                            </span>
                           )}
                         </td>
 
@@ -831,9 +867,15 @@ const VipLevels = () => {
             <div className="p-6 space-y-4">
               {[
                 { label: 'Plan Name *', field: 'planName', type: 'text', placeholder: 'e.g. Gold Plan' },
-                { label: 'Coins Required *', field: 'coinsRequired', type: 'number', placeholder: 'e.g. 200' },
-                { label: 'Valid For (days) *', field: 'validFor', type: 'number', placeholder: 'e.g. 30' },
-                { label: 'VIP a Friend Count', field: 'vipFriendCount', type: 'number', placeholder: 'e.g. 5' },
+                { label: 'Coins Required *', field: 'needCoins', type: 'number', placeholder: 'e.g. 1000' },
+                { label: 'Validity Days *', field: 'validityDays', type: 'number', placeholder: 'e.g. 30' },
+                ...(!editingPlan
+                  ? [
+                      { label: 'Valid For (days)', field: 'validFor', type: 'number', placeholder: 'e.g. 30' },
+                      { label: 'VIP a Friend Count', field: 'vipAFriend', type: 'number', placeholder: 'e.g. 3' },
+                      { label: 'Superadmin %', field: 'superadminPercentage', type: 'number', placeholder: 'e.g. 10' },
+                    ]
+                  : []),
               ].map(({ label, field, type, placeholder }) => (
                 <div key={field}>
                   <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
@@ -847,35 +889,52 @@ const VipLevels = () => {
                 </div>
               ))}
 
-              {/* Invisible Mode */}
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-300">Invisible Mode</label>
-                <button
-                  type="button"
-                  onClick={() => setFormData(f => ({ ...f, invisibleMode: !f.invisibleMode }))}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${formData.invisibleMode ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' : 'bg-gray-700'}`}
+              {/* Plan Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Plan Status</label>
+                <select
+                  value={formData.planStatus}
+                  onChange={e => setFormData(f => ({ ...f, planStatus: e.target.value }))}
+                  className="w-full bg-[#0A0A0A] border border-gray-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#7209B7]"
                 >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${formData.invisibleMode ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="DEACTIVE">DEACTIVE</option>
+                </select>
               </div>
 
-              {/* Avatar Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Avatar Image</label>
-                <div className="border-2 border-dashed border-gray-700 rounded-xl p-4 text-center hover:border-gray-600 transition-colors">
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="avatar-upload" />
-                  <label htmlFor="avatar-upload" className="cursor-pointer block">
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Preview" className="w-20 h-20 mx-auto rounded-xl object-cover mb-2" />
-                    ) : (
-                      <div className="w-20 h-20 mx-auto bg-gray-800 rounded-xl flex items-center justify-center mb-2">
-                        <Crown className="w-10 h-10 text-gray-600" />
-                      </div>
-                    )}
-                    <p className="text-gray-400 text-sm">Click to upload image</p>
-                  </label>
+              {/* Invisible Mode — create only (update API does not accept it) */}
+              {!editingPlan && (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-300">Invisible Mode</label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(f => ({ ...f, invisibleMode: !f.invisibleMode }))}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${formData.invisibleMode ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7]' : 'bg-gray-700'}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${formData.invisibleMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
                 </div>
-              </div>
+              )}
+
+              {/* Avatar Upload — create only */}
+              {!editingPlan && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Avatar Image</label>
+                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-4 text-center hover:border-gray-600 transition-colors">
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="avatar-upload" />
+                    <label htmlFor="avatar-upload" className="cursor-pointer block">
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="Preview" className="w-20 h-20 mx-auto rounded-xl object-cover mb-2" />
+                      ) : (
+                        <div className="w-20 h-20 mx-auto bg-gray-800 rounded-xl flex items-center justify-center mb-2">
+                          <Crown className="w-10 h-10 text-gray-600" />
+                        </div>
+                      )}
+                      <p className="text-gray-400 text-sm">Click to upload image</p>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex gap-3 p-6 border-t border-gray-800">
               <button

@@ -1,6 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, UserX, AlertCircle, RefreshCw, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Search,
+  UserX,
+  AlertCircle,
+  RefreshCw,
+  CheckCircle,
+  XCircle,
+  Smartphone,
+  X,
+} from 'lucide-react';
 import authService from '../services/authService';
+
+const BAN_DURATIONS = [
+  { value: '24h', label: '24 Hours' },
+  { value: '7d', label: '7 Days' },
+  { value: 'permanent', label: 'Permanent' },
+];
 
 const getRoleBadgeClass = (role) => {
   const r = (role || '').toLowerCase();
@@ -52,6 +67,128 @@ const ToastNotif = ({ toast, onDismiss }) => {
   );
 };
 
+const BanDeviceModal = ({ open, onClose, onSubmit, submitting }) => {
+  const [deviceId, setDeviceId] = useState('');
+  const [duration, setDuration] = useState('24h');
+  const [reason, setReason] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setDeviceId('');
+      setDuration('24h');
+      setReason('');
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!deviceId.trim() || !reason.trim()) return;
+    onSubmit({
+      deviceId: deviceId.trim(),
+      duration,
+      reason: reason.trim(),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={submitting ? undefined : onClose} />
+      <div className="relative bg-[#121212] border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-red-900/30 border border-red-800/50 flex items-center justify-center">
+              <Smartphone className="w-4 h-4 text-red-400" />
+            </div>
+            <div>
+              <h3 className="text-white text-lg font-bold">Ban Device</h3>
+              <p className="text-gray-500 text-xs">Block by device ID (super admin)</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              Device ID *
+            </label>
+            <input
+              required
+              value={deviceId}
+              onChange={(e) => setDeviceId(e.target.value)}
+              placeholder="e.g. abc-123-xyz"
+              disabled={submitting}
+              className="bg-[#0A0A0A] border border-gray-800 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7209B7] w-full text-sm font-mono disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              Duration *
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              disabled={submitting}
+              className="bg-[#0A0A0A] border border-gray-800 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#7209B7] w-full text-sm disabled:opacity-50"
+            >
+              {BAN_DURATIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-gray-600 text-xs mt-1.5">
+              24h = 24 hours · 7d = 7 days · permanent = forever
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-gray-300 text-xs font-semibold uppercase tracking-wider mb-2">
+              Reason *
+            </label>
+            <textarea
+              required
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. multi account"
+              disabled={submitting}
+              className="bg-[#0A0A0A] border border-gray-800 rounded-lg p-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7209B7] w-full h-24 resize-none text-sm disabled:opacity-50"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2 border-t border-gray-800">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !deviceId.trim() || !reason.trim()}
+              className="px-4 py-2.5 rounded-lg bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900/50 text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? 'Banning…' : 'Ban Device'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const BlockUsers = () => {
   const [users, setUsers] = useState([]);
   const [meta, setMeta] = useState({ total: 0, permanent: 0, timed: 0 });
@@ -60,6 +197,8 @@ const BlockUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionLoading, setActionLoading] = useState({});
   const [toast, setToast] = useState(null);
+  const [banDeviceOpen, setBanDeviceOpen] = useState(false);
+  const [banDeviceSubmitting, setBanDeviceSubmitting] = useState(false);
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
@@ -100,6 +239,7 @@ const BlockUsers = () => {
       (u.name || '').toLowerCase().includes(term) ||
       (u.username || '').toLowerCase().includes(term) ||
       (u.usercode || u.code || '').toLowerCase().includes(term) ||
+      (u.deviceId || u.deviceid || '').toLowerCase().includes(term) ||
       (u.reason || '').toLowerCase().includes(term) ||
       (u.country || '').toLowerCase().includes(term)
     );
@@ -138,10 +278,36 @@ const BlockUsers = () => {
     }
   };
 
+  const handleBanDevice = async ({ deviceId, duration, reason }) => {
+    setBanDeviceSubmitting(true);
+    try {
+      const res = await authService.blockDevice(deviceId, duration, reason);
+      if (res.success) {
+        showToast(`Device ${deviceId} banned (${duration}).`);
+        setBanDeviceOpen(false);
+        await fetchUsers();
+      } else {
+        showToast(res.error || 'Failed to ban device.', 'error');
+      }
+    } catch {
+      showToast('Failed to ban device.', 'error');
+    } finally {
+      setBanDeviceSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-6">
-        <h1 className="text-2xl font-bold text-white mb-6">Banned Users</h1>
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold text-white">Banned Users</h1>
+          <button
+            onClick={() => setBanDeviceOpen(true)}
+            className="bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800 rounded-lg px-4 py-2 transition-all flex items-center gap-2 text-sm font-medium"
+          >
+            <Smartphone className="w-4 h-4" /> Ban Device
+          </button>
+        </div>
         <div className="space-y-3">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-[#121212] rounded-xl border border-gray-800 p-4 animate-pulse">
@@ -155,6 +321,13 @@ const BlockUsers = () => {
             </div>
           ))}
         </div>
+        <BanDeviceModal
+          open={banDeviceOpen}
+          onClose={() => !banDeviceSubmitting && setBanDeviceOpen(false)}
+          onSubmit={handleBanDevice}
+          submitting={banDeviceSubmitting}
+        />
+        <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
       </div>
     );
   }
@@ -162,6 +335,15 @@ const BlockUsers = () => {
   if (error) {
     return (
       <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-6">
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold text-white">Banned Users</h1>
+          <button
+            onClick={() => setBanDeviceOpen(true)}
+            className="bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800 rounded-lg px-4 py-2 transition-all flex items-center gap-2 text-sm font-medium"
+          >
+            <Smartphone className="w-4 h-4" /> Ban Device
+          </button>
+        </div>
         <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-400" />
@@ -174,6 +356,13 @@ const BlockUsers = () => {
             <RefreshCw className="w-4 h-4" /> Retry
           </button>
         </div>
+        <BanDeviceModal
+          open={banDeviceOpen}
+          onClose={() => !banDeviceSubmitting && setBanDeviceOpen(false)}
+          onSubmit={handleBanDevice}
+          submitting={banDeviceSubmitting}
+        />
+        <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
       </div>
     );
   }
@@ -181,19 +370,27 @@ const BlockUsers = () => {
   return (
     <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full">
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-white">Banned Users</h1>
             <p className="text-gray-400 text-sm mt-1">
               {meta.total} blocked · {meta.timed} timed · {meta.permanent} permanent
             </p>
           </div>
-          <button
-            onClick={fetchUsers}
-            className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-all border border-gray-700 flex items-center gap-2 text-sm"
-          >
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setBanDeviceOpen(true)}
+              className="bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800 rounded-lg px-4 py-2 transition-all flex items-center gap-2 text-sm font-medium"
+            >
+              <Smartphone className="w-4 h-4" /> Ban Device
+            </button>
+            <button
+              onClick={fetchUsers}
+              className="text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-2 transition-all border border-gray-700 flex items-center gap-2 text-sm"
+            >
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
@@ -215,7 +412,7 @@ const BlockUsers = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             className="bg-[#0A0A0A] border border-gray-800 rounded-lg pl-9 pr-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7209B7] w-full sm:w-80"
-            placeholder="Search by name, code, reason..."
+            placeholder="Search by name, code, device, reason..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -255,7 +452,7 @@ const BlockUsers = () => {
 
                     return (
                       <tr
-                        key={user.blockId || code}
+                        key={user.blockId || code || user.deviceId}
                         className="border-b border-gray-800 last:border-b-0 hover:bg-gray-800/30 transition-colors"
                       >
                         <td className="px-6 py-4">
@@ -338,6 +535,13 @@ const BlockUsers = () => {
           </div>
         )}
       </div>
+
+      <BanDeviceModal
+        open={banDeviceOpen}
+        onClose={() => !banDeviceSubmitting && setBanDeviceOpen(false)}
+        onSubmit={handleBanDevice}
+        submitting={banDeviceSubmitting}
+      />
 
       <ToastNotif toast={toast} onDismiss={() => setToast(null)} />
     </div>

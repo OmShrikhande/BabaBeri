@@ -101,6 +101,12 @@ export const API_CONFIG = {
     TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond',
     // Get all VIP users (Super Admin only)
     GET_VIP_USERS: '/auth/api/getvipusers',
+    // VIP plans (Super Admin)
+    GET_ALL_VIP_PLANS: '/auth/superadmin/all-vip-plans',
+    CREATE_VIP_PLAN: '/auth/superadmin/create-vip-plan',
+    UPDATE_VIP_PLAN: '/auth/superadmin', // PUT /auth/superadmin/{id}
+    // Public VIP plans (app)
+    PUBLIC_VIP_PLANS: '/api/vip-plans',
 
     // Forgot password (public)
     FORGOT_PASSWORD_SEND_OTP: '/public/forgot-password/send-otp',

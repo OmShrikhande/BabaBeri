@@ -2043,6 +2043,57 @@ class AuthService {
     }
   }
 
+  /**
+   * Block a device (Super Admin only).
+   * POST /auth/superadmin/block-user?deviceId=&duration=24h|7d|permanent&reason=
+   */
+  async blockDevice(deviceId, duration, reason) {
+    const id = String(deviceId || '').trim();
+    if (!id) {
+      return { success: false, error: 'Device ID is required to ban a device.' };
+    }
+
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const allowedDurations = ['24h', '7d', 'permanent'];
+    const durationParam = allowedDurations.includes(String(duration || '').trim())
+      ? String(duration).trim()
+      : 'permanent';
+    const reasonParam = String(reason || '').trim();
+    if (!reasonParam) {
+      return { success: false, error: 'Ban reason is required.' };
+    }
+
+    const params = new URLSearchParams({
+      deviceId: id,
+      duration: durationParam,
+      reason: reasonParam,
+    });
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BLOCK_USER}?${params.toString()}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'POST' });
+      const raw = await response.text().catch(() => '');
+
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || `Failed to ban device: ${response.status}`);
+      }
+
+      return { success: true, data: data || { message: 'Device banned successfully.' } };
+    } catch (error) {
+      console.error('Block device error:', error);
+      return { success: false, error: error.message || 'Failed to ban device.' };
+    }
+  }
+
   // Unblock user (Super Admin only)
   async unblockUser(code) {
     const token = this.getToken();

@@ -1,7 +1,136 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Coins, Gem, Calendar, User, Eye, ArrowLeft, RefreshCw, FileText } from 'lucide-react';
+import {
+  X, Search, Coins, Gem, Calendar, User, Eye, ArrowLeft, RefreshCw,
+} from 'lucide-react';
 import authService from '../services/authService';
 import Pagination from './Pagination';
+
+const formatDate = (value) => {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+const formatMoney = (value) => {
+  if (value == null || value === '') return '—';
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return n.toLocaleString();
+};
+
+const formatType = (type) =>
+  String(type || '—')
+    .split('_')
+    .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
+    .join(' ');
+
+const EmptyState = ({ message }) => (
+  <div className="p-8 text-center text-gray-500 text-sm">{message}</div>
+);
+
+const DataTable = ({ columns, rows, emptyMessage = 'No records found.' }) => {
+  if (!rows || rows.length === 0) {
+    return (
+      <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
+        <EmptyState message={emptyMessage} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr className="bg-white/5 border-b border-white/5 text-gray-400">
+              {columns.map((col) => (
+                <th key={col.key} className="px-4 py-3 whitespace-nowrap font-medium">
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5 text-gray-300">
+            {rows.map((row, idx) => (
+              <tr key={row.id ?? row.transactionno ?? row.transactionid ?? idx} className="hover:bg-white/[0.02]">
+                {columns.map((col) => (
+                  <td key={col.key} className={`px-4 py-3 ${col.className || ''}`}>
+                    {col.render ? col.render(row) : (row[col.key] ?? '—')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const StatusBadge = ({ status }) => {
+  const s = String(status || '').toUpperCase();
+  const ok =
+    s === 'SUCCESS' ||
+    s === 'APPROVED' ||
+    s === 'ACTIVE' ||
+    s === 'CREDIT' ||
+    s === 'TRUE';
+  const warn = s === 'PENDING' || s === 'NOTVERIFIED';
+  return (
+    <span
+      className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+        ok
+          ? 'bg-green-500/10 text-green-400 border-green-500/20'
+          : warn
+            ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+            : 'bg-red-500/10 text-red-400 border-red-500/20'
+      }`}
+    >
+      {status || '—'}
+    </span>
+  );
+};
+
+const PersonCell = ({ user }) => {
+  if (!user) return '—';
+  return (
+    <div className="flex items-center gap-2 min-w-[140px]">
+      {user.profilepic ? (
+        <img src={user.profilepic} alt="" className="w-7 h-7 rounded-full object-cover" />
+      ) : (
+        <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-[10px]">
+          {(user.name || user.username || '?').charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div>
+        <p className="text-white font-medium">{user.name || user.username || '—'}</p>
+        <p className="text-gray-500 font-mono">{user.code || '—'}</p>
+      </div>
+    </div>
+  );
+};
+
+const DETAIL_TABS = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'wallet', label: 'Wallet' },
+  { id: 'recharge', label: 'Recharge' },
+  { id: 'vip', label: 'VIP' },
+  { id: 'coins', label: 'Coin Trade' },
+  { id: 'cashout', label: 'Cashout' },
+  { id: 'live', label: 'Live / Host' },
+  { id: 'social', label: 'Social' },
+  { id: 'posts', label: 'Posts' },
+  { id: 'devices', label: 'Devices' },
+  { id: 'other', label: 'Other' },
+];
 
 const UserDetailsList = () => {
   const [users, setUsers] = useState([]);
@@ -9,20 +138,17 @@ const UserDetailsList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState('ALL'); // 'ALL', 'AGENCY', 'MASTERAGENCY', 'SUBADMIN', 'HOST'
+  const [selectedRole, setSelectedRole] = useState('ALL');
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Details Modal State
   const [selectedUserCode, setSelectedUserCode] = useState(null);
   const [userDetailData, setUserDetailData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'recharge', 'ledger', 'other'
+  const [activeTab, setActiveTab] = useState('profile');
 
   useEffect(() => {
     fetchUsersList();
@@ -45,22 +171,23 @@ const UserDetailsList = () => {
     }
   };
 
-  // Filter and Search Logic
   useEffect(() => {
     let result = [...users];
 
-    // Filter by Role
     if (selectedRole !== 'ALL') {
-      result = result.filter(user => {
+      result = result.filter((user) => {
         const userRole = (user.role || '').toUpperCase();
-        if (selectedRole === 'AGENCY') {
-          return userRole === 'AGENCY';
-        }
+        if (selectedRole === 'AGENCY') return userRole === 'AGENCY';
         if (selectedRole === 'MASTERAGENCY') {
           return userRole === 'MASTERAGENCY' || userRole === 'MASTER-AGENCY' || userRole === 'MASTER_AGENCY';
         }
         if (selectedRole === 'SUBADMIN') {
-          return userRole === 'SUBADMIN' || userRole === 'SUB-ADMIN' || userRole === 'SUB_ADMIN' || userRole === 'ADMIN';
+          return (
+            userRole === 'SUBADMIN' ||
+            userRole === 'SUB-ADMIN' ||
+            userRole === 'SUB_ADMIN' ||
+            userRole === 'ADMIN'
+          );
         }
         if (selectedRole === 'HOST') {
           return userRole === 'HOST' || userRole === 'LIVEHOST' || userRole === 'LIVE-HOST';
@@ -69,13 +196,13 @@ const UserDetailsList = () => {
       });
     }
 
-    // Search by Name or Code
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
-      result = result.filter(user =>
-        (user.name || '').toLowerCase().includes(term) ||
-        (user.code || '').toLowerCase().includes(term) ||
-        (user.email || '').toLowerCase().includes(term)
+      result = result.filter(
+        (user) =>
+          (user.name || '').toLowerCase().includes(term) ||
+          (user.code || '').toLowerCase().includes(term) ||
+          (user.email || '').toLowerCase().includes(term),
       );
     }
 
@@ -83,7 +210,6 @@ const UserDetailsList = () => {
     setCurrentPage(1);
   }, [users, selectedRole, searchTerm]);
 
-  // Handle Full Details Click
   const handleUserClick = async (code) => {
     setSelectedUserCode(code);
     setDetailLoading(true);
@@ -105,16 +231,702 @@ const UserDetailsList = () => {
     }
   };
 
-  // Pagination Math
   const totalItems = filteredUsers.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
+  const tabCount = (id) => {
+    if (!userDetailData) return 0;
+    switch (id) {
+      case 'wallet':
+        return userDetailData.walletHistory?.length || 0;
+      case 'recharge':
+        return userDetailData.rechargeHistory?.length || 0;
+      case 'vip':
+        return userDetailData.vipPlans?.length || 0;
+      case 'coins':
+        return (userDetailData.coinsSold?.length || 0) + (userDetailData.coinsBought?.length || 0);
+      case 'cashout':
+        return userDetailData.cashoutRequests?.length || 0;
+      case 'social':
+        return (userDetailData.followers?.length || 0) + (userDetailData.following?.length || 0);
+      case 'posts':
+        return userDetailData.posts?.length || 0;
+      case 'devices':
+        return userDetailData.devices?.length || 0;
+      default:
+        return null;
+    }
+  };
+
+  const renderDetailTab = () => {
+    const d = userDetailData;
+    if (!d) return null;
+
+    if (activeTab === 'profile') {
+      const profileFields = [
+        { label: 'Username', value: d.profile?.username },
+        { label: 'Email', value: d.profile?.email },
+        { label: 'Mobile', value: d.profile?.mobile },
+        { label: 'Code', value: d.profile?.code },
+        { label: 'Role', value: d.profile?.role },
+        { label: 'Status', value: d.profile?.status },
+        { label: 'Type', value: d.profile?.type },
+        { label: 'Email Verified', value: d.profile?.emailVerified ? 'Yes' : 'No' },
+        { label: 'Google Login', value: d.profile?.registeredWithGoogle ? 'Yes' : 'No' },
+        { label: 'Seller', value: d.profile?.isseller },
+        { label: 'Live Host', value: d.profile?.livehost },
+        { label: 'Level', value: d.profile?.level },
+        { label: 'Gender', value: d.profile?.gender },
+        { label: 'DOB', value: d.profile?.dob },
+        { label: 'Country', value: d.profile?.country },
+        { label: 'State', value: d.profile?.state },
+        { label: 'City', value: d.profile?.city },
+        { label: 'Followers', value: d.profile?.myfollowers },
+        { label: 'Following', value: d.profile?.mefollowing },
+        { label: 'Owner', value: d.profile?.owner },
+        { label: 'Owner Name', value: d.profile?.ownername },
+        { label: 'Agency Code', value: d.profile?.hosttoagnc },
+        { label: 'Join Date', value: d.profile?.joinDate },
+        { label: 'First Login', value: d.profile?.firstLogin ? 'Yes' : 'No' },
+        { label: 'Bio', value: d.profile?.bio },
+        {
+          label: 'Profile Pic Status',
+          value: d.profilePic?.status || (Array.isArray(d.profilePic) ? `${d.profilePic.length} pics` : '—'),
+        },
+      ];
+
+      return (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {profileFields.map((item) => (
+              <div key={item.label} className="bg-[#121212] border border-white/5 p-4 rounded-xl flex flex-col gap-1">
+                <span className="text-[10px] text-gray-500 uppercase tracking-widest">{item.label}</span>
+                <span className="text-sm text-gray-200 font-medium break-all">
+                  {item.value !== null && item.value !== undefined && item.value !== ''
+                    ? String(item.value)
+                    : '—'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {d.profilePic?.path || d.profile?.profilepic ? (
+            <div className="bg-[#121212] border border-white/5 p-4 rounded-xl">
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3">Profile Picture</p>
+              <div className="flex items-center gap-4">
+                <img
+                  src={d.profilePic?.path || d.profile?.profilepic}
+                  alt="profile"
+                  className="w-20 h-20 rounded-xl object-cover border border-white/10"
+                />
+                <div className="text-xs text-gray-400 space-y-1">
+                  <p>Status: <StatusBadge status={d.profilePic?.status || '—'} /></p>
+                  <p className="font-mono break-all">{d.profilePic?.path || d.profile?.profilepic}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (activeTab === 'wallet') {
+      return (
+        <div className="space-y-4">
+          <h4 className="text-sm font-semibold text-white">Wallet History</h4>
+          <DataTable
+            emptyMessage="No wallet history."
+            rows={d.walletHistory || []}
+            columns={[
+              { key: 'id', label: 'ID', render: (r) => r.id },
+              {
+                key: 'type',
+                label: 'Type',
+                render: (r) => <span className="text-white font-medium">{formatType(r.type)}</span>,
+              },
+              {
+                key: 'coins',
+                label: 'Coins',
+                className: 'font-bold text-yellow-400',
+                render: (r) => formatMoney(r.coins),
+              },
+              { key: 'date', label: 'Date', render: (r) => formatDate(r.date) },
+            ]}
+          />
+
+          <h4 className="text-sm font-semibold text-white pt-2">Superadmin Coin Ledger</h4>
+          <DataTable
+            emptyMessage="No ledger entries."
+            rows={d.superadminCoinLedger || []}
+            columns={[
+              {
+                key: 'transactionno',
+                label: 'Txn',
+                className: 'font-mono text-gray-400',
+                render: (r) => r.transactionno || '—',
+              },
+              { key: 'rechargeFor', label: 'For', render: (r) => r.rechargeFor || '—' },
+              { key: 'rechargeForName', label: 'Name', render: (r) => r.rechargeForName || '—' },
+              {
+                key: 'status',
+                label: 'Status',
+                render: (r) => <StatusBadge status={r.status} />,
+              },
+              {
+                key: 'mycoins',
+                label: 'Coins',
+                className: 'font-bold',
+                render: (r) => (
+                  <span className={r.status === 'CREDIT' ? 'text-green-400' : 'text-red-400'}>
+                    {r.status === 'CREDIT' ? '+' : '−'}
+                    {formatMoney(r.mycoins)}
+                  </span>
+                ),
+              },
+              { key: 'date', label: 'Date', render: (r) => formatDate(r.date) },
+            ]}
+          />
+        </div>
+      );
+    }
+
+    if (activeTab === 'recharge') {
+      return (
+        <DataTable
+          emptyMessage="No recharge records."
+          rows={d.rechargeHistory || []}
+          columns={[
+            {
+              key: 'transactionid',
+              label: 'Transaction ID',
+              className: 'font-mono text-gray-400',
+              render: (r) => r.transactionid || '—',
+            },
+            { key: 'rechargeby', label: 'By', render: (r) => r.rechargeby || '—' },
+            {
+              key: 'coins',
+              label: 'Coins',
+              className: 'text-yellow-400 font-bold',
+              render: (r) => formatMoney(r.coins),
+            },
+            {
+              key: 'amount',
+              label: 'Amount',
+              render: (r) => (r.amount != null ? `₹${formatMoney(r.amount)}` : '—'),
+            },
+            { key: 'paymentmethod', label: 'Method', render: (r) => r.paymentmethod || '—' },
+            { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+            { key: 'remarks', label: 'Remarks', render: (r) => r.remarks || '—' },
+            { key: 'rechargedate', label: 'Date', render: (r) => formatDate(r.rechargedate || r.createdat) },
+          ]}
+        />
+      );
+    }
+
+    if (activeTab === 'vip') {
+      return (
+        <DataTable
+          emptyMessage="No VIP plans."
+          rows={d.vipPlans || []}
+          columns={[
+            { key: 'planName', label: 'Plan', render: (r) => r.planName || '—' },
+            { key: 'planSource', label: 'Source', render: (r) => r.planSource || '—' },
+            { key: 'totalCoins', label: 'Total', render: (r) => formatMoney(r.totalCoins) },
+            { key: 'adminShare', label: 'Admin Share', render: (r) => formatMoney(r.adminShare) },
+            { key: 'remainingCoins', label: 'Remaining', render: (r) => formatMoney(r.remainingCoins) },
+            { key: 'coinsReturned', label: 'Returned', render: (r) => formatMoney(r.coinsReturned) },
+            { key: 'dailyCredit', label: 'Daily', render: (r) => formatMoney(r.dailyCredit) },
+            { key: 'validityDays', label: 'Days', render: (r) => r.validityDays ?? '—' },
+            { key: 'daysCompleted', label: 'Done', render: (r) => r.daysCompleted ?? '—' },
+            {
+              key: 'friendBadges',
+              label: 'Friend Badges',
+              render: (r) => `${r.friendBadgesUsed ?? 0}/${r.friendBadgesAllowed ?? 0}`,
+            },
+            { key: 'startDate', label: 'Start', render: (r) => r.startDate || '—' },
+            { key: 'endDate', label: 'End', render: (r) => r.endDate || '—' },
+            {
+              key: 'active',
+              label: 'Active',
+              render: (r) => <StatusBadge status={r.active ? 'ACTIVE' : 'INACTIVE'} />,
+            },
+          ]}
+        />
+      );
+    }
+
+    if (activeTab === 'coins') {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Coins Sold</h4>
+            <DataTable
+              emptyMessage="No coins sold."
+              rows={d.coinsSold || []}
+              columns={[
+                { key: 'seller', label: 'Seller', render: (r) => r.seller || '—' },
+                { key: 'buyer', label: 'Buyer', render: (r) => r.buyer || '—' },
+                {
+                  key: 'coins',
+                  label: 'Coins',
+                  className: 'text-yellow-400 font-bold',
+                  render: (r) => formatMoney(r.coins),
+                },
+                {
+                  key: 'transactionno',
+                  label: 'Txn',
+                  className: 'font-mono text-gray-400',
+                  render: (r) => r.transactionno || '—',
+                },
+                { key: 'date', label: 'Date', render: (r) => formatDate(r.date) },
+              ]}
+            />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Coins Bought</h4>
+            <DataTable
+              emptyMessage="No coins bought."
+              rows={d.coinsBought || []}
+              columns={[
+                { key: 'seller', label: 'Seller', render: (r) => r.seller || '—' },
+                { key: 'buyer', label: 'Buyer', render: (r) => r.buyer || '—' },
+                {
+                  key: 'coins',
+                  label: 'Coins',
+                  className: 'text-yellow-400 font-bold',
+                  render: (r) => formatMoney(r.coins),
+                },
+                {
+                  key: 'transactionno',
+                  label: 'Txn',
+                  className: 'font-mono text-gray-400',
+                  render: (r) => r.transactionno || '—',
+                },
+                { key: 'date', label: 'Date', render: (r) => formatDate(r.date) },
+              ]}
+            />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Diamond Earnings / Sent / Received</h4>
+            <DataTable
+              emptyMessage="No diamond earnings."
+              rows={d.diamondEarnings || []}
+              columns={[
+                { key: 'id', label: 'ID', render: (r) => r.id },
+                { key: 'diamonds', label: 'Diamonds', render: (r) => formatMoney(r.diamonds ?? r.diamond) },
+                { key: 'type', label: 'Type', render: (r) => formatType(r.type || r.source) },
+                { key: 'date', label: 'Date', render: (r) => formatDate(r.date || r.createdAt) },
+              ]}
+            />
+            <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <DataTable
+                emptyMessage="No diamonds sent."
+                rows={d.diamondsSent || []}
+                columns={[
+                  { key: 'to', label: 'To', render: (r) => r.to || r.usercode || '—' },
+                  { key: 'diamonds', label: 'Diamonds', render: (r) => formatMoney(r.diamonds ?? r.diamond) },
+                  { key: 'date', label: 'Date', render: (r) => formatDate(r.date) },
+                ]}
+              />
+              <DataTable
+                emptyMessage="No diamonds received."
+                rows={d.diamondsReceived || []}
+                columns={[
+                  { key: 'from', label: 'From', render: (r) => r.from || r.usercode || '—' },
+                  { key: 'diamonds', label: 'Diamonds', render: (r) => formatMoney(r.diamonds ?? r.diamond) },
+                  { key: 'date', label: 'Date', render: (r) => formatDate(r.date) },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'cashout') {
+      return (
+        <div className="space-y-6">
+          <DataTable
+            emptyMessage="No cashout requests."
+            rows={d.cashoutRequests || []}
+            columns={[
+              { key: 'id', label: 'ID', render: (r) => r.id },
+              {
+                key: 'diamonds',
+                label: 'Diamonds',
+                className: 'text-violet-400 font-bold',
+                render: (r) => formatMoney(r.diamonds),
+              },
+              { key: 'cashAmount', label: 'Cash', render: (r) => formatMoney(r.cashAmount) },
+              { key: 'profitOrLoss', label: 'P/L', render: (r) => (r.profitOrLoss != null ? formatMoney(r.profitOrLoss) : '—') },
+              { key: 'remark', label: 'Remark', render: (r) => r.remark || '—' },
+              { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+              {
+                key: 'transactionno',
+                label: 'Txn',
+                className: 'font-mono text-gray-400',
+                render: (r) => r.transactionno || '—',
+              },
+              { key: 'role', label: 'Role', render: (r) => r.role || '—' },
+              {
+                key: 'redeemed_request_date',
+                label: 'Requested',
+                render: (r) => formatDate(r.redeemed_request_date),
+              },
+              {
+                key: 'redeemed_approve_reject_date',
+                label: 'Resolved',
+                render: (r) => formatDate(r.redeemed_approve_reject_date),
+              },
+            ]}
+          />
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Bank Accounts</h4>
+            <DataTable
+              emptyMessage="No bank accounts."
+              rows={d.bankAccounts || []}
+              columns={[
+                { key: 'accholdername', label: 'Holder', render: (r) => r.accholdername || r.holderName || '—' },
+                { key: 'Bankname', label: 'Bank', render: (r) => r.Bankname || r.bankName || '—' },
+                {
+                  key: 'accnumber',
+                  label: 'Account',
+                  className: 'font-mono',
+                  render: (r) => r.accnumber || r.accountNumber || '—',
+                },
+                { key: 'ifsccode', label: 'IFSC', render: (r) => r.ifsccode || r.ifsc || '—' },
+                { key: 'acctype', label: 'Type', render: (r) => r.acctype || r.accountType || '—' },
+              ]}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'live') {
+      const app = d.liveHostApplication;
+      return (
+        <div className="space-y-6">
+          <div className="bg-[#121212] border border-white/5 rounded-xl p-4">
+            <h4 className="text-sm font-semibold text-white mb-3">Live Host Application</h4>
+            {!app ? (
+              <EmptyState message="No live host application." />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                {[
+                  ['Name', app.name],
+                  ['User Code', app.usercode],
+                  ['Agency', app.agencycode],
+                  ['DOB', app.dateOfBirth],
+                  ['Nationality', app.nationality],
+                  ['Email', app.email],
+                  ['Email Status', app.emailstatus],
+                  ['WhatsApp', app.whatsappNumber],
+                  ['Aadhaar', app.aadhaarNumber],
+                  ['Status', app.status],
+                  ['Joined', formatDate(app.joiningDate)],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-black/30 rounded-lg p-3">
+                    <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">{label}</p>
+                    <p className="text-gray-200 break-all">{value || '—'}</p>
+                  </div>
+                ))}
+                {(app.document1Path || app.document2Path || app.livephotopath) && (
+                  <div className="md:col-span-2 lg:col-span-3 flex flex-wrap gap-3 pt-2">
+                    {app.document1Path && (
+                      <a href={app.document1Path} target="_blank" rel="noreferrer" className="block">
+                        <img src={app.document1Path} alt="doc1" className="h-24 rounded-lg border border-white/10 object-cover" />
+                      </a>
+                    )}
+                    {app.document2Path && (
+                      <a href={app.document2Path} target="_blank" rel="noreferrer" className="block">
+                        <img src={app.document2Path} alt="doc2" className="h-24 rounded-lg border border-white/10 object-cover" />
+                      </a>
+                    )}
+                    {app.livephotopath && (
+                      <a href={app.livephotopath} target="_blank" rel="noreferrer" className="block">
+                        <img src={app.livephotopath} alt="live" className="h-24 rounded-lg border border-white/10 object-cover" />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Live Sessions</h4>
+            <DataTable
+              emptyMessage="No live sessions."
+              rows={d.liveSessions || []}
+              columns={[
+                { key: 'id', label: 'ID', render: (r) => r.id },
+                { key: 'room_name', label: 'Room', render: (r) => r.room_name || r.roomName || '—' },
+                { key: 'duration_seconds', label: 'Duration (s)', render: (r) => r.duration_seconds ?? r.durationSeconds ?? '—' },
+                { key: 'host_diamonds', label: 'Diamonds', render: (r) => formatMoney(r.host_diamonds ?? r.hostDiamonds) },
+                { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+                { key: 'started_at', label: 'Started', render: (r) => formatDate(r.started_at || r.startedAt) },
+                { key: 'ended_at', label: 'Ended', render: (r) => formatDate(r.ended_at || r.endedAt) },
+              ]}
+            />
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Daily Live Stats</h4>
+            <DataTable
+              emptyMessage="No daily live stats."
+              rows={d.dailyLiveStats || []}
+              columns={[
+                { key: 'date', label: 'Date', render: (r) => r.date || '—' },
+                {
+                  key: 'total_duration_today_seconds',
+                  label: 'Duration (s)',
+                  render: (r) => r.total_duration_today_seconds ?? r.duration ?? '—',
+                },
+                {
+                  key: 'completed_live_day',
+                  label: 'Completed Day',
+                  render: (r) => (r.completed_live_day ? 'Yes' : 'No'),
+                },
+                { key: 'session_count', label: 'Sessions', render: (r) => r.session_count ?? '—' },
+              ]}
+            />
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Live Stream Pics</h4>
+            {(d.liveStreamPics || []).length === 0 ? (
+              <EmptyState message="No live stream pictures." />
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {(d.liveStreamPics || []).map((pic, i) => (
+                  <a key={pic.id || i} href={pic.path || pic.url} target="_blank" rel="noreferrer">
+                    <img
+                      src={pic.path || pic.url}
+                      alt=""
+                      className="w-24 h-24 rounded-lg object-cover border border-white/10"
+                    />
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'social') {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">
+              Followers ({d.followers?.length || 0})
+            </h4>
+            <DataTable
+              emptyMessage="No followers."
+              rows={d.followers || []}
+              columns={[
+                {
+                  key: 'follower',
+                  label: 'Follower',
+                  render: (r) => <PersonCell user={r.follower} />,
+                },
+                { key: 'followedAt', label: 'Followed At', render: (r) => formatDate(r.followedAt) },
+              ]}
+            />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">
+              Following ({d.following?.length || 0})
+            </h4>
+            <DataTable
+              emptyMessage="Not following anyone."
+              rows={d.following || []}
+              columns={[
+                {
+                  key: 'following',
+                  label: 'Following',
+                  render: (r) => <PersonCell user={r.following} />,
+                },
+                { key: 'followedAt', label: 'Followed At', render: (r) => formatDate(r.followedAt) },
+              ]}
+            />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-white mb-3">Gifts Sent / Received</h4>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <DataTable
+                emptyMessage="No gifts sent."
+                rows={d.giftsSent || []}
+                columns={[
+                  { key: 'to', label: 'To', render: (r) => r.to || r.receiver || '—' },
+                  { key: 'coins', label: 'Coins', render: (r) => formatMoney(r.coins || r.diamonds) },
+                  { key: 'date', label: 'Date', render: (r) => formatDate(r.date || r.createdAt) },
+                ]}
+              />
+              <DataTable
+                emptyMessage="No gifts received."
+                rows={d.giftsReceived || []}
+                columns={[
+                  { key: 'from', label: 'From', render: (r) => r.from || r.sender || '—' },
+                  { key: 'coins', label: 'Coins', render: (r) => formatMoney(r.coins || r.diamonds) },
+                  { key: 'date', label: 'Date', render: (r) => formatDate(r.date || r.createdAt) },
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'posts') {
+      return (
+        <DataTable
+          emptyMessage="No posts."
+          rows={d.posts || []}
+          columns={[
+            { key: 'id', label: 'ID', render: (r) => r.id },
+            {
+              key: 'image',
+              label: 'Image',
+              render: (r) =>
+                r.imagePath ? (
+                  <a href={r.imagePath} target="_blank" rel="noreferrer">
+                    <img src={r.imagePath} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                  </a>
+                ) : (
+                  '—'
+                ),
+            },
+            {
+              key: 'caption',
+              label: 'Caption',
+              render: (r) => (
+                <span className="max-w-[200px] truncate block" title={r.caption || ''}>
+                  {r.caption || '—'}
+                </span>
+              ),
+            },
+            { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+            {
+              key: 'likes',
+              label: 'Likes',
+              render: (r) => (Array.isArray(r.likes) ? r.likes.length : r.likes ?? 0),
+            },
+            {
+              key: 'comments',
+              label: 'Comments',
+              render: (r) => (Array.isArray(r.comments) ? r.comments.length : r.comments ?? 0),
+            },
+            { key: 'createdAt', label: 'Created', render: (r) => formatDate(r.createdAt) },
+          ]}
+        />
+      );
+    }
+
+    if (activeTab === 'devices') {
+      return (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-500">
+            Device IDs come from <code className="text-gray-400">data.devices</code> in{' '}
+            <code className="text-gray-400">/auth/api/user-full-data</code>. Use these for Ban Device.
+          </p>
+          <DataTable
+            emptyMessage="No linked devices for this user (devices array is empty)."
+            rows={d.devices || []}
+            columns={[
+              {
+                key: 'deviceId',
+                label: 'Device ID',
+                className: 'font-mono text-white',
+                render: (r) => r.deviceId || r.deviceid || r.device_id || r.id || '—',
+              },
+              {
+                key: 'platform',
+                label: 'Platform',
+                render: (r) => r.platform || r.os || r.deviceType || '—',
+              },
+              { key: 'model', label: 'Model', render: (r) => r.model || r.deviceName || '—' },
+              {
+                key: 'lastSeen',
+                label: 'Last Seen',
+                render: (r) => formatDate(r.lastSeen || r.lastLogin || r.updatedAt || r.createdAt),
+              },
+              { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status || '—'} /> },
+            ]}
+          />
+        </div>
+      );
+    }
+
+    // other
+    return (
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-sm font-semibold text-white mb-3">Level History</h4>
+          <DataTable
+            emptyMessage="No level records."
+            rows={d.level || []}
+            columns={[
+              { key: 'id', label: 'ID', render: (r) => r.id ?? '—' },
+              { key: 'level', label: 'Level', render: (r) => r.level ?? r.name ?? '—' },
+              { key: 'date', label: 'Date', render: (r) => formatDate(r.date || r.createdAt) },
+            ]}
+          />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold text-white mb-3">Current Goal / Goal History</h4>
+          {d.currentGoalTarget ? (
+            <pre className="text-xs text-gray-300 bg-[#121212] border border-white/5 rounded-xl p-4 overflow-x-auto mb-4">
+              {JSON.stringify(d.currentGoalTarget, null, 2)}
+            </pre>
+          ) : (
+            <EmptyState message="No current goal target." />
+          )}
+          <DataTable
+            emptyMessage="No goal history."
+            rows={d.goalHistory || []}
+            columns={[
+              { key: 'id', label: 'ID', render: (r) => r.id ?? '—' },
+              { key: 'name', label: 'Goal', render: (r) => r.name || r.goalName || '—' },
+              { key: 'target', label: 'Target', render: (r) => formatMoney(r.target || r.maxValue) },
+              { key: 'progress', label: 'Progress', render: (r) => formatMoney(r.progress || r.current) },
+              { key: 'date', label: 'Date', render: (r) => formatDate(r.date || r.createdAt) },
+            ]}
+          />
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold text-white mb-3">Sub Users / Owner</h4>
+          <DataTable
+            emptyMessage="No sub users."
+            rows={d.subUsers || []}
+            columns={[
+              { key: 'code', label: 'Code', render: (r) => r.code || '—' },
+              { key: 'name', label: 'Name', render: (r) => r.name || '—' },
+              { key: 'role', label: 'Role', render: (r) => r.role || '—' },
+            ]}
+          />
+          <div className="mt-4">
+            <DataTable
+              emptyMessage="No owner records."
+              rows={Array.isArray(d.owner) ? d.owner : d.owner ? [d.owner] : []}
+              columns={[
+                { key: 'code', label: 'Code', render: (r) => r.code || '—' },
+                { key: 'name', label: 'Name', render: (r) => r.name || '—' },
+                { key: 'role', label: 'Role', render: (r) => r.role || '—' },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#080808] text-gray-100 min-h-screen">
-      {/* Top Banner/Header */}
       <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/5 to-transparent">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -134,119 +946,81 @@ const UserDetailsList = () => {
           </button>
         </div>
 
-        {/* Filters and Search controls */}
         <div className="mt-6 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-          {/* Role Filter Toggles */}
           <div className="flex flex-wrap gap-1.5 p-1 bg-white/5 rounded-xl border border-white/5 self-start">
             {['ALL', 'AGENCY', 'MASTERAGENCY', 'SUBADMIN', 'HOST'].map((role) => (
               <button
                 key={role}
                 onClick={() => setSelectedRole(role)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all ${selectedRole === role
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all ${
+                  selectedRole === role
                     ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-md'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
+                }`}
               >
                 {role === 'MASTERAGENCY' ? 'MASTER AGENCY' : role === 'SUBADMIN' ? 'SUB ADMIN' : role}
               </button>
             ))}
           </div>
 
-          {/* Search bar */}
-          <div className="relative flex-1 max-w-md">
-            <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-              <Search className="w-4 h-4" />
-            </span>
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
-              type="text"
-              placeholder="Search by name, user code, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#121212] border border-white/5 focus:border-[#F72585]/50 rounded-xl py-2 pl-10 pr-4 text-sm text-gray-200 placeholder-gray-500 focus:outline-none transition-all"
+              placeholder="Search name, code, email..."
+              className="w-full bg-[#0A0A0A] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7209B7]"
             />
           </div>
         </div>
       </div>
 
-      {/* Main List Table */}
-      <div className="flex-1 p-6">
+      <div className="p-6 flex-1">
         {loading ? (
-          <div className="h-64 flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#F72585] mb-4"></div>
-            <p className="text-gray-400 text-sm">Fetching users list...</p>
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#F72585]" />
           </div>
         ) : error ? (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-6 text-center max-w-lg mx-auto">
-            <p className="font-semibold text-lg">Error Loading Users</p>
-            <p className="text-sm text-red-400/80 mt-1">{error}</p>
-            <button
-              onClick={fetchUsersList}
-              className="mt-4 px-4 py-2 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="bg-[#121212] border border-white/5 rounded-2xl p-12 text-center">
-            <User className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-lg font-medium">No users found</p>
-            <p className="text-gray-500 text-sm mt-1">Try adjusting your filters or search term.</p>
-          </div>
+          <div className="text-center py-16 text-red-400">{error}</div>
         ) : (
-          <div className="bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+          <div className="bg-[#0c0c0c] border border-white/5 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.01]">
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Profile</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Code</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Role</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Coins</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Diamonds</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Joining Date</th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Actions</th>
+                  <tr className="border-b border-white/5 text-xs text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4">User</th>
+                    <th className="px-6 py-4">Code</th>
+                    <th className="px-6 py-4">Role</th>
+                    <th className="px-6 py-4">Coins</th>
+                    <th className="px-6 py-4">Diamonds</th>
+                    <th className="px-6 py-4">Joined</th>
+                    <th className="px-6 py-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {currentUsers.map((user) => (
                     <tr
-                      key={user.id}
+                      key={user.code || user.id}
                       onClick={() => handleUserClick(user.code)}
-                      className="hover:bg-white/[0.02] transition-colors cursor-pointer group"
+                      className="hover:bg-white/[0.02] cursor-pointer transition-colors"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           {user.profilepic ? (
-                            <img
-                              src={user.profilepic}
-                              alt={user.name}
-                              className="w-9 h-9 rounded-full object-cover border border-white/10 group-hover:border-[#F72585]/30 transition-all"
-                            />
+                            <img src={user.profilepic} alt="" className="w-9 h-9 rounded-full object-cover" />
                           ) : (
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F72585]/20 to-[#7209B7]/20 border border-white/10 flex items-center justify-center text-white text-xs font-bold uppercase">
-                              {user.name ? user.name.slice(0, 2) : 'US'}
+                            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-400" />
                             </div>
                           )}
                           <div>
-                            <p className="text-sm font-semibold text-white group-hover:text-[#F72585] transition-colors">{user.name}</p>
-                            <p className="text-xs text-gray-500">{user.email || 'No email'}</p>
+                            <p className="text-sm font-semibold text-white">{user.name || '—'}</p>
+                            <p className="text-xs text-gray-500">{user.email || '—'}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-400">
-                        {user.code}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider ${user.role === 'SUPERADMIN' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                            user.role === 'ADMIN' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                              user.role === 'SUBADMIN' || user.role === 'SUB-ADMIN' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                user.role === 'MASTERAGENCY' || user.role === 'MASTER-AGENCY' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                                  user.role === 'AGENCY' ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' :
-                                    'bg-green-500/10 text-green-400 border border-green-500/20'
-                          }`}>
-                          {user.role}
-                        </span>
-                      </td>
+                      <td className="px-6 py-4 font-mono text-xs text-gray-300">{user.code || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-300">{user.role || '—'}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 text-sm font-semibold text-yellow-400">
                           <Coins className="w-3.5 h-3.5" />
@@ -277,7 +1051,6 @@ const UserDetailsList = () => {
               </table>
             </div>
 
-            {/* Pagination footer */}
             {totalPages > 1 && (
               <div className="p-4 border-t border-white/5">
                 <Pagination
@@ -297,17 +1070,14 @@ const UserDetailsList = () => {
         )}
       </div>
 
-      {/* Details Overlay / Modal */}
       {selectedUserCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-opacity">
-          <div className="relative w-full max-w-5xl bg-[#0c0c0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-
-            {/* Modal Header */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="relative w-full max-w-6xl bg-[#0c0c0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
             <div className="px-6 py-4 border-b border-white/10 bg-white/[0.02] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setSelectedUserCode(null)}
-                  className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all"
+                  className="p-1.5 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -318,16 +1088,15 @@ const UserDetailsList = () => {
               </div>
               <button
                 onClick={() => setSelectedUserCode(null)}
-                className="p-2 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white transition-all"
+                className="p-2 hover:bg-white/5 rounded-xl text-gray-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body */}
             {detailLoading ? (
               <div className="flex-1 min-h-[350px] flex flex-col items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#F72585] mb-4"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#F72585] mb-4" />
                 <p className="text-gray-400">Loading comprehensive logs...</p>
               </div>
             ) : detailError ? (
@@ -343,7 +1112,6 @@ const UserDetailsList = () => {
               </div>
             ) : userDetailData ? (
               <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-                {/* User Summary Panel */}
                 <div className="p-6 bg-gradient-to-r from-[#111] to-black border-b border-white/5 flex flex-col md:flex-row items-start md:items-center gap-6">
                   {userDetailData.profile?.profilepic ? (
                     <img
@@ -381,175 +1149,27 @@ const UserDetailsList = () => {
                   </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="flex border-b border-white/5 bg-white/[0.01]">
-                  {[
-                    { id: 'profile', label: 'Full Profile' },
-                    { id: 'recharge', label: `Recharge History (${userDetailData.rechargeHistory?.length || 0})` },
-                    { id: 'ledger', label: `Coin Ledger (${userDetailData.superadminCoinLedger?.length || 0})` },
-                    { id: 'other', label: 'Other Details' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`px-6 py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all ${activeTab === tab.id
-                          ? 'border-[#F72585] text-white bg-white/5'
-                          : 'border-transparent text-gray-400 hover:text-white'
+                <div className="flex border-b border-white/5 bg-white/[0.01] overflow-x-auto">
+                  {DETAIL_TABS.map((tab) => {
+                    const count = tabCount(tab.id);
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-4 py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
+                          activeTab === tab.id
+                            ? 'border-[#F72585] text-white bg-white/5'
+                            : 'border-transparent text-gray-400 hover:text-white'
                         }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
+                      >
+                        {tab.label}
+                        {count != null ? ` (${count})` : ''}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* Tab Content Panels */}
-                <div className="p-6 flex-1 min-h-[300px]">
-
-                  {/* Profile Details Tab */}
-                  {activeTab === 'profile' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {[
-                        { label: 'Username', value: userDetailData.profile?.username },
-                        { label: 'Email Address', value: userDetailData.profile?.email },
-                        { label: 'Mobile Number', value: userDetailData.profile?.mobile },
-                        { label: 'Verification Status', value: userDetailData.profile?.status },
-                        { label: 'Email Verified', value: userDetailData.profile?.emailVerified ? 'Yes' : 'No' },
-                        { label: 'Google Login Enabled', value: userDetailData.profile?.registeredWithGoogle ? 'Yes' : 'No' },
-                        { label: 'Level', value: userDetailData.profile?.level },
-                        { label: 'Gender', value: userDetailData.profile?.gender },
-                        { label: 'Date of Birth', value: userDetailData.profile?.dob },
-                        { label: 'Country', value: userDetailData.profile?.country },
-                        { label: 'State', value: userDetailData.profile?.state },
-                        { label: 'City', value: userDetailData.profile?.city },
-                        { label: 'Followers Count', value: userDetailData.profile?.myfollowers },
-                        { label: 'Following Count', value: userDetailData.profile?.mefollowing },
-                        { label: 'Biography', value: userDetailData.profile?.bio },
-                        { label: 'First Login', value: userDetailData.profile?.firstLogin ? 'Yes' : 'No' },
-                        { label: 'Live Host Enabled', value: userDetailData.profile?.livehost },
-                        { label: 'Owner Code / ID', value: userDetailData.profile?.owner }
-                      ].map((item, idx) => (
-                        <div key={idx} className="bg-[#121212] border border-white/5 p-4 rounded-xl flex flex-col gap-1">
-                          <span className="text-[10px] text-gray-500 uppercase tracking-widest">{item.label}</span>
-                          <span className="text-sm text-gray-200 font-medium break-all">{item.value !== null && item.value !== undefined && item.value !== '' ? String(item.value) : '—'}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Recharge History Tab */}
-                  {activeTab === 'recharge' && (
-                    <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
-                      {!userDetailData.rechargeHistory || userDetailData.rechargeHistory.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 text-sm">
-                          No recharge records found for this user.
-                        </div>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="bg-white/5 border-b border-white/5 text-gray-400">
-                                <th className="px-4 py-3">Transaction ID</th>
-                                <th className="px-4 py-3">Amount</th>
-                                <th className="px-4 py-3">Coins</th>
-                                <th className="px-4 py-3">Method</th>
-                                <th className="px-4 py-3">Date</th>
-                                <th className="px-4 py-3">Remarks</th>
-                                <th className="px-4 py-3">Status</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 text-gray-300">
-                              {userDetailData.rechargeHistory.map((item, idx) => (
-                                <tr key={idx} className="hover:bg-white/[0.02]">
-                                  <td className="px-4 py-3 font-mono text-gray-400">{item.transactionid}</td>
-                                  <td className="px-4 py-3 text-white font-semibold">{item.amount ? `₹${item.amount}` : '—'}</td>
-                                  <td className="px-4 py-3 text-yellow-400 font-bold">{item.coins ? item.coins.toLocaleString() : 0}</td>
-                                  <td className="px-4 py-3 uppercase">{item.paymentmethod || 'N/A'}</td>
-                                  <td className="px-4 py-3 text-gray-400">{item.rechargedate ? new Date(item.rechargedate).toLocaleString() : 'N/A'}</td>
-                                  <td className="px-4 py-3 max-w-xs truncate text-gray-400" title={item.remarks}>{item.remarks || '—'}</td>
-                                  <td className="px-4 py-3">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.status === 'SUCCESS' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                      }`}>
-                                      {item.status}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Superadmin Coin Ledger Tab */}
-                  {activeTab === 'ledger' && (
-                    <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
-                      {!userDetailData.superadminCoinLedger || userDetailData.superadminCoinLedger.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 text-sm">
-                          No superadmin ledger actions logged.
-                        </div>
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left border-collapse text-xs">
-                            <thead>
-                              <tr className="bg-white/5 border-b border-white/5 text-gray-400">
-                                <th className="px-4 py-3">Transaction No</th>
-                                <th className="px-4 py-3">Date</th>
-                                <th className="px-4 py-3">Status</th>
-                                <th className="px-4 py-3 text-right">Ledger Coins</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5 text-gray-300">
-                              {userDetailData.superadminCoinLedger.map((item, idx) => (
-                                <tr key={idx} className="hover:bg-white/[0.02]">
-                                  <td className="px-4 py-3 font-mono text-gray-400">{item.transactionno}</td>
-                                  <td className="px-4 py-3 text-gray-400">{item.date ? new Date(item.date).toLocaleString() : 'N/A'}</td>
-                                  <td className="px-4 py-3">
-                                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${item.status === 'CREDIT' ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'
-                                      }`}>
-                                      {item.status}
-                                    </span>
-                                  </td>
-                                  <td className={`px-4 py-3 text-right font-bold ${item.status === 'CREDIT' ? 'text-green-400' : 'text-red-400'
-                                    }`}>
-                                    {item.status === 'CREDIT' ? '+' : '-'}{item.mycoins ? item.mycoins.toLocaleString() : 0}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Other Lists / Arrays Tab */}
-                  {activeTab === 'other' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                      {[
-                        { label: 'Profile Pictures Array', count: userDetailData.profilePic?.length || 0 },
-                        { label: 'Live Stream Pics', count: userDetailData.liveStreamPics?.length || 0 },
-                        { label: 'Followers List', count: userDetailData.followers?.length || 0 },
-                        { label: 'Following List', count: userDetailData.following?.length || 0 },
-                        { label: 'Posts Created', count: userDetailData.posts?.length || 0 },
-                        { label: 'Linked Devices', count: userDetailData.devices?.length || 0 },
-                        { label: 'Bank Accounts', count: userDetailData.bankAccounts?.length || 0 },
-                        { label: 'Vip Plans Active', count: userDetailData.vipPlans?.length || 0 },
-                        { label: 'Sub Users Registered', count: userDetailData.subUsers?.length || 0 },
-                        { label: 'Wallet History Items', count: userDetailData.walletHistory?.length || 0 }
-                      ].map((item, idx) => (
-                        <div key={idx} className="p-4 bg-[#121212] border border-white/5 rounded-xl flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <FileText className="w-5 h-5 text-gray-500" />
-                            <span className="text-xs font-semibold text-gray-300">{item.label}</span>
-                          </div>
-                          <span className="px-2.5 py-1 bg-white/5 text-xs text-white font-bold rounded-lg">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                </div>
+                <div className="p-6 flex-1 min-h-[300px]">{renderDetailTab()}</div>
               </div>
             ) : (
               <div className="flex-1 p-8 text-center text-gray-500">No profile found.</div>

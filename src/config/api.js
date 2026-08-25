@@ -36,6 +36,8 @@ export const API_CONFIG = {
     GET_ALL_PENDING_CASHOUT: '/auth/superadmin/allpendingcashout',
     // Get pending cashout list (Alternative)
     GET_PENDING_CASHOUT_LIST: '/auth/superadmin/getPendingcashoutList',
+    // Approve / reject cashout request (Super Admin only)
+    APPROVE_REJECT_CASHOUT: '/auth/superadmin/approve-reject-cashout',
     // Get cashout history (Super Admin only)
     GET_CASHOUT_HISTORY: '/auth/superadmin/cashouthistory',
     SUPERADMIN_BALANCE: '/auth/superadmin/balance',

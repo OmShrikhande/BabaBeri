@@ -944,6 +944,63 @@ class AuthService {
     }
   }
 
+  /**
+   * Approve or reject a cashout request (Super Admin only).
+   * PUT /auth/superadmin/approve-reject-cashout?usercode=&status=&transactionno=&role=
+   */
+  async approveRejectCashout({ usercode, status, transactionno, role }) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const userRole = normalizeUserType(this.getUserType());
+    if (userRole !== USER_TYPES.SUPER_ADMIN) {
+      return { success: false, status: 403, error: 'Forbidden: Only Super Admin can approve/reject cashouts.' };
+    }
+
+    if (!usercode || !status || !transactionno) {
+      return { success: false, error: 'usercode, status, and transactionno are required.' };
+    }
+
+    const params = new URLSearchParams({
+      usercode: String(usercode).trim(),
+      status: String(status).trim().toUpperCase(),
+      transactionno: String(transactionno).trim(),
+      role: String(role || 'HOST').trim().toUpperCase(),
+    });
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.APPROVE_REJECT_CASHOUT}?${params.toString()}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: '',
+      });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        throw new Error(
+          this.formatApiError(response, raw, `Failed to ${status} cashout: ${response.status}`),
+        );
+      }
+      let data = null;
+      if (raw) {
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+      }
+      return { success: true, data: data || { message: `Cashout ${status} successful` } };
+    } catch (error) {
+      console.error('Approve/reject cashout error:', error);
+      return { success: false, error: error.message || 'Failed to update cashout request.' };
+    }
+  }
+
   async getDiamondWalletSummary() {
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };

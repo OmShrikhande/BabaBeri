@@ -3,16 +3,12 @@ import useToast from '../../hooks/useToast';
 import ToastList from '../ToastList';
 import ExchangeRateBar from './ExchangeRateBar';
 import DiamondCreditsModal from './DiamondCreditsModal';
-import UserSearchSection from './UserSearchSection';
-import UserProfileCard from './UserProfileCard';
-import CashoutHistorySection from './CashoutHistorySection';
 import CashoutRequestsSection from './CashoutRequestsSection';
 import { useWalletData } from './hooks/useWalletData';
 import { useCreditManagement } from './hooks/useCreditManagement';
 import { useCashoutRequests } from './hooks/useCashoutRequests';
-import { useUserSearch } from './hooks/useUserSearch';
 import authService from '../../services/authService';
-import { ArrowLeftRight, X, Wallet } from 'lucide-react';
+import { ArrowLeftRight, X } from 'lucide-react';
 
 const ConvertDiamondsModal = ({ isOpen, onClose, onSuccess, addToast }) => {
   const [diamonds, setDiamonds] = useState('');
@@ -82,7 +78,6 @@ const ConvertDiamondsModal = ({ isOpen, onClose, onSuccess, addToast }) => {
 const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => {
   const { toasts, addToast, removeToast } = useToast();
   const [componentError, setComponentError] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState('Monthly');
   const [convertModalOpen, setConvertModalOpen] = useState(false);
 
   useEffect(() => { setComponentError(null); }, []);
@@ -93,31 +88,12 @@ const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => 
     walletData.fetchWalletSummary();
   });
   const cashoutReqs = useCashoutRequests(addToast);
-  const userSearch = useUserSearch(addToast);
 
   useEffect(() => {
     cashoutReqs.fetchPendingRequests();
     walletData.fetchWalletSummary();
     walletData.fetchDiamondCredits();
   }, []);
-
-  useEffect(() => {
-    if (userSearch.selectedUser) {
-      userSearch.fetchCashoutHistory(userSearch.selectedUser.username);
-    }
-  }, [userSearch.selectedUser]);
-
-  const handleDeleteCredit = (creditId) => {
-    creditMgmt.handleDeleteCredit(creditId, () => {
-      walletData.removeCreditFromList(creditId);
-      walletData.fetchWalletSummary();
-    });
-  };
-
-  const handleFilterSelect = (filter) => {
-    setSelectedFilter(filter);
-    addToast(`Filter changed to ${filter}`, 'success');
-  };
 
   if (componentError) {
     return (
@@ -139,13 +115,6 @@ const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">Diamonds Cashout</h1>
         <div className="flex items-center gap-3">
-          {/* <button
-            onClick={() => onNavigateToDiamondsWallet && onNavigateToDiamondsWallet()}
-            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#4361EE] to-[#4CC9F0] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            <Wallet className="w-4 h-4 mr-2" />
-            Wallet
-          </button> */}
           <button
             onClick={() => setConvertModalOpen(true)}
             className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg px-4 py-2 font-medium text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
@@ -158,34 +127,15 @@ const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => 
 
       <ExchangeRateBar />
 
-      <UserSearchSection
-        searchUserId={userSearch.searchUserId}
-        loadingUser={userSearch.loadingUser}
-        selectedFilter={selectedFilter}
-        onSearchChange={userSearch.setSearchUserId}
-        onSearch={userSearch.handleUserSearch}
-        onKeyPress={userSearch.handleKeyPress}
-        onFilterSelect={handleFilterSelect}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3 space-y-6">
-          <UserProfileCard selectedUser={userSearch.selectedUser} loadingUser={userSearch.loadingUser} />
-          <CashoutHistorySection
-            selectedUser={userSearch.selectedUser}
-            cashoutHistory={userSearch.cashoutHistory}
-            loadingHistory={userSearch.loadingHistory}
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <CashoutRequestsSection
-            cashoutRequests={cashoutReqs.cashoutRequests}
-            loadingRequests={cashoutReqs.loadingRequests}
-            error={cashoutReqs.error}
-            onApprove={cashoutReqs.handleApprove}
-            onReject={cashoutReqs.handleReject}
-          />
-        </div>
+      <div className="w-full">
+        <CashoutRequestsSection
+          cashoutRequests={cashoutReqs.cashoutRequests}
+          loadingRequests={cashoutReqs.loadingRequests}
+          error={cashoutReqs.error}
+          onApprove={cashoutReqs.handleApprove}
+          onReject={cashoutReqs.handleReject}
+          actionLoadingId={cashoutReqs.actionLoadingId}
+        />
       </div>
 
       <DiamondCreditsModal

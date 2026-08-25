@@ -1,11 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Flag, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import services from '../services/services';
 import authService from '../services/authService';
 import ConfirmDialog from './RoleStages/ConfirmDialog';
 import BanDialog from './RoleStages/BanDialog';
 
 const ITEMS_PER_PAGE = 20;
+
+const resolveUserCode = (user) => {
+  if (!user) return '';
+  return String(
+    user.code ||
+      user.usercode ||
+      user.userCode ||
+      user.UserCode ||
+      user.hostId ||
+      ''
+  ).trim();
+};
+
+const normalizeHostUser = (user) => {
+  if (!user || typeof user !== 'object') return user;
+  const code = resolveUserCode(user);
+  return {
+    ...user,
+    code,
+    name: user.name || user.username || user.fullName || 'Unknown',
+    role: user.role || user.userType || user.type || 'HOST',
+    status: user.status || 'Active',
+  };
+};
 
 const ReportsBan = () => {
   const [loading, setLoading] = useState(true);
@@ -33,7 +56,10 @@ const ReportsBan = () => {
         if (ignore) return;
 
         if (response.success) {
-          const usersList = Array.isArray(response.data) ? response.data : [];
+          const rawList = Array.isArray(response.data)
+            ? response.data
+            : (response.data?.data || response.data?.users || []);
+          const usersList = rawList.map(normalizeHostUser);
           setUsers(usersList);
           setFilteredUsers(usersList);
         } else {
@@ -128,16 +154,24 @@ const ReportsBan = () => {
   const handleConfirmBan = async ({ reason, duration }) => {
     if (!banDialogUser) return;
     const user = banDialogUser;
+    const code = resolveUserCode(user);
+
+    if (!code) {
+      showToast('Host code is missing. Cannot ban this user.', 'error');
+      setBanDialogUser(null);
+      return;
+    }
 
     try {
-      const response = await authService.blockUser(user.code, reason);
+      // POST /auth/superadmin/block-user?code=&duration=&reason=
+      // duration: 24h | 7d | permanent (Bearer token via authService)
+      const response = await authService.blockUser(code, duration, reason);
 
       if (response.success) {
-        // Update local state optimistically
         setUsers((prev) =>
-          prev.map((u) => (u.code === user.code ? { ...u, status: 'Blocked' } : u))
+          prev.map((u) => (resolveUserCode(u) === code ? { ...u, status: 'Blocked' } : u))
         );
-        showToast(`User banned successfully`, 'success');
+        showToast(`User ${code} banned successfully (${duration})`, 'success');
       } else {
         throw new Error(response.error || 'Failed to ban user');
       }
@@ -153,29 +187,24 @@ const ReportsBan = () => {
     if (!confirmDialog) return;
 
     const { user, newStatus } = confirmDialog;
+    const code = resolveUserCode(user);
+
+    if (!code) {
+      showToast('Host code is missing. Cannot update status.', 'error');
+      setConfirmDialog(null);
+      return;
+    }
 
     try {
-      const response = await authService.makeAuthenticatedRequest(
-        `https://proxstreamapi.in/auth/api/updatestatus?usercode=${user.code}&status=${newStatus}`,
-        { method: 'PUT' }
-      );
+      const response = await authService.updateUserStatus(code, newStatus);
 
-      if (response.ok) {
-        // Update local state optimistically
+      if (response.success) {
         setUsers((prev) =>
-          prev.map((u) => (u.code === user.code ? { ...u, status: newStatus } : u))
+          prev.map((u) => (resolveUserCode(u) === code ? { ...u, status: newStatus } : u))
         );
         showToast(`Status updated to ${newStatus} successfully`, 'success');
       } else {
-        const errorText = await response.text().catch(() => '');
-        let errorMessage = 'Failed to update status';
-        try {
-          const parsed = JSON.parse(errorText);
-          errorMessage = parsed.message || parsed.error || errorMessage;
-        } catch (e) {
-          if (errorText) errorMessage = errorText;
-        }
-        throw new Error(errorMessage);
+        throw new Error(response.error || 'Failed to update status');
       }
     } catch (err) {
       console.error('Error updating status:', err);

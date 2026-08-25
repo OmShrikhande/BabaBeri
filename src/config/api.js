@@ -93,10 +93,17 @@ export const API_CONFIG = {
     BLOCK_USER: '/auth/superadmin/block-user',
     // Unblock user (Super Admin only)
     UNBLOCK_USER: '/auth/superadmin/unblock-user',
+    // Get blocked users (Super Admin only)
+    BLOCKED_USERS: '/auth/superadmin/blocked-users',
     // Top 10 Hosts by Diamond
     TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond',
     // Get all VIP users (Super Admin only)
     GET_VIP_USERS: '/auth/api/getvipusers',
+
+    // Forgot password (public)
+    FORGOT_PASSWORD_SEND_OTP: '/public/forgot-password/send-otp',
+    FORGOT_PASSWORD_VERIFY_OTP: '/public/forgot-password/verify-otp',
+    FORGOT_PASSWORD_RESET: '/public/forgot-password/reset',
 
     // Public live tracking
     DIAMOND_COUNT: '/public/diamond-count',

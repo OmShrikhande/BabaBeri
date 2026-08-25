@@ -1938,11 +1938,35 @@ class AuthService {
   }
 
   // Block user (Super Admin only)
-  async blockUser(code, reason) {
+  // POST /auth/superadmin/block-user?code={hostId}&duration={24h|7d|permanent}&reason={reason}
+  async blockUser(code, duration, reason) {
+    const userCode = String(code || '').trim();
+    if (!userCode) {
+      return { success: false, error: 'Host code is required to block a user.' };
+    }
+
     const token = this.getToken();
     if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
 
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BLOCK_USER}?code=${encodeURIComponent(code)}&reason=${encodeURIComponent(reason)}`;
+    const allowedDurations = ['24h', '7d', 'permanent'];
+    const durationParam = allowedDurations.includes(String(duration || '').trim())
+      ? String(duration).trim()
+      : 'permanent';
+    const reasonParam = String(reason || '').trim();
+    if (!reasonParam) {
+      return { success: false, error: 'Ban reason is required.' };
+    }
+
+    const params = new URLSearchParams({
+      code: userCode,
+      duration: durationParam,
+      reason: reasonParam,
+    });
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BLOCK_USER}?${params.toString()}`;
 
     try {
       const response = await this.makeAuthenticatedRequest(url, { method: 'POST' });
@@ -1952,10 +1976,10 @@ class AuthService {
       try { data = JSON.parse(raw); } catch { data = { message: raw }; }
 
       if (!response.ok) {
-        throw new Error(data?.message || `Failed to block user: ${response.status}`);
+        throw new Error(data?.message || data?.error || `Failed to block user: ${response.status}`);
       }
 
-      return { success: true, data };
+      return { success: true, data: data || { message: 'User blocked successfully.' } };
     } catch (error) {
       console.error('Block user error:', error);
       return { success: false, error: error.message || 'Failed to block user.' };
@@ -1984,6 +2008,200 @@ class AuthService {
     } catch (error) {
       console.error('Unblock user error:', error);
       return { success: false, error: error.message || 'Failed to unblock user.' };
+    }
+  }
+
+  // Get blocked users (Super Admin only)
+  // Response shape:
+  // { status, total, permanent, timed, records: [{ usercode, name, reason, ... }] }
+  async getBlockedUsers() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.BLOCKED_USERS}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+
+      let payload = null;
+      try { payload = JSON.parse(raw); } catch { payload = { message: raw }; }
+
+      if (!response.ok) {
+        throw new Error(payload?.message || payload?.error || `Failed to fetch blocked users: ${response.status}`);
+      }
+
+      const records = Array.isArray(payload?.records)
+        ? payload.records
+        : (Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []));
+
+      const normalized = records.map((item) => {
+        const usercode = String(item?.usercode || item?.userCode || item?.code || '').trim();
+        return {
+          ...item,
+          blockId: item?.blockId ?? item?.id ?? null,
+          usercode,
+          code: usercode,
+          name: item?.name || item?.username || 'Unknown',
+          username: item?.username || item?.name || '',
+          role: item?.role || 'HOST',
+          reason: item?.reason || '',
+          blockedBy: item?.blockedBy || '',
+          blockedAt: item?.blockedAt || null,
+          permanent: Boolean(item?.permanent),
+          hours: item?.hours ?? null,
+          durationText: item?.durationText || (item?.permanent ? 'Permanent' : ''),
+          blockedUntil: item?.blockedUntil || null,
+          blockedUntilText: item?.blockedUntilText || '',
+          minutesLeft: item?.minutesLeft ?? null,
+          profilepic: item?.profilepic || item?.profilePic || null,
+          country: item?.country || '',
+        };
+      });
+
+      return {
+        success: true,
+        data: normalized,
+        meta: {
+          total: payload?.total ?? normalized.length,
+          permanent: payload?.permanent ?? normalized.filter((r) => r.permanent).length,
+          timed: payload?.timed ?? normalized.filter((r) => !r.permanent).length,
+          status: payload?.status || 'success',
+        },
+      };
+    } catch (error) {
+      console.error('Get blocked users error:', error);
+      return { success: false, error: error.message || 'Failed to fetch blocked users.' };
+    }
+  }
+
+  async sendForgotPasswordOtp(email) {
+    const trimmedEmail = String(email || '').trim();
+    if (!trimmedEmail) {
+      return { success: false, error: 'Email is required.' };
+    }
+
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FORGOT_PASSWORD_SEND_OTP}`,
+        {
+          method: 'POST',
+          headers: DEFAULT_HEADERS,
+          body: JSON.stringify({ email: trimmedEmail }),
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || data.error || `Request failed (${response.status})`);
+      }
+
+      return {
+        success: true,
+        message: data.message || `OTP sent to ${data.email || trimmedEmail}`,
+        email: data.email || trimmedEmail,
+        expiresInMinutes: data.expiresInMinutes ?? 10,
+      };
+    } catch (error) {
+      console.error('Send forgot password OTP error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to send OTP. Please try again.',
+      };
+    }
+  }
+
+  async verifyForgotPasswordOtp(email, otp) {
+    const trimmedEmail = String(email || '').trim();
+    const trimmedOtp = String(otp || '').trim();
+    if (!trimmedEmail) {
+      return { success: false, error: 'Email is required.' };
+    }
+    if (!trimmedOtp) {
+      return { success: false, error: 'OTP is required.' };
+    }
+
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FORGOT_PASSWORD_VERIFY_OTP}`,
+        {
+          method: 'POST',
+          headers: DEFAULT_HEADERS,
+          body: JSON.stringify({ email: trimmedEmail, otp: trimmedOtp }),
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || data.error || `Request failed (${response.status})`);
+      }
+
+      return {
+        success: true,
+        message: data.message || 'OTP verified. You can set a new password now.',
+        email: data.email || trimmedEmail,
+        resetToken: data.resetToken || data.token || null,
+        tokenExpiresInMinutes: data.tokenExpiresInMinutes ?? 15,
+      };
+    } catch (error) {
+      console.error('Verify forgot password OTP error:', error);
+      return {
+        success: false,
+        error: error.message || 'Invalid or expired OTP. Please try again.',
+      };
+    }
+  }
+
+  async resetForgotPassword({ email, resetToken, newPassword, confirmPassword }) {
+    const trimmedEmail = String(email || '').trim();
+    const token = String(resetToken || '').trim();
+    const password = String(newPassword || '');
+    const confirm = String(confirmPassword || '');
+
+    if (!trimmedEmail) {
+      return { success: false, error: 'Email is required.' };
+    }
+    if (!token) {
+      return { success: false, error: 'Reset token is missing. Please verify OTP again.' };
+    }
+    if (!password || password.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters.' };
+    }
+    if (password !== confirm) {
+      return { success: false, error: 'Passwords do not match.' };
+    }
+
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FORGOT_PASSWORD_RESET}`,
+        {
+          method: 'POST',
+          headers: DEFAULT_HEADERS,
+          body: JSON.stringify({
+            email: trimmedEmail,
+            resetToken: token,
+            newPassword: password,
+            confirmPassword: confirm,
+          }),
+        },
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || data.error || `Request failed (${response.status})`);
+      }
+
+      return {
+        success: true,
+        message: data.message || 'Password reset successfully. You can sign in now.',
+        email: data.email || trimmedEmail,
+      };
+    } catch (error) {
+      console.error('Reset forgot password error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to reset password. Please try again.',
+      };
     }
   }
 }

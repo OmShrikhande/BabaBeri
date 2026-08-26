@@ -72,7 +72,7 @@ export const API_CONFIG = {
     // Save Tiers (Goals by superadmin)
     SAVE_TIERS: '/auth/superadmin/savetiers',
     // Get all goals (Tiers)
-    GET_ALL_GOALS: '/auth/api/getallgoals',
+    GET_ALL_GOALS: '/auth/user/getallgoals',
     // Delete Tier
     DELETE_TIER: '/auth/superadmin/deletetier',
     // Update Tier

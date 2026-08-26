@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Diamond, Search, MoreVertical, User } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import EntityMovementModal from './EntityMovementModal';
 import authService from '../services/authService';
 import { APP_CONFIG } from '../config/api';
+import { SUB_USER_ROLES, fetchSubUserCurrentGoal } from '../utils/subUserGoals';
 
 const ownerBase = `/${APP_CONFIG.OWNER_SECRET_PATH}`;
 
@@ -14,13 +15,13 @@ const MasterAgencyDetail = ({ currentUser }) => {
   const onBack = () => navigate(-1);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
-  const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [apiAgencies, setApiAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [maGoals, setMaGoals] = useState(null);
+  const [maGoalsLoading, setMaGoalsLoading] = useState(false);
 
   const masterAgencyName = location.state?.name || masterAgencyId || 'Master Agency';
   const adminName = location.state?.adminName || adminCode || 'Admin';
@@ -33,23 +34,25 @@ const MasterAgencyDetail = ({ currentUser }) => {
       setLoading(true);
       setError(null);
       try {
-        const res = await authService.getAllSubUserByCode(maCode, 'AGENCY');
+        const res = await authService.getAllSubUserByCode(maCode, SUB_USER_ROLES.AGENCY);
         if (!ignore) {
           if (res.success) {
             const dataList = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.result || []);
             const mapped = dataList.map((item, idx) => {
               const agencyId = authService.extractUserCode(item) || item.agencyId || '';
+              const hosttoagnc = item.hosttoagnc || item.hostToAgnc || '';
               return {
                 id: item.id || item._id || agencyId || idx,
                 name: item.name || item.username || 'Agency',
                 agencyId,
+                hosttoagnc,
                 totalHosts: item.totalHosts || item.hostsCount || item.hosts || 0,
                 myEarning: item.earning || item.myEarning || 0,
                 redeemed: item.redeemed || item.redeem || 0,
                 coins: item.coins || 0,
                 diamond: item.diamond || item.totaldiamonds || 0,
               };
-            }).filter((a) => a.agencyId);
+            }).filter((a) => a.agencyId || a.hosttoagnc);
             setApiAgencies(mapped);
           } else {
             setError(res.error || 'Failed to fetch agencies');
@@ -70,6 +73,34 @@ const MasterAgencyDetail = ({ currentUser }) => {
     return () => { ignore = true; };
   }, [maCode]);
 
+  // MA goal: getAllSubUserByCode(adminCode, 'MASTER_AGENCY') → item.goals
+  useEffect(() => {
+    let ignore = false;
+    const loadGoals = async () => {
+      if (!adminCode || !maCode) {
+        setMaGoals(null);
+        return;
+      }
+      setMaGoalsLoading(true);
+      try {
+        const { success, goal } = await fetchSubUserCurrentGoal({
+          parentCode: adminCode,
+          role: SUB_USER_ROLES.MASTER_AGENCY,
+          entityCodes: [maCode],
+        });
+        if (ignore) return;
+        setMaGoals(success && goal ? goal : null);
+      } catch (err) {
+        console.error('Error fetching master agency goals:', err);
+        if (!ignore) setMaGoals(null);
+      } finally {
+        if (!ignore) setMaGoalsLoading(false);
+      }
+    };
+    loadGoals();
+    return () => { ignore = true; };
+  }, [adminCode, maCode]);
+
   const stats = useMemo(() => apiAgencies.reduce((acc, curr) => ({
     totalDiamonds: acc.totalDiamonds + (Number(curr.diamond) || 0),
     totalCoins: acc.totalCoins + (Number(curr.coins) || 0),
@@ -77,15 +108,39 @@ const MasterAgencyDetail = ({ currentUser }) => {
     hostCount: acc.hostCount + (Number(curr.totalHosts) || 0),
   }), { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 }), [apiAgencies]);
 
+  const diamondTarget = maGoals?.diamondTarget ?? 0;
+  const cashoutTarget = maGoals?.cashoutTarget ?? 0;
+  const diamondProgress = maGoals?.diamondEarned ?? 0;
+  const cashoutProgress = maGoals?.cashoutCount ?? 0;
+  const diamondPct = Number.isFinite(maGoals?.diamondAchievedPercent)
+    ? Math.min(maGoals.diamondAchievedPercent, 100)
+    : (diamondTarget > 0 ? Math.min((diamondProgress / diamondTarget) * 100, 100) : 0);
+  const cashoutPct = Number.isFinite(maGoals?.cashoutAchievedPercent)
+    ? Math.min(maGoals.cashoutAchievedPercent, 100)
+    : (cashoutTarget > 0 ? Math.min((cashoutProgress / cashoutTarget) * 100, 100) : 0);
+  const showDiamondGoal = Boolean(maGoals) && diamondTarget > 0;
+  const showCashoutGoal = Boolean(maGoals) && cashoutTarget > 0;
+  const goalsCompleted =
+    (showDiamondGoal && diamondProgress >= diamondTarget ? 1 : 0) +
+    (showCashoutGoal && cashoutProgress >= cashoutTarget ? 1 : 0);
+  const goalsTotal = (showDiamondGoal ? 1 : 0) + (showCashoutGoal ? 1 : 0);
+
   const filteredAgencies = apiAgencies.filter(agency =>
     (agency.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(agency.agencyId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const openAgency = (agency) => {
-    const code = agency.agencyId || agency.id;
+    const code = agency.hosttoagnc || agency.agencyId || agency.id;
     navigate(`${ownerBase}/sub-admins/${encodeURIComponent(adminCode)}/${encodeURIComponent(maCode)}/${encodeURIComponent(code)}`, {
-      state: { name: agency.name, masterAgencyName, adminName },
+      state: {
+        name: agency.name,
+        masterAgencyName,
+        adminName,
+        hosttoagnc: code,
+        agencyCode: agency.agencyId,
+        masterAgencyCode: maCode,
+      },
     });
   };
 
@@ -116,6 +171,78 @@ const MasterAgencyDetail = ({ currentUser }) => {
       </div>
 
       <div className="flex-1 p-6 space-y-6">
+        {/* Goals — item.goals from getAllSubUserByCode(adminCode, 'MASTER_AGENCY') */}
+        <div className="w-full border border-gray-800 rounded-xl p-5 bg-[#121212]">
+          {maGoalsLoading ? (
+            <p className="text-gray-400 text-sm">Loading goals...</p>
+          ) : !maGoals || goalsTotal === 0 ? (
+            <div>
+              <h2 className="text-xl font-bold text-white mb-2">Goals</h2>
+              <p className="text-gray-500 text-sm">
+                {adminCode
+                  ? 'No current goal assigned for this master agency.'
+                  : 'Admin code missing — cannot load master agency goals.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-xl font-bold text-white mb-1">
+                {goalsCompleted}/{goalsTotal} Goals Complete
+              </h2>
+              <p className="text-gray-400 text-sm mb-6">
+                {maGoals.tierName}
+                {maGoals.currentMonth ? ` · ${maGoals.currentMonth}` : ''}
+              </p>
+              {showDiamondGoal && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between text-white mb-2">
+                    <div className="flex items-center">
+                      <Diamond className="w-4 h-4 mr-2 text-blue-400" />
+                      <span className="font-medium">Diamonds</span>
+                    </div>
+                    <span className="font-medium">{diamondProgress} / {diamondTarget}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                      <div
+                        className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                        style={{ width: `${diamondPct}%` }}
+                      />
+                    </div>
+                    <div className={`w-5 h-5 border ${diamondProgress >= diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center`}>
+                      {diamondProgress >= diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500 mt-1 block">{diamondPct.toFixed(1)}%</span>
+                </div>
+              )}
+              {showCashoutGoal && (
+                <div>
+                  <div className="flex items-center justify-between text-white mb-2">
+                    <div className="flex items-center">
+                      <User className="w-4 h-4 mr-2 text-purple-400" />
+                      <span className="font-medium">Cashouts</span>
+                    </div>
+                    <span className="font-medium">{cashoutProgress} / {cashoutTarget}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                      <div
+                        className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                        style={{ width: `${cashoutPct}%` }}
+                      />
+                    </div>
+                    <div className={`w-5 h-5 border ${cashoutProgress >= cashoutTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center`}>
+                      {cashoutProgress >= cashoutTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500 mt-1 block">{cashoutPct.toFixed(1)}%</span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-[#2A2A2A] p-5 rounded-xl border border-gray-800">
             <p className="text-gray-400 text-sm mb-2">Agencies</p>

@@ -1,13 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, Eye, User, Building2, Diamond, TrendingUp, Coins, ChevronDown, Lock, Shield, Crown } from 'lucide-react';
 import { TableSkeleton } from './LoadingSkeleton';
 import authService from '../services/authService';
+import { SUB_USER_ROLES, fetchSubUserCurrentGoal } from '../utils/subUserGoals';
 
-const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
+const AgencyDetail = ({
+  agencyId: agencyIdProp,
+  hosttoagnc: hosttoagncProp,
+  masterAgencyCode: masterAgencyCodeProp,
+  agencyCode: agencyCodeProp,
+  onBack: onBackProp,
+}) => {
   const { agencyId: agencyIdParam } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const agencyId = agencyIdProp || agencyIdParam;
+  // Hosts under an agency are keyed by hosttoagnc (e.g. AC101), not agency usercode (e.g. PX101)
+  const hosttoagnc = hosttoagncProp || location.state?.hosttoagnc || agencyIdProp || agencyIdParam;
+  const masterAgencyCode =
+    masterAgencyCodeProp ||
+    location.state?.masterAgencyCode ||
+    location.state?.ownerId ||
+    location.state?.owner ||
+    null;
+  const agencyCode =
+    agencyCodeProp ||
+    location.state?.agencyCode ||
+    location.state?.agencyId ||
+    null;
   const onBack = onBackProp || (() => navigate(-1));
   const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,54 +38,46 @@ const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
     totalRedeem: 0,
     hostCount: 0
   });
-
-  // Mock targets
-  const goals = {
-    diamondTarget: 10000,
-    hostTarget: 10
-  };
-  
-  // We can fetch the agency details separately if needed, but for now we focus on the list of hosts
-  // as per the requirement.
+  const [goals, setGoals] = useState(null);
+  const [goalsLoading, setGoalsLoading] = useState(false);
 
   useEffect(() => {
     const fetchHosts = async () => {
-      if (!agencyId) return;
+      if (!hosttoagnc) return;
       setLoading(true);
       try {
-        const result = await authService.getAllSubUserByCode(agencyId, 'HOST');
-        
+        const result = await authService.getAllSubUserByCode(hosttoagnc, SUB_USER_ROLES.HOST);
+
         if (result.success && Array.isArray(result.data)) {
-            const transformedHosts = result.data.map(host => ({
-                name: host.name,
-                id: authService.extractUserCode(host) || host.code || host.usercode || host.id,
-                owner: host.ownername || '-',
-                ownerId: host.owner || agencyId,
-                hosts: [],
-                overalldiamonds: Number(host.totaldiamonds) || 0,
-                stage: host.stage || "Unknown",
-                currentslab: host.currentSlab || "Unknown",
-                activehost: host.activecashouthost || "-",
-                redeem: Number(host.redeem) || 0,
-                earnings: host.earning,
-                coins: Number(host.coins) || 0,
-                joiningDate: host.joiningdate || host.createdAt || new Date(),
-            }));
-            setHosts(transformedHosts);
+          const transformedHosts = result.data.map(host => ({
+            name: host.name,
+            id: authService.extractUserCode(host) || host.code || host.usercode || host.id,
+            owner: host.ownername || '-',
+            ownerId: host.owner || hosttoagnc,
+            hosts: [],
+            overalldiamonds: Number(host.totaldiamonds) || 0,
+            stage: host.stage || 'Unknown',
+            currentslab: host.currentSlab || 'Unknown',
+            activehost: host.activecashouthost || '-',
+            redeem: Number(host.redeem) || 0,
+            earnings: host.earning,
+            coins: Number(host.coins) || 0,
+            joiningDate: host.joiningdate || host.createdAt || new Date(),
+          }));
+          setHosts(transformedHosts);
 
-            const calculatedStats = transformedHosts.reduce((acc, curr) => ({
-                totalDiamonds: acc.totalDiamonds + (curr.overalldiamonds || 0),
-                totalCoins: acc.totalCoins + (curr.coins || 0),
-                totalRedeem: acc.totalRedeem + (curr.redeem || 0),
-                hostCount: acc.hostCount + 1
-            }), { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 });
-            setStats(calculatedStats);
-
+          const calculatedStats = transformedHosts.reduce((acc, curr) => ({
+            totalDiamonds: acc.totalDiamonds + (curr.overalldiamonds || 0),
+            totalCoins: acc.totalCoins + (curr.coins || 0),
+            totalRedeem: acc.totalRedeem + (curr.redeem || 0),
+            hostCount: acc.hostCount + 1,
+          }), { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 });
+          setStats(calculatedStats);
         } else {
-            setHosts([]);
+          setHosts([]);
         }
       } catch (error) {
-        console.error("Error fetching hosts:", error);
+        console.error('Error fetching hosts:', error);
         setHosts([]);
       } finally {
         setLoading(false);
@@ -73,7 +85,35 @@ const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
     };
 
     fetchHosts();
-  }, [agencyId]);
+  }, [hosttoagnc]);
+
+  // Current agency goal: getAllSubUserByCode(maCode, 'AGENCY') → item.goals
+  useEffect(() => {
+    let ignore = false;
+    const loadGoals = async () => {
+      if (!masterAgencyCode) {
+        setGoals(null);
+        return;
+      }
+      setGoalsLoading(true);
+      try {
+        const { success, goal } = await fetchSubUserCurrentGoal({
+          parentCode: masterAgencyCode,
+          role: SUB_USER_ROLES.AGENCY,
+          entityCodes: [agencyCode, hosttoagnc, agencyIdProp, agencyIdParam],
+        });
+        if (ignore) return;
+        setGoals(success && goal ? goal : null);
+      } catch (err) {
+        console.error('Error fetching agency goals:', err);
+        if (!ignore) setGoals(null);
+      } finally {
+        if (!ignore) setGoalsLoading(false);
+      }
+    };
+    loadGoals();
+    return () => { ignore = true; };
+  }, [masterAgencyCode, agencyCode, hosttoagnc, agencyIdProp, agencyIdParam]);
 
   const filteredHosts = hosts.filter(host => {
      const matchesSearch = host.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,9 +121,22 @@ const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
      return matchesSearch;
   });
 
-  const goalsCompleted = 
-    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) + 
-    (stats.hostCount >= goals.hostTarget ? 1 : 0);
+  const diamondTarget = goals?.diamondTarget ?? 0;
+  const cashoutTarget = goals?.cashoutTarget ?? 0;
+  const diamondProgress = goals?.diamondEarned ?? 0;
+  const cashoutProgress = goals?.cashoutCount ?? 0;
+  const diamondPct = Number.isFinite(goals?.diamondAchievedPercent)
+    ? Math.min(goals.diamondAchievedPercent, 100)
+    : (diamondTarget > 0 ? Math.min((diamondProgress / diamondTarget) * 100, 100) : 0);
+  const cashoutPct = Number.isFinite(goals?.cashoutAchievedPercent)
+    ? Math.min(goals.cashoutAchievedPercent, 100)
+    : (cashoutTarget > 0 ? Math.min((cashoutProgress / cashoutTarget) * 100, 100) : 0);
+  const showDiamondGoal = Boolean(goals) && diamondTarget > 0;
+  const showCashoutGoal = Boolean(goals) && cashoutTarget > 0;
+  const goalsTotal = (showDiamondGoal ? 1 : 0) + (showCashoutGoal ? 1 : 0);
+  const goalsCompleted =
+    (showDiamondGoal && diamondProgress >= diamondTarget ? 1 : 0) +
+    (showCashoutGoal && cashoutProgress >= cashoutTarget ? 1 : 0);
 
   return (
     <main className="flex-1 p-4 sm:p-6 overflow-y-auto bg-[#000000]/20 backdrop-blur-md" role="main">
@@ -118,47 +171,78 @@ const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
          <div className="flex flex-col lg:flex-row gap-6 mb-10">
             {/* Left Column: Goals + Stats */}
             <div className="w-full lg:w-[65%] flex flex-col gap-8">
-                {/* Goals Section */}
+                {/* Goals — item.goals from getAllSubUserByCode(maCode, 'AGENCY') */}
                 <div className="w-full border border-gray-800 rounded-xl p-5">
-                    <h2 className="text-xl font-bold text-white mb-6">{goalsCompleted}/2 Goals Remaining</h2>
-                    
-                    {/* Diamond Goal */}
-                    <div className="mb-6">
-                        <div className="flex items-center text-white mb-2">
-                        <Diamond className="w-4 h-4 mr-2 text-blue-400" />
-                        <span className="font-medium">{stats.totalDiamonds} / {goals.diamondTarget}</span>
-                        </div>
-                        <div className="flex items-center">
-                        <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
-                            <div 
-                                className="h-full bg-pink-500 rounded-full transition-all duration-500" 
-                                style={{width: `${Math.min((stats.totalDiamonds/goals.diamondTarget)*100, 100)}%`}}
-                            ></div>
-                        </div>
-                        <div className={`w-5 h-5 border ${stats.totalDiamonds >= goals.diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
-                            {stats.totalDiamonds >= goals.diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
-                        </div>
-                        </div>
-                    </div>
+                    {goalsLoading ? (
+                      <p className="text-gray-400 text-sm">Loading goals...</p>
+                    ) : !goals || goalsTotal === 0 ? (
+                      <div>
+                        <h2 className="text-xl font-bold text-white mb-2">Goals</h2>
+                        <p className="text-gray-500 text-sm">
+                          {masterAgencyCode
+                            ? 'No current goal assigned for this agency.'
+                            : 'Master agency code missing — cannot load agency goals.'}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                    <h2 className="text-xl font-bold text-white mb-1">
+                      {goalsCompleted}/{goalsTotal} Goals Complete
+                    </h2>
+                    <p className="text-gray-400 text-sm mb-6">
+                      {goals.tierName}
+                      {goals.currentMonth ? ` · ${goals.currentMonth}` : ''}
+                    </p>
 
-                    {/* Host Goal */}
+                    {showDiamondGoal && (
                     <div className="mb-6">
-                        <div className="flex items-center text-white mb-2">
-                        <User className="w-4 h-4 mr-2 text-purple-400" />
-                        <span className="font-medium">{stats.hostCount} / {goals.hostTarget}</span>
+                        <div className="flex items-center justify-between text-white mb-2">
+                          <div className="flex items-center">
+                            <Diamond className="w-4 h-4 mr-2 text-blue-400" />
+                            <span className="font-medium">Diamonds</span>
+                          </div>
+                          <span className="font-medium">{diamondProgress} / {diamondTarget}</span>
                         </div>
                         <div className="flex items-center">
                         <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
-                            <div 
-                                className="h-full bg-pink-500 rounded-full transition-all duration-500" 
-                                style={{width: `${Math.min((stats.hostCount/goals.hostTarget)*100, 100)}%`}}
+                            <div
+                                className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                                style={{width: `${diamondPct}%`}}
                             ></div>
                         </div>
-                        <div className={`w-5 h-5 border ${stats.hostCount >= goals.hostTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
-                            {stats.hostCount >= goals.hostTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                        <div className={`w-5 h-5 border ${diamondProgress >= diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                            {diamondProgress >= diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
                         </div>
                         </div>
+                        <span className="text-xs text-gray-500 mt-1 block">{diamondPct.toFixed(1)}%</span>
                     </div>
+                    )}
+
+                    {showCashoutGoal && (
+                    <div className="mb-2">
+                        <div className="flex items-center justify-between text-white mb-2">
+                          <div className="flex items-center">
+                            <User className="w-4 h-4 mr-2 text-purple-400" />
+                            <span className="font-medium">Cashouts</span>
+                          </div>
+                          <span className="font-medium">{cashoutProgress} / {cashoutTarget}</span>
+                        </div>
+                        <div className="flex items-center">
+                        <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
+                            <div
+                                className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                                style={{width: `${cashoutPct}%`}}
+                            ></div>
+                        </div>
+                        <div className={`w-5 h-5 border ${cashoutProgress >= cashoutTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                            {cashoutProgress >= cashoutTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                        </div>
+                        </div>
+                        <span className="text-xs text-gray-500 mt-1 block">{cashoutPct.toFixed(1)}%</span>
+                    </div>
+                    )}
+                      </>
+                    )}
                 </div>
 
                 {/* Stats & Filter Section */}
@@ -264,7 +348,7 @@ const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
         ) : (
           <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl overflow-hidden">
             <div className="p-6 border-b border-gray-800">
-              <h2 className="text-xl font-semibold text-white">List of Hosts for Agency: {agencyId}</h2>
+              <h2 className="text-xl font-semibold text-white">List of Hosts for Agency: {hosttoagnc}</h2>
             </div>
             
             <div className="overflow-x-auto">

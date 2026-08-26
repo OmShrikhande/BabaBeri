@@ -5,6 +5,7 @@ import { normalizeUserType } from '../utils/roleBasedAccess';
 import authService from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { APP_CONFIG } from '../config/api';
+import { SUB_USER_ROLES, fetchSubUserCurrentGoal } from '../utils/subUserGoals';
 
 const ownerBase = `/${APP_CONFIG.OWNER_SECRET_PATH}`;
 
@@ -25,16 +26,16 @@ const MasterAgency = ({ onNavigateToDetail }) => {
   const [agenciesList, setAgenciesList] = useState([]);
   const [agenciesLoading, setAgenciesLoading] = useState(false);
   const [agenciesError, setAgenciesError] = useState(null);
+  const [maGoals, setMaGoals] = useState(null);
+  const [maGoalsLoading, setMaGoalsLoading] = useState(false);
 
   useEffect(() => {
     if (selectedAgency && selectedAgency.agencyId) {
       setAgenciesLoading(true);
       setAgenciesError(null);
-      // Fetch agencies under the master agency. Assuming role 'AGENCY' for children.
-      authService.getAllSubUserByCode(selectedAgency.agencyId, 'AGENCY')
+      authService.getAllSubUserByCode(selectedAgency.agencyId, SUB_USER_ROLES.AGENCY)
         .then(res => {
           if (res.success) {
-            // Ensure data is array
             setAgenciesList(Array.isArray(res.data) ? res.data : []);
           } else {
             setAgenciesError(res.error || 'Failed to load agencies');
@@ -49,6 +50,39 @@ const MasterAgency = ({ onNavigateToDetail }) => {
     } else {
       setAgenciesList([]);
     }
+  }, [selectedAgency]);
+
+  // MA current goal: getAllSubUserByCode(adminCode, 'MASTER_AGENCY') → item.goals
+  useEffect(() => {
+    let ignore = false;
+    const loadMaGoals = async () => {
+      if (!selectedAgency?.agencyId) {
+        setMaGoals(null);
+        return;
+      }
+      const adminCode = selectedAgency.subAdminId || selectedAgency.owner;
+      if (!adminCode) {
+        setMaGoals(null);
+        return;
+      }
+      setMaGoalsLoading(true);
+      try {
+        const { success, goal } = await fetchSubUserCurrentGoal({
+          parentCode: adminCode,
+          role: SUB_USER_ROLES.MASTER_AGENCY,
+          entityCodes: [selectedAgency.agencyId],
+        });
+        if (ignore) return;
+        setMaGoals(success && goal ? goal : null);
+      } catch (err) {
+        console.error('Error fetching master agency goals:', err);
+        if (!ignore) setMaGoals(null);
+      } finally {
+        if (!ignore) setMaGoalsLoading(false);
+      }
+    };
+    loadMaGoals();
+    return () => { ignore = true; };
   }, [selectedAgency]);
 
   const [apiMasterAgencies, setApiMasterAgencies] = useState(null); // null = not loaded, [] = loaded empty
@@ -176,12 +210,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
 
   const [showCreate, setShowCreate] = useState(false);
 
-  // Calculate stats for the selected agency detail view
-  const goals = {
-    diamondTarget: 100000,
-    hostTarget: 20
-  };
-
+  // Stats for selected MA detail (agencies under this MA)
   const stats = React.useMemo(() => {
     if (!agenciesList || agenciesList.length === 0) {
       return { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 };
@@ -194,9 +223,22 @@ const MasterAgency = ({ onNavigateToDetail }) => {
     }), { totalDiamonds: 0, totalCoins: 0, totalRedeem: 0, hostCount: 0 });
   }, [agenciesList]);
 
+  const diamondTarget = maGoals?.diamondTarget ?? 0;
+  const cashoutTarget = maGoals?.cashoutTarget ?? 0;
+  const diamondProgress = maGoals?.diamondEarned ?? 0;
+  const cashoutProgress = maGoals?.cashoutCount ?? 0;
+  const diamondPct = Number.isFinite(maGoals?.diamondAchievedPercent)
+    ? Math.min(maGoals.diamondAchievedPercent, 100)
+    : (diamondTarget > 0 ? Math.min((diamondProgress / diamondTarget) * 100, 100) : 0);
+  const cashoutPct = Number.isFinite(maGoals?.cashoutAchievedPercent)
+    ? Math.min(maGoals.cashoutAchievedPercent, 100)
+    : (cashoutTarget > 0 ? Math.min((cashoutProgress / cashoutTarget) * 100, 100) : 0);
+  const showDiamondGoal = Boolean(maGoals) && diamondTarget > 0;
+  const showCashoutGoal = Boolean(maGoals) && cashoutTarget > 0;
   const goalsCompleted =
-    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) +
-    (stats.hostCount >= goals.hostTarget ? 1 : 0);
+    (showDiamondGoal && diamondProgress >= diamondTarget ? 1 : 0) +
+    (showCashoutGoal && cashoutProgress >= cashoutTarget ? 1 : 0);
+  const goalsTotal = (showDiamondGoal ? 1 : 0) + (showCashoutGoal ? 1 : 0);
 
   if (selectedAgency) {
     return (
@@ -229,47 +271,76 @@ const MasterAgency = ({ onNavigateToDetail }) => {
             <div className="flex flex-col lg:flex-row gap-6 mb-10">
               {/* Left Column: Goals + Stats */}
               <div className="w-full lg:w-[65%] flex flex-col gap-8">
-                {/* Goals Section */}
+                {/* Goals — item.goals from getAllSubUserByCode(adminCode, 'MASTER_AGENCY') */}
                 <div className="w-full border border-gray-800 rounded-xl p-5">
-                  <h2 className="text-xl font-bold text-white mb-6">{goalsCompleted}/2 Goals Remaining</h2>
+                  {maGoalsLoading ? (
+                    <p className="text-gray-400 text-sm">Loading goals...</p>
+                  ) : !maGoals || goalsTotal === 0 ? (
+                    <div>
+                      <h2 className="text-xl font-bold text-white mb-2">Goals</h2>
+                      <p className="text-gray-500 text-sm">
+                        {selectedAgency.subAdminId || selectedAgency.owner
+                          ? 'No current goal assigned for this master agency.'
+                          : 'Admin code missing — cannot load master agency goals.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                  <h2 className="text-xl font-bold text-white mb-1">{goalsCompleted}/{goalsTotal} Goals Complete</h2>
+                  <p className="text-gray-400 text-sm mb-6">
+                    {maGoals.tierName}
+                    {maGoals.currentMonth ? ` · ${maGoals.currentMonth}` : ''}
+                  </p>
 
-                  {/* Diamond Goal */}
+                  {showDiamondGoal && (
                   <div className="mb-6">
-                    <div className="flex items-center text-white mb-2">
-                      <Diamond className="w-4 h-4 mr-2 text-blue-400" />
-                      <span className="font-medium">{stats.totalDiamonds} / {goals.diamondTarget}</span>
+                    <div className="flex items-center justify-between text-white mb-2">
+                      <div className="flex items-center">
+                        <Diamond className="w-4 h-4 mr-2 text-blue-400" />
+                        <span className="font-medium">Diamonds</span>
+                      </div>
+                      <span className="font-medium">{diamondProgress} / {diamondTarget}</span>
                     </div>
                     <div className="flex items-center">
                       <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
                         <div
                           className="h-full bg-pink-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((stats.totalDiamonds / goals.diamondTarget) * 100, 100)}%` }}
+                          style={{ width: `${diamondPct}%` }}
                         ></div>
                       </div>
-                      <div className={`w-5 h-5 border ${stats.totalDiamonds >= goals.diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
-                        {stats.totalDiamonds >= goals.diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                      <div className={`w-5 h-5 border ${diamondProgress >= diamondTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                        {diamondProgress >= diamondTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
                       </div>
                     </div>
+                    <span className="text-xs text-gray-500 mt-1 block">{diamondPct.toFixed(1)}%</span>
                   </div>
+                  )}
 
-                  {/* Host Goal */}
-                  <div className="mb-6">
-                    <div className="flex items-center text-white mb-2">
-                      <User className="w-4 h-4 mr-2 text-purple-400" />
-                      <span className="font-medium">{stats.hostCount} / {goals.hostTarget}</span>
+                  {showCashoutGoal && (
+                  <div className="mb-2">
+                    <div className="flex items-center justify-between text-white mb-2">
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-2 text-purple-400" />
+                        <span className="font-medium">Cashouts</span>
+                      </div>
+                      <span className="font-medium">{cashoutProgress} / {cashoutTarget}</span>
                     </div>
                     <div className="flex items-center">
                       <div className="flex-1 h-3 bg-gray-700 rounded-full mr-4 overflow-hidden">
                         <div
                           className="h-full bg-pink-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min((stats.hostCount / goals.hostTarget) * 100, 100)}%` }}
+                          style={{ width: `${cashoutPct}%` }}
                         ></div>
                       </div>
-                      <div className={`w-5 h-5 border ${stats.hostCount >= goals.hostTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
-                        {stats.hostCount >= goals.hostTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
+                      <div className={`w-5 h-5 border ${cashoutProgress >= cashoutTarget ? 'border-pink-500' : 'border-gray-500'} rounded flex items-center justify-center transition-colors`}>
+                        {cashoutProgress >= cashoutTarget && <div className="w-3 h-3 bg-pink-500 rounded-sm" />}
                       </div>
                     </div>
+                    <span className="text-xs text-gray-500 mt-1 block">{cashoutPct.toFixed(1)}%</span>
                   </div>
+                  )}
+                    </>
+                  )}
                 </div>
 
                 {/* Stats & Filter Section */}
@@ -468,23 +539,35 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                   )}
                   {!agenciesLoading && !agenciesError && agenciesList.map((agency, index) => {
                     const agencyCode = authService.extractUserCode(agency) || agency.agencyId || agency.code || agency.usercode;
+                    const hosttoagnc = agency.hosttoagnc || agency.hostToAgnc || '';
+                    const detailCode = hosttoagnc || agencyCode;
                     return (
                     <div
                       key={agencyCode || agency.id || index}
                       role="button"
                       tabIndex={0}
                       onClick={() => {
-                        if (!agencyCode) return;
-                        // Prefer ownerarea agency detail route (hosts via getAllSubUserByCode HOST)
-                        navigate(`${ownerBase}/agencies/${encodeURIComponent(agencyCode)}`, {
-                          state: { name: agency.name || agency.username },
+                        if (!detailCode) return;
+                        // Pass hosttoagnc for getAllSubUserByCode(..., 'HOST')
+                        navigate(`${ownerBase}/agencies/${encodeURIComponent(detailCode)}`, {
+                          state: {
+                            name: agency.name || agency.username,
+                            hosttoagnc: detailCode,
+                            agencyCode,
+                            masterAgencyCode: selectedAgency.agencyId,
+                          },
                         });
                       }}
                       onKeyDown={(e) => {
-                        if ((e.key === 'Enter' || e.key === ' ') && agencyCode) {
+                        if ((e.key === 'Enter' || e.key === ' ') && detailCode) {
                           e.preventDefault();
-                          navigate(`${ownerBase}/agencies/${encodeURIComponent(agencyCode)}`, {
-                            state: { name: agency.name || agency.username },
+                          navigate(`${ownerBase}/agencies/${encodeURIComponent(detailCode)}`, {
+                            state: {
+                              name: agency.name || agency.username,
+                              hosttoagnc: detailCode,
+                              agencyCode,
+                              masterAgencyCode: selectedAgency.agencyId,
+                            },
                           });
                         }
                       }}
@@ -535,9 +618,14 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!agencyCode) return;
-                            navigate(`${ownerBase}/agencies/${encodeURIComponent(agencyCode)}`, {
-                              state: { name: agency.name || agency.username },
+                            if (!detailCode) return;
+                            navigate(`${ownerBase}/agencies/${encodeURIComponent(detailCode)}`, {
+                              state: {
+                                name: agency.name || agency.username,
+                                hosttoagnc: detailCode,
+                                agencyCode,
+                                masterAgencyCode: selectedAgency.agencyId,
+                              },
                             });
                           }}
                           className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"

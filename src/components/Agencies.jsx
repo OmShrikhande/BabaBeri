@@ -15,7 +15,7 @@ const Agencies = () => {
   const [selectedAgency, setSelectedAgency] = useState(null);
   const [agencies, setAgencies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewingAgencyId, setViewingAgencyId] = useState(null);
+  const [viewingAgency, setViewingAgency] = useState(null);
   const [error, setError] = useState('');
   
   // Pagination State
@@ -40,10 +40,12 @@ const Agencies = () => {
       if (result.success) {
         const items = Array.isArray(result.data) ? result.data : (result.data?.result || result.data?.data || []);
         const transformedAgencies = items.map(agency => {
-          const id = authService.extractUserCode(agency) || agency.hosttoagnc || agency.code || '';
+          const id = authService.extractUserCode(agency) || agency.code || '';
+          const hosttoagnc = agency.hosttoagnc || agency.hostToAgnc || '';
           return {
             name: agency.name || agency.username || 'Agency',
             id,
+            hosttoagnc,
             owner: agency.ownername || agency.ownerName || '-',
             ownerId: agency.owner || null,
             hosts: agency.hosts ?? agency.hostCount ?? 0,
@@ -56,7 +58,7 @@ const Agencies = () => {
             coins: agency.coins || 0,
             joiningDate: agency.joiningdate || agency.joinDate || agency.createdAt || '—',
           };
-        }).filter((a) => a.id);
+        }).filter((a) => a.id || a.hosttoagnc);
         setAgencies(transformedAgencies);
       } else {
         setError(result.error || 'Failed to fetch agencies');
@@ -70,7 +72,8 @@ const Agencies = () => {
 
   const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(agency.id).toLowerCase().includes(searchTerm.toLowerCase());
+      String(agency.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(agency.hosttoagnc || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTier = filterTier === 'all' || agency.tier === filterTier;
     return matchesSearch && matchesTier;
   });
@@ -79,8 +82,10 @@ const Agencies = () => {
   const totalPages = Math.ceil(filteredAgencies.length / itemsPerPage);
   const paginatedAgencies = filteredAgencies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleViewAgency = (agencyId) => {
-    setViewingAgencyId(agencyId);
+  const handleViewAgency = (agency) => {
+    const code = agency?.hosttoagnc || agency?.id;
+    if (!code) return;
+    setViewingAgency(agency);
   };
 
   const handleMoveEntity = (agency) => {
@@ -96,11 +101,13 @@ const Agencies = () => {
     setSelectedAgency(null);
   };
 
-  if (viewingAgencyId) {
+  if (viewingAgency) {
     return (
       <AgencyDetail
-        agencyId={viewingAgencyId}
-        onBack={() => setViewingAgencyId(null)}
+        hosttoagnc={viewingAgency.hosttoagnc || viewingAgency.id}
+        agencyCode={viewingAgency.id}
+        masterAgencyCode={viewingAgency.ownerId}
+        onBack={() => setViewingAgency(null)}
       />
     );
   }
@@ -244,7 +251,7 @@ const Agencies = () => {
                       <tr
                         key={agency.id}
                         className="hover:bg-[#1A1A1A] transition-colors cursor-pointer group"
-                        onClick={() => handleViewAgency(agency.id)}
+                        onClick={() => handleViewAgency(agency)}
                       >
                         {/* Agency Name */}
                         <td className="py-3.5 px-4">
@@ -328,7 +335,7 @@ const Agencies = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleViewAgency(agency.id);
+                                handleViewAgency(agency);
                               }}
                               className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
                               title="View Agency Details"

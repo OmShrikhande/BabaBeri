@@ -31,28 +31,55 @@ const AgencyDashboard = () => {
         setLoading(true);
         setError(null);
 
-        const info = authService.getUserInfo();
+        let info = (await authService.ensureUserProfileCached()) || authService.getUserInfo();
+
+        const resolveHosttoagnc = (profile) =>
+          profile?.hosttoagnc ||
+          profile?.hostToAgnc ||
+          profile?.profile?.hosttoagnc ||
+          profile?.profile?.hostToAgnc ||
+          '';
+
+        // Prefer hosttoagnc from a fresh profile when cache only has agency usercode
+        if (!resolveHosttoagnc(info)) {
+          try {
+            const fresh = await authService.fetchUserProfile();
+            if (fresh && typeof fresh === 'object') {
+              info = { ...(info || {}), ...fresh };
+            }
+          } catch (profileErr) {
+            console.warn('Could not refresh agency profile for hosttoagnc:', profileErr);
+          }
+        }
+
         if (!ignore) {
           setUserInfo(info);
         }
 
-        const myCode = authService.extractUserCode(info);
-
-        const hostsResponse = await authService.getActiveHosts();
+        // Same API as AgencyDetail: getAllSubUserByCode(hosttoagnc, 'HOST') — not agency usercode
+        const hosttoagnc = resolveHosttoagnc(info);
+        const hostsResponse = hosttoagnc
+          ? await authService.getAllSubUserByCode(hosttoagnc, 'HOST')
+          : { success: false, error: 'Agency hosttoagnc not found' };
 
         if (ignore) return;
 
         if (hostsResponse.success) {
-          const allHosts = Array.isArray(hostsResponse.data) ? hostsResponse.data : [];
-          const myHosts = allHosts.filter(host => host.owner === myCode);
-          const activeHosts = myHosts.filter(host => host.status?.toLowerCase() === 'activate');
+          const myHosts = Array.isArray(hostsResponse.data) ? hostsResponse.data : [];
+          const activeHosts = myHosts.filter((host) =>
+            String(host.status || '').toLowerCase() === 'activate' ||
+            String(host.status || '').toLowerCase() === 'active'
+          );
 
           setHosts(myHosts);
           setMetrics({
             totalHosts: myHosts.length,
             activeHosts: activeHosts.length,
-            diamonds: 0
+            diamonds: myHosts.reduce((sum, h) => sum + (Number(h.diamond) || Number(h.totaldiamonds) || 0), 0),
           });
+        } else {
+          setHosts([]);
+          setError(hostsResponse.error || 'Failed to load hosts');
         }
       } catch (err) {
         if (!ignore) {

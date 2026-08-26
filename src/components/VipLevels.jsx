@@ -409,7 +409,7 @@ const VipLevels = () => {
           </div>
 
           {/* Info note */}
-          <div className="bg-[#121212] border border-gray-700 rounded-lg p-4 mb-6">
+          {/* <div className="bg-[#121212] border border-gray-700 rounded-lg p-4 mb-6">
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-[#F72585] mt-0.5 flex-shrink-0" />
               <div>
@@ -422,7 +422,7 @@ const VipLevels = () => {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Error */}
@@ -697,10 +697,9 @@ const VipLevels = () => {
 
                         {/* Days Left */}
                         <td className="py-3 px-4">
-                          <span className={`text-sm font-semibold ${
-                            member.expired ? 'text-red-400' :
+                          <span className={`text-sm font-semibold ${member.expired ? 'text-red-400' :
                             member.daysLeft <= 30 ? 'text-yellow-400' : 'text-green-400'
-                          }`}>
+                            }`}>
                             {member.expired ? '—' : `${member.daysLeft ?? '—'}d`}
                           </span>
                         </td>
@@ -871,10 +870,10 @@ const VipLevels = () => {
                 { label: 'Validity Days *', field: 'validityDays', type: 'number', placeholder: 'e.g. 30' },
                 ...(!editingPlan
                   ? [
-                      { label: 'Valid For (days)', field: 'validFor', type: 'number', placeholder: 'e.g. 30' },
-                      { label: 'VIP a Friend Count', field: 'vipAFriend', type: 'number', placeholder: 'e.g. 3' },
-                      { label: 'Superadmin %', field: 'superadminPercentage', type: 'number', placeholder: 'e.g. 10' },
-                    ]
+                    { label: 'Valid For (days)', field: 'validFor', type: 'number', placeholder: 'e.g. 30' },
+                    { label: 'VIP a Friend Count', field: 'vipAFriend', type: 'number', placeholder: 'e.g. 3' },
+                    { label: 'Superadmin %', field: 'superadminPercentage', type: 'number', placeholder: 'e.g. 10' },
+                  ]
                   : []),
               ].map(({ label, field, type, placeholder }) => (
                 <div key={field}>

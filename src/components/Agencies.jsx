@@ -5,95 +5,93 @@ import EntityMovementModal from './EntityMovementModal';
 import authService from '../services/authService';
 import AgencyDetail from './AgencyDetail';
 import { useAuth } from '../context/AuthContext';
-import { a } from 'framer-motion/client';
+import { normalizeUserType } from '../utils/roleBasedAccess';
 
-const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: propLoading = false }) => {
+const Agencies = () => {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTier, setFilterTier] = useState('all');
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedAgency, setSelectedAgency] = useState(null);
-  const [agencies, setAgencies] = useState(propAgencies);
-  const [loading, setLoading] = useState(propLoading);
+  const [agencies, setAgencies] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [viewingAgencyId, setViewingAgencyId] = useState(null);
+  const [error, setError] = useState('');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchAgencies = async () => {
-      console.log('Starting to fetch agencies...');
       setLoading(true);
-      const role = authService.getUserType();
+      setError('');
+      const role = normalizeUserType(authService.getUserType() || currentUser?.userType);
       const userInfo = authService.getUserInfo();
-      const adminCode = authService.extractUserCode(userInfo);
-      
+      const myCode = authService.extractUserCode(userInfo);
+
       let result;
-      if (role === 'admin' && adminCode) {
-        result = await authService.getAllSubUserByCode(adminCode, 'AGENCY');
+      if ((role === 'admin' || role === 'master-agency') && myCode) {
+        result = await authService.getAllSubUserByCode(myCode, 'AGENCY');
       } else {
         result = await authService.getUsersByRole('AGENCY');
       }
-      console.log('API result:', result);
-      if (result.success && Array.isArray(result.data)) {
-        console.log('Fetched agencies:', result.data);
-        const transformedAgencies = result.data.map(agency => ({
-          name: agency.name,
-          id: agency.hosttoagnc || agency.code,
-          owner: agency.ownername || '-', // Default owner since not in API
-          ownerId: agency.owner || null, // Default since not in API
-          hosts: agency.hosts || "-", // Default empty array
-          overalldiamonds: agency.totaldiamonds || 0, // Default overall diamonds since not in API
-          stage: agency.stage || "Unknown", // Default stage since not in API
-          currentslab: agency.currentSlab || "Unknown", // Default current slab since not in API
-          activehost: agency.activecashouthost || "-", // Default active cashout host since not in API
-          redeem: agency.redeem || "--", // Default redeem since not in API
-          earnings: agency.earning, // Default since not in API
-          coins: agency.coins || 0, // Default coins since not in API
-          joiningDate: agency.joiningdate || new Date(), // Default joining date since not in API
-        }));
-        console.log('Transformed agencies:', transformedAgencies);
+
+      if (result.success) {
+        const items = Array.isArray(result.data) ? result.data : (result.data?.result || result.data?.data || []);
+        const transformedAgencies = items.map(agency => {
+          const id = authService.extractUserCode(agency) || agency.hosttoagnc || agency.code || '';
+          return {
+            name: agency.name || agency.username || 'Agency',
+            id,
+            owner: agency.ownername || agency.ownerName || '-',
+            ownerId: agency.owner || null,
+            hosts: agency.hosts ?? agency.hostCount ?? 0,
+            overalldiamonds: agency.totaldiamonds || agency.diamond || 0,
+            stage: agency.stage || '—',
+            currentslab: agency.currentSlab || agency.slab || '—',
+            activehost: agency.activecashouthost || '—',
+            redeem: agency.redeem || agency.redeemed || '—',
+            earnings: agency.earning || agency.myEarning,
+            coins: agency.coins || 0,
+            joiningDate: agency.joiningdate || agency.joinDate || agency.createdAt || '—',
+          };
+        }).filter((a) => a.id);
         setAgencies(transformedAgencies);
       } else {
-        console.error('Failed to fetch agencies:', result.error);
+        setError(result.error || 'Failed to fetch agencies');
         setAgencies([]);
       }
       setLoading(false);
-      console.log('Loading set to false');
     };
 
     fetchAgencies();
-  }, []);
+  }, [currentUser?.userType]);
 
   const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      agency.id.toLowerCase().includes(searchTerm.toLowerCase());
+      String(agency.id).toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTier = filterTier === 'all' || agency.tier === filterTier;
     return matchesSearch && matchesTier;
   });
+
+  // Paginated Slices
+  const totalPages = Math.ceil(filteredAgencies.length / itemsPerPage);
+  const paginatedAgencies = filteredAgencies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleViewAgency = (agencyId) => {
     setViewingAgencyId(agencyId);
   };
 
-  const handleDeleteAgency = (agencyId, agencyName) => {
-    // In a real app, this would make an API call
-    console.log(`Deleting agency: ${agencyName} (${agencyId})`);
-    // You can implement actual delete logic here
-  };
-
   const handleMoveEntity = (agency) => {
-    // Add current parent information for the modal
-    const agencyWithParent = {
+    setSelectedAgency({
       ...agency,
-      currentParent: 'Current Master Agency', // This would come from actual data
-      currentSubAdminId: 1 // This would come from actual data
-    };
-    setSelectedAgency(agencyWithParent);
+      currentParent: agency.owner || '—',
+    });
     setShowMovementModal(true);
   };
 
-  const handleEntityMove = async (moveData) => {
-    // Here you would implement the actual move logic
-    console.log('Moving agency:', moveData);
-    // For now, just close the modal
+  const handleEntityMove = async () => {
     setShowMovementModal(false);
     setSelectedAgency(null);
   };
@@ -108,8 +106,8 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
   }
 
   return (
-    <main className="flex-1 p-4 sm:p-6 overflow-y-auto bg-[#000000]/20 backdrop-blur-md" role="main">
-      <div className="max-wmx-auto">
+    <main className="flex-1 p-4 sm:p-6 overflow-y-auto bg-[#1A1A1A] min-h-full" role="main">
+      <div className="max-w-full mx-auto">
         {/* Header */}
         <div className="flex flex-col space-y-6 lg:flex-row lg:items-center lg:justify-between lg:space-y-0 mb-8">
           <div className="flex items-center space-x-3">
@@ -212,7 +210,7 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
         {loading ? (
           <TableSkeleton rows={10} columns={6} showHeader={true} />
         ) : (
-          <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl overflow-hidden">
+          <div className="bg-[#121212] border border-gray-800 rounded-xl overflow-hidden">
             <div className="p-6 border-b border-gray-800">
               <h2 className="text-xl font-semibold text-white">List of Agencies</h2>
               {/* <p className="text-gray-400 text-sm mt-1">
@@ -225,117 +223,117 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
                 <table className="w-full">
                   <thead className="bg-[#1A1A1A]">
                     <tr>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm min-w-[250px]">Agency Name</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Agency code</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency code</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host count</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Overall diamonds</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Stage</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Slab</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">active cashout host</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeem</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">My Earning</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Availble coins</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Joining date</th>
-                      <th className="text-right py-4 px-6 text-gray-400 font-medium text-sm">Actions</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs min-w-[200px]">Agency Name</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Agency code</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Master Agency</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Master Agency code</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Host count</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Overall diamonds</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Current Stage</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Current Slab</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">active cashout host</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Redeem</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">My Earning</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Availble coins</th>
+                      <th className="text-left py-3.5 px-4 text-gray-400 font-semibold text-xs">Joining date</th>
+                      <th className="text-right py-3.5 px-4 text-gray-400 font-semibold text-xs">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {filteredAgencies.map((agency) => (
+                    {paginatedAgencies.map((agency) => (
                       <tr
                         key={agency.id}
                         className="hover:bg-[#1A1A1A] transition-colors cursor-pointer group"
                         onClick={() => handleViewAgency(agency.id)}
                       >
                         {/* Agency Name */}
-                        <td className="py-4 px-6">
+                        <td className="py-3.5 px-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                            <div className="w-9 h-9 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-xs">
                               {agency.name.charAt(0)}
                             </div>
                             <div>
-                              <p className="text-white font-medium">{agency.name}</p>
+                              <p className="text-white font-semibold text-sm">{agency.name}</p>
                             </div>
                           </div>
                         </td>
 
                         {/* Agency Code */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 font-mono text-sm">{agency.id}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 font-mono text-xs">{agency.id}</span>
                         </td>
 
                         {/* Master Agency */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.owner || '--'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.owner || '--'}</span>
                         </td>
 
                         {/* Master Agency Code */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 font-mono text-sm">{agency.ownerId}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 font-mono text-xs">{agency.ownerId}</span>
                         </td>
 
                         {/* Host Count */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.hosts.length || 0}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{Array.isArray(agency.hosts) ? agency.hosts.length : (agency.hosts || 0)}</span>
                         </td>
 
                         {/* Overall Diamonds */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.totaldiamonds || 0}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.overalldiamonds || 0}</span>
                         </td>
 
                         {/* Current Stage */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.stage || '--'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.stage || '--'}</span>
                         </td>
 
                         {/* Current Slab */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.currentSlab || '- / -'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.currentslab || '- / -'}</span>
                         </td>
 
                         {/* Active Cashout Host */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.activehost || '--'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.activehost || '--'}</span>
                         </td>
 
                         {/* Redeem */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.redeem || '--'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.redeem || '--'}</span>
                         </td>
 
                         {/* My Earning */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 font-semibold">
-                            {agency.redeem || '--'}
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 font-bold text-xs">
+                            {agency.earnings ?? agency.redeem ?? '--'}
                           </span>
                         </td>
 
                         {/* Available Coins */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.coins || '-'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.coins || '-'}</span>
                         </td>
 
                         {/* Joining Date */}
-                        <td className="py-4 px-6">
-                          <span className="text-gray-300 text-sm">{agency.joiningdate || '--'}</span>
+                        <td className="py-3.5 px-4">
+                          <span className="text-gray-300 text-xs">{agency.joiningDate || '--'}</span>
                         </td>
 
 
 
                         {/* Actions */}
-                        <td className="py-4 px-6 text-right">
+                        <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleViewAgency(agency.id);
                               }}
-                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
+                              className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 rounded-lg transition-all"
                               title="View Agency Details"
                             >
-                              <Eye className="w-4 h-4" />
+                              <Eye className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -349,6 +347,68 @@ const Agencies = ({ onNavigateToDetail, agencies: propAgencies = [], loading: pr
             {filteredAgencies.length === 0 && !loading && (
               <div className="py-12 text-center">
                 <p className="text-gray-400">No agencies found matching your search.</p>
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {!loading && !error && filteredAgencies.length > 0 && (
+              <div className="border-t border-gray-800 bg-gray-900/40">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4">
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <span>Show:</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm focus:outline-none"
+                      >
+                        {[5, 10, 20, 50].map((size) => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
+                      <span>per page</span>
+                    </div>
+                    <div>
+                      Showing {Math.min(filteredAgencies.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredAgencies.length, currentPage * itemsPerPage)} of {filteredAgencies.length}
+                    </div>
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        First
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        Prev
+                      </button>
+                      <span className="text-xs text-gray-400 px-2">Page {currentPage} of {totalPages}</span>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        Last
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

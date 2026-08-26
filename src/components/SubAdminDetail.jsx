@@ -1,80 +1,96 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, Diamond, Search, ChevronDown, MoreVertical, PlusCircle, X, Shield, Crown, Lock, Coins, TrendingUp, User } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { subAdminsData } from '../data/subAdminsData';
 import EntityMovementModal from './EntityMovementModal';
 import MasterAgencyForm from './MasterAgencyForm';
-// import authService from '../services/authService';
+import authService from '../services/authService';
+import { APP_CONFIG } from '../config/api';
 
-const SubAdminDetail = ({ currentUser, subAdminName, subUsers = [] }) => {
+const ownerBase = `/${APP_CONFIG.OWNER_SECRET_PATH}`;
+
+const SubAdminDetail = ({ currentUser }) => {
   const { adminCode } = useParams();
+  const location = useLocation();
   const subAdminId = adminCode;
   const navigate = useNavigate();
   const onBack = () => navigate(-1);
-  const onNavigateToMasterAgency = (saId, maId) => {
-    navigate(`/ownerarea/sub-admins/${saId}/${maId}`);
-  };
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [selectedMasterAgency, setSelectedMasterAgency] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [apiMasterAgencies, setApiMasterAgencies] = useState([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState('');
+  const [adminName, setAdminName] = useState(location.state?.name || 'Admin');
 
-  // Calendar selection value (YYYY-MM for Monthly, YYYY-MM-DD for Daily)
   const [selectedValue, setSelectedValue] = useState(() => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`; // default to current month
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const isApiMode = !!adminCode;
-
-  const subAdmin = useMemo(() => {
-    if (isApiMode) {
-      return { id: subAdminId, name: subAdminName || 'Admin', masterAgencies: [] };
-    }
-    return subAdminsData.find(sa => sa.id === subAdminId);
-  }, [isApiMode, subAdminId, subAdminName]);
-
-  // Derive earnings based on selected period and value
-  const selectedEarnings = useMemo(() => {
-    if (!subAdmin) return { earnings: 0, redeemDiamonds: 0 };
-    const history = subAdmin.earningsHistory || {};
-
-    if (selectedPeriod === 'Monthly') {
-      const monthly = history.monthly || {};
-      const rec = monthly[selectedValue];
-      return {
-        earnings: rec?.earnings ?? (subAdmin.earnings?.thisMonth ?? 0),
-        redeemDiamonds: rec?.redeemDiamonds ?? (subAdmin.earnings?.redeemDiamonds ?? 0),
-      };
-    }
-
-    // Daily
-    const daily = history.daily || {};
-    const rec = daily[selectedValue];
-    return {
-      earnings: rec?.earnings ?? 0,
-      redeemDiamonds: rec?.redeemDiamonds ?? 0,
+  useEffect(() => {
+    let ignore = false;
+    const load = async () => {
+      if (!adminCode) return;
+      setListLoading(true);
+      setListError('');
+      try {
+        const res = await authService.getAllSubUserByCode(adminCode, 'MASTER_AGENCY');
+        if (ignore) return;
+        if (res.success) {
+          const items = Array.isArray(res.data) ? res.data : (res.data?.result || res.data?.data || []);
+          const mapped = items.map((u, idx) => {
+            const agencyId = authService.extractUserCode(u) || u?.agencyCode || u?.agencyid || '';
+            return {
+              id: u?.id || u?._id || agencyId || idx + 1,
+              name: u?.name || u?.username || u?.fullname || `Master Agency ${idx + 1}`,
+              agencyId,
+              totalAgency: u?.totalAgency || u?.agencyCount || u?.count || 0,
+              myEarning: u?.myEarning || u?.earning || 0,
+              redeemed: u?.redeemed || u?.redeem || 0,
+              coins: u?.coins || 0,
+              diamond: u?.diamond || u?.totaldiamonds || 0,
+            };
+          }).filter((m) => m.agencyId);
+          setApiMasterAgencies(mapped);
+          if (!location.state?.name) {
+            setAdminName(adminCode);
+          }
+        } else {
+          setListError(res.error || 'Failed to load master agencies');
+          setApiMasterAgencies([]);
+        }
+      } catch (e) {
+        if (!ignore) {
+          setListError(e?.message || 'Failed to load master agencies');
+          setApiMasterAgencies([]);
+        }
+      } finally {
+        if (!ignore) setListLoading(false);
+      }
     };
-  }, [subAdmin, selectedPeriod, selectedValue]);
+    load();
+    return () => { ignore = true; };
+  }, [adminCode, location.state?.name]);
 
-  const effectiveMasterAgencies = useMemo(() => {
-    if (subUsers.length > 0) {
-      // Map subUsers from API to expected format
-      return subUsers.map((u, idx) => ({
-        id: u?.id || u?._id || u?.agencyId || u?.userid || idx + 1,
-        name: u?.name || u?.username || u?.fullname || u?.agencyname || `Master Agency ${idx + 1}`,
-        agencyId: u?.code || u?.usercode || u?.agencyCode || u?.agencyid || u?.userid || '',
-        totalAgency: u?.totalAgency || u?.total || u?.count || 0,
-        myEarning: u?.myEarning || u?.earning || 0,
-        redeemed: u?.redeemed || u?.redeem || 0,
-      }));
-    }
-    return subAdmin?.masterAgencies ?? [];
-  }, [subUsers, subAdmin]);
+  const subAdmin = useMemo(() => ({
+    id: subAdminId,
+    name: adminName,
+    masterAgencies: apiMasterAgencies,
+    coins: apiMasterAgencies.reduce((s, m) => s + (Number(m.coins) || 0), 0),
+    earnings: { thisMonth: 0, redeemDiamonds: 0 },
+  }), [subAdminId, adminName, apiMasterAgencies]);
 
-  // Calculate stats first, since goalsCompleted depends on it
+  const selectedEarnings = useMemo(() => ({
+    earnings: apiMasterAgencies.reduce((s, m) => s + (Number(m.diamond) || 0), 0),
+    redeemDiamonds: apiMasterAgencies.reduce((s, m) => s + (Number(m.redeemed) || 0), 0),
+  }), [apiMasterAgencies]);
+
+  const effectiveMasterAgencies = apiMasterAgencies;
+
   const stats = {
     totalDiamonds: selectedEarnings.earnings || 0,
     totalCoins: subAdmin.coins || 0,
@@ -87,37 +103,20 @@ const SubAdminDetail = ({ currentUser, subAdminName, subUsers = [] }) => {
     hostTarget: 20
   };
 
-  const goalsCompleted = 
-    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) + 
+  const goalsCompleted =
+    (stats.totalDiamonds >= goals.diamondTarget ? 1 : 0) +
     (stats.hostCount >= goals.hostTarget ? 1 : 0);
-
-
-
-  if (!subAdmin && !isApiMode) {
-    return (
-      <div className="flex-1 bg-[#1A1A1A] text-white flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Sub-Admin Not Found</h2>
-          <button
-            onClick={onBack}
-            className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const filteredMasterAgencies = effectiveMasterAgencies.filter(agency =>
     agency.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (agency.agencyId || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleMasterAgencyClick = (masterAgencyId) => {
-    if (onNavigateToMasterAgency) {
-      onNavigateToMasterAgency(subAdminId, masterAgencyId);
-    }
+  const handleMasterAgencyClick = (masterAgency) => {
+    const code = masterAgency.agencyId || masterAgency.id;
+    navigate(`${ownerBase}/sub-admins/${encodeURIComponent(subAdminId)}/${encodeURIComponent(code)}`, {
+      state: { name: masterAgency.name, adminName: subAdmin.name },
+    });
   };
 
   const handleMoveEntity = (masterAgency) => {
@@ -128,32 +127,25 @@ const SubAdminDetail = ({ currentUser, subAdminName, subUsers = [] }) => {
     setShowMovementModal(true);
   };
 
-  const handleEntityMove = async (entityId, targetId) => {
-    // Here you would implement the actual move logic
-    console.log(`Moving master agency ${entityId} to sub-admin ${targetId}`);
-    // For now, just close the modal
+  const handleEntityMove = async () => {
     setShowMovementModal(false);
     setSelectedMasterAgency(null);
   };
 
   const getAvailableSubAdmins = () => {
     return subAdminsData
-      .filter(sa => sa.id !== subAdminId) // Exclude current sub-admin
-      .map(subAdmin => ({
-        id: subAdmin.id,
-        name: subAdmin.name,
-        count: subAdmin.masterAgenciesCount || 0
+      .filter(sa => sa.id !== subAdminId)
+      .map(sa => ({
+        id: sa.id,
+        name: sa.name,
+        count: sa.masterAgenciesCount || 0
       }));
   };
 
   const formatNumber = (num) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}k`;
-    }
-    return num.toLocaleString();
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+    return Number(num || 0).toLocaleString();
   };
 
   return (
@@ -406,20 +398,32 @@ const SubAdminDetail = ({ currentUser, subAdminName, subUsers = [] }) => {
 
             {/* Table Body */}
             <div className="divide-y divide-gray-800 max-h-100 overflow-y-auto">
-              {filteredMasterAgencies.map((masterAgency, index) => (
+              {listLoading && (
+                <div className="px-6 py-8 text-gray-400 text-center">Loading master agencies...</div>
+              )}
+              {!listLoading && listError && (
+                <div className="px-6 py-8 text-red-400 text-center">{listError}</div>
+              )}
+              {!listLoading && !listError && filteredMasterAgencies.map((masterAgency, index) => (
                 <div 
-                  key={masterAgency.id} 
-                  className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                  key={masterAgency.agencyId || masterAgency.id} 
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleMasterAgencyClick(masterAgency)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleMasterAgencyClick(masterAgency);
+                    }
+                  }}
+                  className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Master Agency Name */}
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
                     <div>
-                      <div 
-                        className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer"
-                        onClick={() => handleMasterAgencyClick(masterAgency.id)}
-                      >
+                      <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">
                         {masterAgency.name}
                       </div>
                     </div>

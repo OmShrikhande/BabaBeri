@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Search, ChevronDown, MoreVertical, ArrowUpDown, Plus, X, LayoutDashboard, Users, Settings, CreditCard, Bell, FileText, Shield, Diamond, CheckSquare, Building, Crown, Coins, TrendingUp, Lock, User } from 'lucide-react';
-// import { subAdminsData } from '../data/subAdminsData';
-// import MasterAgencyForm from './MasterAgencyForm';
+import { useNavigate } from 'react-router-dom';
 import { normalizeUserType } from '../utils/roleBasedAccess';
 import authService from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import { APP_CONFIG } from '../config/api';
+
+const ownerBase = `/${APP_CONFIG.OWNER_SECRET_PATH}`;
 
 const MasterAgency = ({ onNavigateToDetail }) => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('Monthly');
@@ -14,6 +17,10 @@ const MasterAgency = ({ onNavigateToDetail }) => {
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedAgency, setSelectedAgency] = useState(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [agenciesList, setAgenciesList] = useState([]);
   const [agenciesLoading, setAgenciesLoading] = useState(false);
@@ -58,41 +65,31 @@ const MasterAgency = ({ onNavigateToDetail }) => {
       try {
         let res;
         if (currentRole === 'super-admin') {
-          const token = authService.getToken();
-          const response = await fetch('https://proxstreamapi.in/auth/api/alluserByRole?role=MASTER_AGENCY', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          const data = await response.json();
-          res = { success: response.ok, data: data, error: response.ok ? null : 'Failed to fetch master agencies' };
+          res = await authService.getUsersByRole('MASTER_AGENCY');
         } else if (currentRole === 'admin') {
           res = await authService.getMasterAgenciesForLoggedInAdmin();
         }
         if (!ignore && res && res.success) {
-          // Map backend data to UI shape, best-effort with safe fallbacks
-          const mapped = Array.isArray(res.data)
-            ? res.data.map((item, idx) => ({
+          const items = Array.isArray(res.data) ? res.data : (res.data?.result || res.data?.data || []);
+          const mapped = items.map((item, idx) => ({
               id: item.id || item._id || idx + 1,
               name: item.name || item.masterAgencyName || item.username || 'Master Agency',
-              agencyId: item.agencyId || item.code || item.usercode || '#N/A',
+              agencyId: authService.extractUserCode(item) || item.agencyId || '#N/A',
               totalAgency: item.totalAgency || item.agencyCount || 0,
               myEarning: item.myEarning || item.earning || 0,
               redeemed: item.redeemed || 0,
-              subAdminName: item.owner || item.subAdminName || item.adminName || '—',
-              subAdminId: item.owner ? item.owner : item.subAdminId || item.adminId || 0,
-              currentParent: item.owner || item.subAdminName || item.adminName || '—',
+              subAdminName: item.ownername || item.owner || item.subAdminName || item.adminName || '—',
+              subAdminId: item.owner || item.subAdminId || item.adminId || 0,
+              currentParent: item.ownername || item.owner || item.subAdminName || item.adminName || '—',
               coins: item.coins || item.coinBalance || 0,
               profilePic: item.profilePic || '',
-              createdAt: new Date(item.createdAt),
-              updatedAt: new Date(item.updatedAt),
-              joinDate: item.joinDate,
-              diamond: item.diamond,
-              slab: item.slab,
-            }))
-            : [];
+              createdAt: item.createdAt ? new Date(item.createdAt) : null,
+              updatedAt: item.updatedAt ? new Date(item.updatedAt) : null,
+              joinDate: item.joinDate || item.joiningdate || '—',
+              diamond: item.diamond || item.totaldiamonds || 0,
+              slab: item.slab || item.currentSlab || '—',
+              currentStage: item.stage || item.currentStage || '—',
+            }));
           setApiMasterAgencies(mapped);
         } else if (!ignore && res && !res.success) {
           setError(res.error || 'Failed to load master agencies');
@@ -153,6 +150,10 @@ const MasterAgency = ({ onNavigateToDetail }) => {
       return aValue < bValue ? 1 : -1;
     }
   });
+
+  // Paginated Slices
+  const totalPages = Math.ceil(sortedMasterAgencies.length / itemsPerPage);
+  const paginatedMasterAgencies = sortedMasterAgencies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -465,12 +466,30 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                   {!agenciesLoading && !agenciesError && agenciesList.length === 0 && (
                     <div className="p-8 text-center text-gray-400">No agencies found for this master agency.</div>
                   )}
-                  {!agenciesLoading && !agenciesError && agenciesList.map((agency, index) => (
+                  {!agenciesLoading && !agenciesError && agenciesList.map((agency, index) => {
+                    const agencyCode = authService.extractUserCode(agency) || agency.agencyId || agency.code || agency.usercode;
+                    return (
                     <div
-                      key={agency.id || index}
-                      className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                      key={agencyCode || agency.id || index}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (!agencyCode) return;
+                        // Prefer ownerarea agency detail route (hosts via getAllSubUserByCode HOST)
+                        navigate(`${ownerBase}/agencies/${encodeURIComponent(agencyCode)}`, {
+                          state: { name: agency.name || agency.username },
+                        });
+                      }}
+                      onKeyDown={(e) => {
+                        if ((e.key === 'Enter' || e.key === ' ') && agencyCode) {
+                          e.preventDefault();
+                          navigate(`${ownerBase}/agencies/${encodeURIComponent(agencyCode)}`, {
+                            state: { name: agency.name || agency.username },
+                          });
+                        }
+                      }}
+                      className="grid grid-cols-6 gap-6 px-3 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
                     >
-                      {/* Agency Name */}
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors flex items-center justify-center text-xs font-bold text-white">
                           {agency.profilePic ? (
@@ -480,27 +499,24 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                           )}
                         </div>
                         <div>
-                          <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors cursor-pointer">
+                          <div className="text-white font-bold text-base group-hover:text-[#F72585] transition-colors">
                             {agency.name || agency.username || 'Agency Name'}
                           </div>
                         </div>
                       </div>
 
-                      {/* Agency ID */}
                       <div className="flex items-center">
                         <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">
-                          {agency.agencyId || agency.code || agency.usercode || 'N/A'}
+                          {agencyCode || 'N/A'}
                         </span>
                       </div>
 
-                      {/* Total Hosts */}
                       <div className="flex items-center">
                         <span className="text-gray-300 font-mono font-medium group-hover:text-white transition-colors">
                           {agency.totalHosts || agency.hostCount || 0}
                         </span>
                       </div>
 
-                      {/* My Earning */}
                       <div className="flex items-center space-x-1">
                         <Diamond className="w-4 h-4 text-[#4CC9F0]" />
                         <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">
@@ -508,7 +524,6 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                         </span>
                       </div>
 
-                      {/* Redeemed */}
                       <div className="flex items-center space-x-1">
                         <Diamond className="w-4 h-4 text-[#4CC9F0]" />
                         <span className="text-gray-300 font-bold text-base group-hover:text-white transition-colors">
@@ -516,9 +531,15 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                         </span>
                       </div>
 
-                      {/* Actions */}
                       <div className="flex items-center">
                         <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!agencyCode) return;
+                            navigate(`${ownerBase}/agencies/${encodeURIComponent(agencyCode)}`, {
+                              state: { name: agency.name || agency.username },
+                            });
+                          }}
                           className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
                           title="View Details"
                         >
@@ -526,7 +547,8 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                         </button>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -538,7 +560,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
   }
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] text-white overflow-y-auto flex flex-col">
+    <div className="flex-1 bg-[#1A1A1A] text-white min-h-full flex flex-col">
       {/* Header */}
       <div className="bg-[#121212] border-b border-gray-800 p-6 flex-shrink-0">
         <div className="flex items-center justify-between ">
@@ -554,21 +576,10 @@ const MasterAgency = ({ onNavigateToDetail }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto table-scroll-container">
-        <div className="p-6 space-y-6">
-          {/* Create Master Agency */}
-          {/* {showCreate && (
-            <MasterAgencyForm
-              onCreated={(created) => {
-                // Optionally, you can refetch or optimistically update UI here
-                setShowCreate(false);
-              }}
-            />
-          )} */}
-
-          {/* Master Agencies List */}
-          <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
-            <div className="p-0 border-b border-gray-800">
+      <div className="flex-1 overflow-auto table-scroll-container p-6">
+        {/* Master Agencies List */}
+        <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
+          <div className="p-0">
               <div className="flex items-center justify-between">
                 {/* <h2 className="text-xl font-bold text-white">List of Master Agencies</h2> */}
                 <div className="flex items-center space-x-4">
@@ -611,7 +622,6 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                       </div>
                     )}
                   </div> */}
-                </div>
               </div>
             </div>
 
@@ -623,60 +633,70 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                   <div className="grid grid-cols-13 gap-4 px-4 py-4">
                     <button
                       onClick={() => handleSort('name')}
-                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                      className="text-gray-400 font-bold text-xs uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                     >
                       <span>MA Name</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3.5 h-3.5" />
                     </button>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">MA Code</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">MA Code</div>
                     <button
                       onClick={() => handleSort('subAdmin')}
-                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                      className="text-gray-400 font-bold text-xs uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                     >
                       <span>AD Name</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3.5 h-3.5" />
                     </button>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">AD Code</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">AD Code</div>
                     <button
                       onClick={() => handleSort('totalAgency')}
-                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                      className="text-gray-400 font-bold text-xs uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                     >
                       <span>Total Agencies</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3.5 h-3.5" />
                     </button>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">over all diamonds</div>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current stage</div>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">current slab</div>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Redeem</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">over all diamonds</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">current stage</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">current slab</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">Redeem</div>
                     <button
                       onClick={() => handleSort('myEarning')}
-                      className="text-gray-400 font-bold text-sm uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
+                      className="text-gray-400 font-bold text-xs uppercase tracking-wider text-left flex items-center space-x-1 hover:text-white transition-colors"
                     >
                       <span>My Earning</span>
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-3.5 h-3.5" />
                     </button>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Available coins</div>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">joining date</div>
-                    <div className="text-gray-400 font-bold text-sm uppercase tracking-wider">Actions</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">Available coins</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">joining date</div>
+                    <div className="text-gray-400 font-bold text-xs uppercase tracking-wider">Actions</div>
                   </div>
                 </div>
 
                 {/* Table Body */}
                 <div className="divide-y divide-gray-800 max-h-96 overflow-y-auto">
-                  {sortedMasterAgencies.map((masterAgency, index) => (
+                  {paginatedMasterAgencies.map((masterAgency, index) => (
                     <div
-                      key={`${masterAgency.subAdminId}-${masterAgency.id}`}
-                      className="grid grid-cols-13 gap-4 px-4 py-5 hover:bg-[#222222] transition-all duration-200 group"
+                      key={`${masterAgency.agencyId}-${masterAgency.id}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (currentRole === 'super-admin' || currentRole === 'admin') {
+                          setSelectedAgency(masterAgency);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if ((e.key === 'Enter' || e.key === ' ') && (currentRole === 'super-admin' || currentRole === 'admin')) {
+                          e.preventDefault();
+                          setSelectedAgency(masterAgency);
+                        }
+                      }}
+                      className="grid grid-cols-13 gap-4 px-4 py-5 hover:bg-[#222222] transition-all duration-200 group cursor-pointer"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
                       {/* Master Agency Name */}
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex-shrink-0 border-2 border-gray-600 group-hover:border-[#F72585] transition-colors"></div>
                         <div>
-                          <div
-                            className="text-white font-bold text-sm group-hover:text-[#F72585] transition-colors cursor-pointer"
-                            onClick={() => onNavigateToDetail && onNavigateToDetail(masterAgency.subAdminId, masterAgency.id)}
-                          >
+                          <div className="text-white font-bold text-sm group-hover:text-[#F72585] transition-colors">
                             {masterAgency.name}
                           </div>
                         </div>
@@ -691,73 +711,72 @@ const MasterAgency = ({ onNavigateToDetail }) => {
 
                       {/* Sub Admin Name */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
-                          {masterAgency.ownerName || masterAgency.subAdminName || masterAgency.owner || '—'}
+                        <span className="text-gray-300 text-[11px] group-hover:text-white transition-colors">
+                          {masterAgency.subAdminName}
                         </span>
                       </div>
 
-                      {/* Sub Admin Code */}
+                      {/* Sub Admin ID */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 font-mono text-sm group-hover:text-white transition-colors">
-                          {masterAgency.subAdminId || '--'}
+                        <span className="text-gray-300 font-mono font-medium text-[11px] group-hover:text-white transition-colors">
+                          {masterAgency.subAdminId}
                         </span>
                       </div>
 
                       {/* Total Agencies */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 font-medium text-sm group-hover:text-white transition-colors">
+                        <span className="text-gray-300 font-bold text-xs group-hover:text-white transition-colors">
                           {masterAgency.totalAgency}
                         </span>
                       </div>
 
-                      {/* Over all diamonds (Placeholder) */}
+                      {/* Overall Diamonds */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{masterAgency.diamond}</span>
+                        <span className="text-gray-300 text-[11px] group-hover:text-white transition-colors">{masterAgency.diamond}</span>
                       </div>
 
-                      {/* Current Stage (Placeholder) */}
+                      {/* Current Stage */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{masterAgency.currentStage}</span>
+                        <span className="text-gray-300 text-[10px] group-hover:text-white transition-colors">{masterAgency.currentStage}</span>
                       </div>
 
-                      {/* Current Slab (Placeholder) */}
+                      {/* Current Slab */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">--</span>
+                        <span className="text-gray-300 text-[10px] group-hover:text-white transition-colors">{masterAgency.slab}</span>
                       </div>
 
-                      {/* Redeemed */}
+                      {/* Redeem */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 font-bold text-sm group-hover:text-white transition-colors">
-                          {formatNumber(masterAgency.redeemed || 0)}
-                        </span>
+                        <span className="text-gray-300 text-[11px] group-hover:text-white transition-colors">{masterAgency.redeemed}</span>
                       </div>
 
-                      {/* My Earning */}
+                      {/* My Earnings */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 font-bold text-sm group-hover:text-white transition-colors">
-                          {formatNumber(masterAgency.myEarning)}
-                        </span>
+                        <span className="text-gray-300 font-bold text-[11px] group-hover:text-white transition-colors">{formatNumber(masterAgency.myEarning)}</span>
                       </div>
 
-                      {/* Available Coins (Placeholder) */}
-                      <div className="flex items-center ">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">  {formatNumber(masterAgency.coins)}</span>
+                      {/* Available Coins */}
+                      <div className="flex items-center">
+                        <span className="text-gray-300 text-[11px] group-hover:text-white transition-colors">{masterAgency.coins}</span>
                       </div>
 
-                      {/* Joining Date (Placeholder) */}
+                      {/* Joining Date */}
                       <div className="flex items-center">
-                        <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{masterAgency.joinDate}</span>
+                        <span className="text-gray-300 text-[10px] group-hover:text-white transition-colors">{masterAgency.joinDate}</span>
                       </div>
 
                       {/* Actions */}
                       <div className="flex items-center">
                         {(currentRole === 'super-admin' || currentRole === 'admin') && (
                           <button
-                            onClick={() => setSelectedAgency(masterAgency)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAgency(masterAgency);
+                            }}
                             className="text-gray-400 hover:text-[#F72585] transition-colors p-1 hover:bg-gray-800 rounded"
                             title="View Details"
                           >
-                            <MoreVertical className="w-4 h-4" />
+                            <MoreVertical className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
@@ -780,6 +799,68 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                     : "No master agencies are currently available."
                   }
                 </p>
+              </div>
+            )}
+            
+            {/* Pagination Controls */}
+            {!loading && !error && sortedMasterAgencies.length > 0 && (
+              <div className="border-t border-gray-800 bg-gray-900/40">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4">
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-2">
+                      <span>Show:</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-gray-200 text-sm focus:outline-none"
+                      >
+                        {[5, 10, 20, 50].map((size) => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
+                      <span>per page</span>
+                    </div>
+                    <div>
+                      Showing {Math.min(sortedMasterAgencies.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(sortedMasterAgencies.length, currentPage * itemsPerPage)} of {sortedMasterAgencies.length}
+                    </div>
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        First
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        Prev
+                      </button>
+                      <span className="text-xs text-gray-400 px-2">Page {currentPage} of {totalPages}</span>
+                      <button
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        Next
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        className="px-2.5 py-1.5 rounded bg-gray-800 border border-gray-700 text-xs disabled:opacity-40"
+                      >
+                        Last
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

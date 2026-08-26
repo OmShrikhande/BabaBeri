@@ -181,7 +181,7 @@ const SuperAdminWallet = ({ currentUser }) => {
               <span className="text-xs text-gray-500">...</span>
             ) : (
               <span className="text-sm font-bold text-yellow-400 leading-none">
-                {walletData.currentBalance.toLocaleString()}
+                {walletData.coinLedgerBalance.toLocaleString()}
               </span>
             )}
           </div>

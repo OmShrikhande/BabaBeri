@@ -1031,9 +1031,10 @@ class AuthService {
         }
       }
       const summary = {
-        totalCredited: data.totalCredited ?? data.totalCredit ?? 0,
-        totalDebited: data.totalDebited ?? data.totalDebit ?? 0,
+        totalCredited: data.totalCredit ?? data.totalCredited ?? 0,
+        totalDebited: data.totalDebit ?? data.totalDebited ?? 0,
         currentBalance: data.currentBalance ?? 0,
+        coinLedgerBalance: data.coinLedgerBalance ?? 0,
         diamondBalance: data.diamondBalance ?? 0,
         lastUpdated: data.lastUpdated ?? null
       };
@@ -1898,6 +1899,145 @@ class AuthService {
     } catch (error) {
       console.error('Get diamond range error:', error);
       return { success: false, error: error.message || 'Failed to fetch diamond range.' };
+    }
+  }
+
+  // Role-scoped financial overview cards
+  async getFinancialOverview({ role, usercode, period = 'MONTH', from, to } = {}) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+    if (!role || !usercode) {
+      return { success: false, error: 'role and usercode are required for financial overview.' };
+    }
+
+    const params = new URLSearchParams({
+      role: String(role).toUpperCase(),
+      usercode: String(usercode),
+    });
+    if (from && to) {
+      params.set('from', from);
+      params.set('to', to);
+    } else if (period) {
+      params.set('period', String(period).toUpperCase());
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FINANCIAL_OVERVIEW}?${params}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch financial overview: ${response.status}`),
+        };
+      }
+      return { success: true, data: this.parseApiPayload(raw) };
+    } catch (error) {
+      console.error('Get financial overview error:', error);
+      return { success: false, error: error.message || 'Failed to fetch financial overview.' };
+    }
+  }
+
+  // Role-scoped financial analytics chart series
+  async getFinancialAnalytics({ role, usercode, type = 'MONTHLY', year } = {}) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+    if (!role || !usercode) {
+      return { success: false, error: 'role and usercode are required for financial analytics.' };
+    }
+
+    const params = new URLSearchParams({
+      role: String(role).toUpperCase(),
+      usercode: String(usercode),
+      type: String(type).toUpperCase(),
+    });
+    if (year != null && year !== '') {
+      params.set('year', String(year));
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FINANCIAL_ANALYTICS}?${params}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch financial analytics: ${response.status}`),
+        };
+      }
+      return { success: true, data: this.parseApiPayload(raw) };
+    } catch (error) {
+      console.error('Get financial analytics error:', error);
+      return { success: false, error: error.message || 'Failed to fetch financial analytics.' };
+    }
+  }
+
+  async getCurrentMonthTarget() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_CURRENT_MONTH_TARGET}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch current month target: ${response.status}`),
+        };
+      }
+      if (!raw || raw.trim() === '' || raw.trim() === 'null') {
+        return { success: true, data: null };
+      }
+      return { success: true, data: this.parseApiPayload(raw) };
+    } catch (error) {
+      console.error('Get current month target error:', error);
+      return { success: false, error: error.message || 'Failed to fetch current month target.' };
+    }
+  }
+
+  async getMyTargetHistory() {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.GET_MY_TARGET_HISTORY}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch target history: ${response.status}`),
+        };
+      }
+      if (!raw || raw.trim() === '' || raw.trim() === 'null') {
+        return { success: true, data: [] };
+      }
+      const data = this.parseApiPayload(raw);
+      return { success: true, data: Array.isArray(data) ? data : (data?.data || data?.history || []) };
+    } catch (error) {
+      console.error('Get my target history error:', error);
+      return { success: false, error: error.message || 'Failed to fetch target history.' };
     }
   }
 

@@ -42,8 +42,8 @@ export const useCashoutRequests = (addToast) => {
         const data = response.data || [];
         const validRequests = Array.isArray(data)
           ? data
-              .filter((item) => item && typeof item === 'object' && item.id != null)
-              .map(transformCashoutRequest)
+            .filter((item) => item && typeof item === 'object' && item.id != null)
+            .map(transformCashoutRequest)
           : [];
         setCashoutRequests(validRequests);
       } else {
@@ -81,13 +81,14 @@ export const useCashoutRequests = (addToast) => {
         });
 
         if (result.success) {
-          const nextStatus = status === 'APPROVE' ? 'APPROVED' : 'REJECTED';
+          const isApproved = status === 'APPROVED' || status === 'APPROVE';
+          const nextStatus = isApproved ? 'APPROVED' : 'REJECTED';
           setCashoutRequests((prev) =>
             prev.map((r) => (r.id === requestId ? { ...r, status: nextStatus } : r)),
           );
           addToast(
-            status === 'APPROVE' ? 'Cashout approved successfully' : 'Cashout rejected',
-            status === 'APPROVE' ? 'success' : 'error',
+            isApproved ? 'Cashout approved successfully' : 'Cashout rejected',
+            isApproved ? 'success' : 'error',
           );
           await fetchPendingRequests();
         } else {
@@ -104,7 +105,7 @@ export const useCashoutRequests = (addToast) => {
   );
 
   const handleApprove = useCallback(
-    (requestId) => updateCashoutStatus(requestId, 'APPROVE'),
+    (requestId) => updateCashoutStatus(requestId, 'APPROVED'),
     [updateCashoutStatus],
   );
 

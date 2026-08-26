@@ -30,6 +30,7 @@ const DpVerificationModal = ({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50); // tuned for responsiveness
   const [selectedId, setSelectedId] = useState(initialSelectedId);
+  const [mobileActiveView, setMobileActiveView] = useState('list'); // 'list' or 'detail'
 
   // Fetched pending requests from API (when requests prop not provided)
   const [fetchedRequests, setFetchedRequests] = useState([]);
@@ -149,7 +150,7 @@ const DpVerificationModal = ({
       }
       if (status === 'APPROVED') onApprove?.(usercode);
       if (status === 'REJECT') onReject?.(usercode);
-      onClose?.();
+      if (!fullPage) onClose?.();
     } catch (e) {
       console.error('Profile pic action error:', e);
       alert(e?.message || 'Failed to update status.');
@@ -162,44 +163,30 @@ const DpVerificationModal = ({
     <div
       className={
         fullPage
-          ? "fixed inset-0 z-50 bg-[#121212] flex flex-col"
+          ? "absolute inset-0 bg-[#121212] flex flex-col overflow-hidden"
           : "fixed inset-0 z-50 flex items-center justify-center bg-black/60"
       }
       role="dialog"
       aria-modal="true"
-      style={fullPage ? { minHeight: '100vh', height: '100vh', overflow: 'auto' } : {}}
     >
       <div
         className={
           fullPage
-            ? "w-full h-full flex flex-col"
+            ? "w-full flex-1 flex flex-col min-h-0"
             : "relative bg-[#121212] w-full max-w-6xl rounded-2xl border border-gray-800 shadow-2xl overflow-hidden"
         }
-        style={fullPage ? { borderRadius: 0, border: 'none', boxShadow: 'none', height: '100vh', maxWidth: '100vw', overflow: 'auto' } : {}}
       >
-        {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 border-b border-gray-800 ${fullPage ? "bg-[#121212]" : "bg-gradient-to-r from-[#1A1A1A] to-[#181818]"}`}>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">DP Verification</h2>
-            <p className="text-gray-400 text-sm">Review and action profile photo verification requests</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {loading && <span className="text-xs text-gray-400">Loading...</span>}
-            {error && <span className="text-xs text-red-400" title={error}>Failed to load</span>}
-            <button
-              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white"
-              aria-label="Close"
-              onClick={onClose}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
         {/* Content */}
-        <div className={`grid grid-cols-1 lg:grid-cols-12 gap-0 ${fullPage ? "flex-1 overflow-auto" : ""}`} style={fullPage ? { minHeight: '0' } : { height: '80vh' }}>
+        <div
+          className={`${
+            fullPage
+              ? 'flex-1 grid grid-cols-1 lg:grid-cols-12'
+              : 'grid grid-cols-1 lg:grid-cols-12'
+          } gap-0 overflow-hidden`}
+          style={fullPage ? { height: 'calc(100vh - 80px)' } : { height: '80vh' }}
+        >
           {/* Left: List */}
-          <div className="lg:col-span-5 xl:col-span-4 border-r border-gray-800 flex flex-col">
+          <div className={`lg:col-span-5 xl:col-span-4 border-r border-gray-800 flex flex-col overflow-hidden ${fullPage && mobileActiveView === 'detail' ? 'hidden lg:flex' : 'flex'}`}>
             {/* Controls */}
             <div className="p-4 border-b border-gray-800">
               <div className="flex items-center gap-3">
@@ -241,7 +228,10 @@ const DpVerificationModal = ({
                       <li key={r.id}>
                         <button
                           className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-white/5 ${active ? 'bg-white/5' : ''}`}
-                          onClick={() => setSelectedId(r.id)}
+                          onClick={() => {
+                            setSelectedId(r.id);
+                            setMobileActiveView('detail');
+                          }}
                         >
                           {/* Thumbnail */}
                           <img src={r.dp} alt={r.username} className="w-10 h-10 rounded-full object-cover border border-gray-700" />
@@ -290,7 +280,7 @@ const DpVerificationModal = ({
           </div>
 
           {/* Right: Detail */}
-          <div className="lg:col-span-7 xl:col-span-8 p-6 flex flex-col">
+          <div className={`lg:col-span-7 xl:col-span-8 p-4 sm:p-6 flex flex-col overflow-y-auto ${fullPage && mobileActiveView === 'list' ? 'hidden lg:flex' : 'flex'}`}>
             {selected ? (
               <div className="flex-1 flex flex-col">
                 <div className="flex items-start gap-5 flex-wrap">
@@ -320,8 +310,18 @@ const DpVerificationModal = ({
                   </div>
                 </div>
 
+                {/* Back button for mobile */}
+                {fullPage && mobileActiveView === 'detail' && (
+                  <button
+                    className="lg:hidden mb-4 flex items-center gap-2 text-sm text-gray-400 hover:text-white"
+                    onClick={() => setMobileActiveView('list')}
+                  >
+                    <span>←</span> Back to list
+                  </button>
+                )}
+
                 {/* Preview area */}
-                <div className="mt-6 flex-1">
+                <div className="mt-4 sm:mt-6">
                   <div className="rounded-xl border border-gray-800 bg-[#0f0f0f] p-4">
                     <p className="text-gray-400 text-sm">Profile photo preview</p>
                     <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -356,7 +356,7 @@ const DpVerificationModal = ({
                     <XCircle className="w-4 h-4" /> Reject
                   </button>
                   <button
-                    className="ml-auto px-4 py-2 rounded-lg text-sm bg_WHITE/5 text-gray-300 hover:bg-white/10 border border-gray-800"
+                    className="ml-auto px-4 py-2 rounded-lg text-sm bg-white/5 text-gray-300 hover:bg-white/10 border border-gray-800"
                     onClick={onClose}
                   >
                     Close
@@ -371,7 +371,6 @@ const DpVerificationModal = ({
           </div>
         </div>
 
-        {/* Tiny animations */}
         {!fullPage && (
           <style>{`
             @keyframes modalPop { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }

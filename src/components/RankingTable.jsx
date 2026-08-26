@@ -1,13 +1,18 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Diamond, Coins, Trophy, Crown, Medal, Award, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getRankBadgeColor, getLevelBadgeColor } from '../data/rankingData';
+import { getRankBadgeColor } from '../data/rankingData';
 
 const ROWS_PER_PAGE = 10;
+const MAX_ROWS = 100;
 
 const RankingTable = ({ data, type, searchTerm }) => {
   const [sortField, setSortField] = useState('rank');
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data, searchTerm, type, sortField, sortDirection]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -26,24 +31,41 @@ const RankingTable = ({ data, type, searchTerm }) => {
   };
 
   const filteredAndSortedData = useMemo(() => {
-    let filtered = data.filter(item =>
-      item.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.userId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const q = String(searchTerm || '').toLowerCase();
+    let filtered = (Array.isArray(data) ? data : [])
+      .slice(0, MAX_ROWS)
+      .filter((item) =>
+        String(item.fullName || '').toLowerCase().includes(q) ||
+        String(item.username || '').toLowerCase().includes(q) ||
+        String(item.userId || '').toLowerCase().includes(q)
+      );
 
     filtered.sort((a, b) => {
-      let aValue, bValue;
+      let aValue;
+      let bValue;
       switch (sortField) {
-        case 'rank':      aValue = a.rank; bValue = b.rank; break;
-        case 'fullName':  aValue = a.fullName.toLowerCase(); bValue = b.fullName.toLowerCase(); break;
-        case 'username':  aValue = a.username.toLowerCase(); bValue = b.username.toLowerCase(); break;
-        case 'userId':    aValue = a.userId.toLowerCase(); bValue = b.userId.toLowerCase(); break;
+        case 'rank':
+          aValue = a.rank;
+          bValue = b.rank;
+          break;
+        case 'fullName':
+          aValue = String(a.fullName || '').toLowerCase();
+          bValue = String(b.fullName || '').toLowerCase();
+          break;
+        case 'username':
+          aValue = String(a.username || '').toLowerCase();
+          bValue = String(b.username || '').toLowerCase();
+          break;
+        case 'userId':
+          aValue = String(a.userId || '').toLowerCase();
+          bValue = String(b.userId || '').toLowerCase();
+          break;
         case 'value':
           aValue = type === 'hosts' ? a.diamondsValue : a.coinsValue;
           bValue = type === 'hosts' ? b.diamondsValue : b.coinsValue;
           break;
-        default: return 0;
+        default:
+          return 0;
       }
       if (typeof aValue === 'string') {
         return sortDirection === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
@@ -71,7 +93,7 @@ const RankingTable = ({ data, type, searchTerm }) => {
         <div className="text-center">
           <Trophy className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <p className="text-lg font-medium mb-1 text-gray-400">No results found</p>
-          <p className="text-sm text-gray-600">Try adjusting your search terms</p>
+          <p className="text-sm text-gray-600">Try another date or search term</p>
         </div>
       </div>
     );
@@ -93,102 +115,91 @@ const RankingTable = ({ data, type, searchTerm }) => {
     <div className="flex flex-col h-full">
       <div className="overflow-x-auto flex-1">
         <table className="w-full min-w-[700px] border-collapse">
-        <thead>
-          <tr className="border-b border-gray-700 bg-[#0F0F0F]">
-            <SortTh field="rank" className="w-20 pl-6">Rank</SortTh>
-            <SortTh field="fullName">Player</SortTh>
-            <SortTh field="username">Username</SortTh>
-            <SortTh field="userId">User ID</SortTh>
-            <SortTh field="value" className="pr-6">
-              {type === 'hosts' ? 'Diamonds' : 'Coins'}
-            </SortTh>
-          </tr>
-        </thead>
-        <tbody>
-          {pagedData.map((item) => (
-            <tr
-              key={item.id}
-              className="border-b border-gray-800 hover:bg-[#1A1A1A] transition-colors duration-150 group"
-            >
-              {/* Rank */}
-              <td className="py-3 px-4 pl-6 w-20">
-                <div className="flex items-center gap-2">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${getRankBadgeColor(item.rank)}`}>
-                    {item.rank}
-                  </div>
-                  {getRankIcon(item.rank)}
-                </div>
-              </td>
-
-              {/* Player */}
-              <td className="py-3 px-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-shrink-0">
-                    <img
-                      src={item.avatar}
-                      alt={item.fullName}
-                      className="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-[#F72585] transition-colors"
-                      onError={(e) => {
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.fullName)}&background=F72585&color=fff&size=40`;
-                      }}
-                    />
-                    {item.rank <= 3 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 flex items-center justify-center">
-                        <span className="text-xs font-bold text-black" style={{ fontSize: '9px' }}>{item.rank}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{item.fullName}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full border ${getLevelBadgeColor(item.level)}`}>
-                        {item.level}
-                      </span>
-                      <span className="text-xs text-gray-500">{item.country}</span>
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              {/* Username */}
-              <td className="py-3 px-4">
-                <span className="text-[#F72585] text-sm font-medium">@{item.username}</span>
-              </td>
-
-              {/* User ID */}
-              <td className="py-3 px-4">
-                <span className="text-gray-400 font-mono text-xs bg-gray-800 px-2 py-1 rounded">{item.userId}</span>
-              </td>
-
-              {/* Value */}
-              <td className="py-3 px-4 pr-6">
-                {type === 'hosts' ? (
-                  <div className="flex items-center gap-1.5">
-                    <Diamond className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                    <span className="font-semibold text-blue-400 text-sm">{item.diamonds}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <Coins className="w-4 h-4 text-yellow-400 flex-shrink-0" />
-                    <span className="font-semibold text-yellow-400 text-sm">{item.coins}</span>
-                  </div>
-                )}
-              </td>
+          <thead>
+            <tr className="border-b border-gray-700 bg-[#0F0F0F]">
+              <SortTh field="rank" className="w-20 pl-6">Rank</SortTh>
+              <SortTh field="fullName">Name</SortTh>
+              <SortTh field="username">Username</SortTh>
+              <SortTh field="userId">Usercode</SortTh>
+              <SortTh field="value" className="pr-6">
+                {type === 'hosts' ? 'Total Diamonds' : 'Total Recharge'}
+              </SortTh>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {pagedData.map((item) => (
+              <tr
+                key={item.id}
+                className="border-b border-gray-800 hover:bg-[#1A1A1A] transition-colors duration-150 group"
+              >
+                <td className="py-3 px-4 pl-6 w-20">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${getRankBadgeColor(item.rank)}`}>
+                      {item.rank}
+                    </div>
+                    {getRankIcon(item.rank)}
+                  </div>
+                </td>
+
+                <td className="py-3 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={item.avatar}
+                        alt={item.fullName}
+                        className="w-9 h-9 rounded-full object-cover border-2 border-gray-700 group-hover:border-[#F72585] transition-colors"
+                        onError={(e) => {
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.fullName || 'User')}&background=F72585&color=fff&size=40`;
+                        }}
+                      />
+                      {item.rank <= 3 && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 flex items-center justify-center">
+                          <span className="font-bold text-black" style={{ fontSize: '9px' }}>{item.rank}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-white font-medium text-sm truncate">{item.fullName}</p>
+                  </div>
+                </td>
+
+                <td className="py-3 px-4">
+                  <span className="text-[#F72585] text-sm font-medium">
+                    {item.username && item.username !== '—' ? `@${item.username}` : '—'}
+                  </span>
+                </td>
+
+                <td className="py-3 px-4">
+                  <span className="text-gray-400 font-mono text-xs bg-gray-800 px-2 py-1 rounded">{item.userId}</span>
+                </td>
+
+                <td className="py-3 px-4 pr-6">
+                  {type === 'hosts' ? (
+                    <div className="flex items-center gap-1.5">
+                      <Diamond className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                      <span className="font-semibold text-blue-400 text-sm">{item.diamonds}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <Coins className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                      <span className="font-semibold text-yellow-400 text-sm">{item.coins}</span>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
+      {filteredAndSortedData.length > ROWS_PER_PAGE && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700 bg-[#0D0D0D] flex-shrink-0">
           <span className="text-sm text-gray-400">
-            Page {safePage} of {totalPages} &mdash; {filteredAndSortedData.length} total
+            Page {safePage} of {totalPages} — {filteredAndSortedData.length} total
           </span>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safePage === 1}
               className="p-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
@@ -199,6 +210,7 @@ const RankingTable = ({ data, type, searchTerm }) => {
               const page = start + i;
               return (
                 <button
+                  type="button"
                   key={page}
                   onClick={() => setCurrentPage(page)}
                   className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
@@ -212,7 +224,8 @@ const RankingTable = ({ data, type, searchTerm }) => {
               );
             })}
             <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={safePage === totalPages}
               className="p-1.5 rounded-lg border border-gray-700 text-gray-400 hover:text-white hover:border-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >

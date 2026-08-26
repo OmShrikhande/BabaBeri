@@ -36,6 +36,7 @@ export { default as ToggleButtonGroup } from './ToggleButtonGroup';
 export { default as RankingTable } from './RankingTable';
 export { default as RankingTableSkeleton } from './RankingTableSkeleton';
 export { default as FinancialMetricsCard } from './FinancialMetricsCard';
+export { default as FinancialInsightsSection } from './FinancialInsightsSection';
 export { default as EnhancedChartCard } from './EnhancedChartCard';
 export { default as HostDetails } from './HostDetails';
 export { default as RoleStagesPage } from './RoleStages/RoleStagesPage';

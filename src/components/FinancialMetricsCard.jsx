@@ -10,10 +10,11 @@ const iconMap = {
   TrendingDown
 };
 
-const FinancialMetricsCard = ({ title, value, formatted, change, trend, icon, color = 'blue', isLoading = false }) => {
+const FinancialMetricsCard = ({ title, value, formatted, subtitle, change, trend, icon, color = 'blue', isLoading = false }) => {
   const IconComponent = iconMap[icon];
   const TrendIcon = trend === 'up' ? TrendingUp : TrendingDown;
-  
+  const showChange = Boolean(change);
+
   const colorClasses = {
     blue: {
       bg: 'bg-blue-600/20',
@@ -94,22 +95,29 @@ const FinancialMetricsCard = ({ title, value, formatted, change, trend, icon, co
             <div>
               <h3 className="text-gray-400 text-sm font-medium">{title}</h3>
               <p className="text-white text-2xl font-bold">{formatted}</p>
+              {subtitle ? (
+                <p className="text-gray-400 text-xs mt-1">{subtitle}</p>
+              ) : null}
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <div className={`
-              flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium
-              ${trend === 'up' 
-                ? 'bg-green-600/20 text-green-400' 
-                : 'bg-red-600/20 text-red-400'
-              }
-            `}>
-              <TrendIcon className="w-3 h-3" />
-              {change}
+
+          {showChange && (
+            <div className="flex items-center gap-2">
+              <div className={`
+                flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium
+                ${trend === 'up'
+                  ? 'bg-green-600/20 text-green-400'
+                  : trend === 'down'
+                    ? 'bg-red-600/20 text-red-400'
+                    : 'bg-gray-600/20 text-gray-400'
+                }
+              `}>
+                {(trend === 'up' || trend === 'down') && <TrendIcon className="w-3 h-3" />}
+                {change}
+              </div>
+              <span className="text-gray-500 text-xs">vs last period</span>
             </div>
-            <span className="text-gray-500 text-xs">vs last period</span>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ import AgencyGoals from './pages/agency/AgencyGoals';
 
 // Existing Components
 import Dashboard from './components/Dashboard';
+import DpVerificationModal from './components/DpVerificationModal';
 import HostVerification from './components/HostVerification';
 import Agencies from './components/Agencies';
 import AgencyDetail from './components/AgencyDetail';
@@ -84,6 +85,15 @@ function App() {
         <Route path="agencies" element={<Agencies />} />
         <Route path="agencies/:agencyId" element={<AgencyDetail />} />
         <Route path="host-verification" element={<HostVerification />} />
+        <Route path="dp-verification" element={
+          <DpVerificationModal
+            isOpen={true}
+            onClose={() => window.history.back()}
+            requests={[]}
+            initialSelectedId={null}
+            fullPage={true}
+          />
+        } />
         <Route path="verified-hosts" element={<HostDetails />} />
         <Route path="live-monitoring" element={<LiveMonitoring />} />
         <Route path="coin-recharge" element={<CoinRecharge />} />

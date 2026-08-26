@@ -4,10 +4,11 @@ import { ArrowLeft, Search, Filter, Eye, User, Building2, Diamond, TrendingUp, C
 import { TableSkeleton } from './LoadingSkeleton';
 import authService from '../services/authService';
 
-const AgencyDetail = () => {
-  const { agencyId } = useParams();
+const AgencyDetail = ({ agencyId: agencyIdProp, onBack: onBackProp }) => {
+  const { agencyId: agencyIdParam } = useParams();
   const navigate = useNavigate();
-  const onBack = () => navigate(-1);
+  const agencyId = agencyIdProp || agencyIdParam;
+  const onBack = onBackProp || (() => navigate(-1));
   const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,19 +30,18 @@ const AgencyDetail = () => {
 
   useEffect(() => {
     const fetchHosts = async () => {
+      if (!agencyId) return;
       setLoading(true);
       try {
-        console.log(`Fetching hosts for agency: ${agencyId}`);
         const result = await authService.getAllSubUserByCode(agencyId, 'HOST');
-        console.log('Hosts API result:', result);
         
         if (result.success && Array.isArray(result.data)) {
             const transformedHosts = result.data.map(host => ({
                 name: host.name,
-                id: host.code || host.usercode || host.id,
-                owner: host.ownername || '-', // Agency Name
-                ownerId: host.owner || agencyId, // Agency Code
-                hosts: [], // Hosts don't have hosts
+                id: authService.extractUserCode(host) || host.code || host.usercode || host.id,
+                owner: host.ownername || '-',
+                ownerId: host.owner || agencyId,
+                hosts: [],
                 overalldiamonds: Number(host.totaldiamonds) || 0,
                 stage: host.stage || "Unknown",
                 currentslab: host.currentSlab || "Unknown",
@@ -53,7 +53,6 @@ const AgencyDetail = () => {
             }));
             setHosts(transformedHosts);
 
-            // Calculate stats
             const calculatedStats = transformedHosts.reduce((acc, curr) => ({
                 totalDiamonds: acc.totalDiamonds + (curr.overalldiamonds || 0),
                 totalCoins: acc.totalCoins + (curr.coins || 0),
@@ -63,7 +62,6 @@ const AgencyDetail = () => {
             setStats(calculatedStats);
 
         } else {
-            console.error('Failed to fetch hosts:', result.error);
             setHosts([]);
         }
       } catch (error) {

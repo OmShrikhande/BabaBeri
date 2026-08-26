@@ -127,6 +127,7 @@ export const navigationItems = [
   { id: 'master-agency', label: 'Master Agency', icon: 'Building', path: '/ownerarea/master-agency' },
   { id: 'agencies', label: 'Agencies', icon: 'Building2', path: '/ownerarea/agencies' },
   { id: 'host-verification', label: 'Host Verification', icon: 'Shield', path: '/ownerarea/host-verification' },
+  { id: 'dp-verification', label: 'DP Verification', icon: 'UserCheck', path: '/ownerarea/dp-verification' },
   { id: 'users-details', label: 'Verified Hosts', icon: 'UserCheck', path: '/ownerarea/verified-hosts' },
   { id: 'live-monitoring', label: 'Live Monitoring', icon: 'Eye', path: '/ownerarea/live-monitoring' },
   { id: 'coin-recharge', label: 'Coin Recharge', icon: 'Coins', path: '/ownerarea/coin-recharge' },

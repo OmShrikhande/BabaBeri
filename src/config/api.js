@@ -99,6 +99,8 @@ export const API_CONFIG = {
     BLOCKED_USERS: '/auth/superadmin/blocked-users',
     // Top 10 Hosts by Diamond
     TOP_HOST_RANKING: '/auth/superadmin/top10ByDiamond',
+    // Top recharge (supporters / coins)
+    TOP_RECHARGE: '/auth/superadmin/topRecharge',
     // Get all VIP users (Super Admin only)
     GET_VIP_USERS: '/auth/api/getvipusers',
     // VIP plans (Super Admin)
@@ -134,6 +136,12 @@ export const API_CONFIG = {
     GIFTS_SEND: '/gifts/send',
     GIFTS_CATALOG: '/gifts/catalog',
     GIFTS_ADMIN_TRANSACTIONS: '/gifts/admin/gift-transactions',
+
+    // Role-scoped financial dashboards
+    FINANCIAL_OVERVIEW: '/auth/api/financialOverview',
+    FINANCIAL_ANALYTICS: '/auth/api/financialAnalytics',
+    GET_CURRENT_MONTH_TARGET: '/auth/user/getcurrentmonthtarget',
+    GET_MY_TARGET_HISTORY: '/auth/user/getmyTargetHistory',
   },
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3

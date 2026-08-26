@@ -1084,7 +1084,11 @@ class AuthService {
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };
 
-      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_HOST_RANKING}?type=${type}&date=${date}`;
+      const params = new URLSearchParams({
+        type: String(type || 'monthly').toLowerCase(),
+        date: String(date || ''),
+      });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_HOST_RANKING}?${params}`;
 
       try {
         const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
@@ -1098,10 +1102,41 @@ class AuthService {
         } catch {
           throw new Error('Invalid response format');
         }
-        return { success: true, data: data };
+        const list = Array.isArray(data) ? data : (data?.data || data?.result || []);
+        return { success: true, data: list };
       } catch (error) {
         console.error('Get top host ranking error:', error);
         return { success: false, error: error.message || 'Failed to fetch top host ranking.' };
+      }
+    }
+
+    async getTopRecharge(type, date) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const params = new URLSearchParams({
+        type: String(type || 'monthly').toLowerCase(),
+        date: String(date || ''),
+      });
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_RECHARGE}?${params}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch top recharge: ${response.status} ${response.statusText}\n${raw}`);
+        }
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+        const list = Array.isArray(data) ? data : (data?.data || data?.result || []);
+        return { success: true, data: list };
+      } catch (error) {
+        console.error('Get top recharge error:', error);
+        return { success: false, error: error.message || 'Failed to fetch top recharge.' };
       }
     }
 

@@ -17,7 +17,7 @@ const UserBanner = ({ user, isActive, onToggleActivation, isProcessing }) => {
   const palette = isActive ? statusColors.active : statusColors.inactive;
   const displayName = user?.name || user?.Name || user?.username || 'Unnamed User';
   const displayCode = user?.code || user?.UserCode || user?.userCode || 'N/A';
-  const displayAvatar = user?.dp || user?.avatar || '/default-avatar.png';
+  const displayAvatar = user?.dp || user?.avatar || user?.profilepic || '/default-avatar.png';
 
   return (
     <div className={`relative overflow-hidden rounded-2xl mb-10 border ${palette.border}`}>

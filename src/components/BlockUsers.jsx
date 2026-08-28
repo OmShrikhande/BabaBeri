@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import authService from '../services/authService';
+import { MobileDataCard, MobileCardRow } from './common/ResponsiveUI';
 
 const BAN_DURATIONS = [
   { value: '24h', label: '24 Hours' },
@@ -298,7 +299,7 @@ const BlockUsers = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-6">
+      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h1 className="text-2xl font-bold text-white">Banned Users</h1>
           <button
@@ -334,7 +335,7 @@ const BlockUsers = () => {
 
   if (error) {
     return (
-      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-6">
+      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h1 className="text-2xl font-bold text-white">Banned Users</h1>
           <button
@@ -369,7 +370,7 @@ const BlockUsers = () => {
 
   return (
     <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-white">Banned Users</h1>
@@ -428,7 +429,46 @@ const BlockUsers = () => {
           </div>
         ) : (
           <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-800">
+              {filteredUsers.map((user) => {
+                const code = user.usercode || user.code || '';
+                const isBusy = !!actionLoading[code];
+                const initial = (user.name || user.username || '?').charAt(0).toUpperCase();
+                const durationLabel = user.permanent
+                  ? 'Permanent'
+                  : (user.durationText || formatMinutesLeft(user.minutesLeft));
+                return (
+                  <MobileDataCard key={user.blockId || code || user.deviceId}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${getRoleInitialColor(user.role)} flex items-center justify-center text-white text-sm font-semibold shrink-0`}>
+                        {initial}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white text-sm font-medium truncate">{user.name || '—'}</p>
+                        <p className="text-gray-500 text-xs font-mono">{code || '—'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <MobileCardRow label="Role" value={(user.role || 'HOST').replace(/_/g, ' ')} />
+                      <MobileCardRow label="Duration" value={durationLabel} />
+                      <MobileCardRow label="Reason" value={user.reason || '—'} />
+                      <MobileCardRow label="Blocked By" value={user.blockedBy || '—'} mono />
+                    </div>
+                    <button
+                      onClick={() => handleUnban(user)}
+                      disabled={isBusy || !code}
+                      className="w-full text-green-400 border border-green-800 bg-green-900/20 rounded-lg px-3 py-2 text-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      {isBusy ? 'Unbanning...' : 'Unban'}
+                    </button>
+                  </MobileDataCard>
+                );
+              })}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-800">

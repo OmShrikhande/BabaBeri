@@ -81,10 +81,16 @@ export const API_CONFIG = {
     GET_ALL_GIFTS: '/auth/superadmin/getallgifts',
     // Save gift
     SAVE_GIFT: '/auth/superadmin/savegifts',
+    UPDATE_GIFT: '/auth/superadmin/updategift',
+    DELETE_GIFT: '/auth/superadmin/deletegift',
     // Get all banners
     GET_ALL_BANNERS: '/auth/superadmin/getallebanners',
     // Save banner
     SAVE_BANNER: '/auth/superadmin/savebanner',
+    UPDATE_BANNER: '/auth/superadmin/updatebanner',
+    DELETE_BANNER: '/auth/superadmin/deletebanner',
+    // Coin sellers list
+    COIN_SELLERS: '/auth/user/coin-sellers',
     // Get user by code
     GET_BY_CODE: '/auth/api/getByCode',
     // Get all users (Super Admin only)
@@ -93,6 +99,8 @@ export const API_CONFIG = {
     USER_FULL_DATA: '/auth/api/user-full-data',
     // Block user (Super Admin only)
     BLOCK_USER: '/auth/superadmin/block-user',
+    // User reports (Super Admin only)
+    USER_REPORTS: '/auth/superadmin/user-reports',
     // Unblock user (Super Admin only)
     UNBLOCK_USER: '/auth/superadmin/unblock-user',
     // Get blocked users (Super Admin only)

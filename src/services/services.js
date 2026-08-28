@@ -987,6 +987,65 @@ class AuthService {
       }
     }
 
+    async updateGift(formData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_GIFT}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to update gift: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+
+        return { success: true, data };
+      } catch (error) {
+        console.error('Update gift error:', error);
+        return { success: false, error: error.message || 'Failed to update gift.' };
+      }
+    }
+
+    async deleteGift(id) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DELETE_GIFT}?id=${encodeURIComponent(id)}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'DELETE' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to delete gift: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = raw ? JSON.parse(raw) : { message: 'Deleted' };
+        } catch {
+          data = { message: raw };
+        }
+
+        return { success: true, data };
+      } catch (error) {
+        console.error('Delete gift error:', error);
+        return { success: false, error: error.message || 'Failed to delete gift.' };
+      }
+    }
+
     async getAllBanners() {
       const token = this.getToken();
       if (!token) return { success: false, error: 'Not authenticated. Please login.' };
@@ -1077,6 +1136,92 @@ class AuthService {
       } catch (error) {
         console.error('Save banner error:', error);
         return { success: false, error: error.message || 'Failed to save banner.' };
+      }
+    }
+
+    async updateBanner(formData) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.UPDATE_BANNER}`;
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to update banner: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          data = { message: raw };
+        }
+
+        return { success: true, data };
+      } catch (error) {
+        console.error('Update banner error:', error);
+        return { success: false, error: error.message || 'Failed to update banner.' };
+      }
+    }
+
+    async deleteBanner(id) {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.DELETE_BANNER}?id=${encodeURIComponent(id)}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'DELETE' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to delete banner: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = raw ? JSON.parse(raw) : { message: 'Deleted' };
+        } catch {
+          data = { message: raw };
+        }
+
+        return { success: true, data };
+      } catch (error) {
+        console.error('Delete banner error:', error);
+        return { success: false, error: error.message || 'Failed to delete banner.' };
+      }
+    }
+
+    async getCoinSellers(status = 'all') {
+      const token = this.getToken();
+      if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.COIN_SELLERS}?status=${encodeURIComponent(status)}`;
+
+      try {
+        const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+        const raw = await response.text().catch(() => '');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch coin sellers: ${response.status} ${response.statusText}\n${raw}`);
+        }
+
+        let data = null;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error('Invalid response format');
+        }
+
+        return { success: true, data };
+      } catch (error) {
+        console.error('Get coin sellers error:', error);
+        return { success: false, error: error.message || 'Failed to fetch coin sellers.' };
       }
     }
 

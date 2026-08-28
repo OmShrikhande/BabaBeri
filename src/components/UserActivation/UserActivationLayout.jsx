@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import UserCodeInput from './components/UserCodeInput';
 import UserBanner from './components/UserBanner';
 import UserDetails from './components/UserDetails';
-import { API_CONFIG, TOKEN_CONFIG } from '../../config/api';
+import { CoinSellersPanel } from '../Gifts_and_Banner/sharedPanels';
 import authService from '../../services/authService';
 
 const USER_TOGGLE_ENDPOINT = '/auth/superadmin/active-deactive-seller';
@@ -106,21 +106,31 @@ const UserActivationLayout = () => {
     setUserData(null);
 
     try {
-      const response = await authService.getUserByCode(trimmedCode);
+      const response = await authService.getUserFullData(trimmedCode);
 
       if (!response.success) {
         throw new Error(response.error || 'User not found');
       }
 
-      const user = response.data?.data || response.data;
+      const payload = response.data;
+      const fullData = payload?.data || payload;
+      const profile = fullData?.profile || fullData;
 
-      if (!user) {
+      if (!profile || !profile.code) {
         setError('User not found');
         return;
       }
 
-      const normalizedActive = resolveUserActive(user);
-      setUserData(applyActiveState(user, normalizedActive));
+      const normalizedActive = resolveUserActive(profile);
+      setUserData(
+        applyActiveState(
+          {
+            ...profile,
+            devices: fullData?.devices || [],
+          },
+          normalizedActive,
+        ),
+      );
     } catch (err) {
       console.error('Fetch user error:', err);
       setError(err?.message || 'Something went wrong');
@@ -191,8 +201,8 @@ const UserActivationLayout = () => {
   }, [userData, userCode]);
 
   return (
-    <div className="h-900 w-full bg-gradient-to-br from-[#050505] via-[#0F0F0F] to-[#050505] text-white py-16 px-4 md:px-8">
-      <div className="relative mx-auto w-full max-w-5xl">
+    <div className="min-h-full w-full min-w-0 overflow-x-hidden bg-gradient-to-br from-[#050505] via-[#0F0F0F] to-[#050505] text-white py-8 sm:py-16 px-3 sm:px-4 md:px-8">
+      <div className="relative mx-auto w-full max-w-5xl min-w-0">
         <div className="absolute inset-0 -z-10 rounded-3xl bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent)] opacity-80" aria-hidden />
 
         <header className="text-center mb-12">
@@ -202,7 +212,7 @@ const UserActivationLayout = () => {
           </p>
         </header>
 
-        <section className="bg-[#101010] border border-white/5 rounded-3xl shadow-2xl p-6 md:p-10">
+        <section className="bg-[#101010] border border-white/5 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-10">
           <UserCodeInput
             userCode={userCode}
             setUserCode={setUserCode}
@@ -250,6 +260,10 @@ const UserActivationLayout = () => {
               <UserDetails user={userData} />
             </div>
           )}
+        </section>
+
+        <section className="mt-10">
+          <CoinSellersPanel />
         </section>
       </div>
     </div>

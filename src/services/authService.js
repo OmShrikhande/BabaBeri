@@ -2136,6 +2136,61 @@ class AuthService {
 
   // Block user (Super Admin only)
   // POST /auth/superadmin/block-user?code={hostId}&duration={24h|7d|permanent}&reason={reason}
+  async getUserReports(status) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated. Please login.' };
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return { success: false, error: 'Session expired. Please login again.' };
+    }
+
+    const params = new URLSearchParams();
+    if (status && String(status).toUpperCase() !== 'ALL') {
+      params.set('status', String(status).toUpperCase());
+    }
+    const qs = params.toString();
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_REPORTS}${qs ? `?${qs}` : ''}`;
+
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      if (!response.ok) {
+        return {
+          success: false,
+          error: this.formatApiError(response, raw, `Failed to fetch user reports: ${response.status}`),
+        };
+      }
+
+      let data = null;
+      try {
+        data = raw ? JSON.parse(raw) : null;
+      } catch {
+        throw new Error('Invalid response format');
+      }
+
+      const reports = Array.isArray(data?.reports)
+        ? data.reports
+        : Array.isArray(data?.data)
+          ? data.data
+          : Array.isArray(data)
+            ? data
+            : [];
+
+      return {
+        success: true,
+        data: {
+          ...data,
+          reports,
+          pending: data?.pending ?? reports.filter((r) => String(r?.status || '').toUpperCase() === 'PENDING').length,
+          total: data?.total ?? reports.length,
+        },
+      };
+    } catch (error) {
+      console.error('Get user reports error:', error);
+      return { success: false, error: error.message || 'Failed to fetch user reports.' };
+    }
+  }
+
   async blockUser(code, duration, reason) {
     const userCode = String(code || '').trim();
     if (!userCode) {

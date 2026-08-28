@@ -4,6 +4,7 @@
 :root {
   --primary-bg: #121212;
   --secondary-bg: #1A1A1A;
+  --dashboard-sidebar-width: 0px;
   --neon-pink: #F72585;
   --neon-purple: #7209B7;
   --neon-blue: #4361EE;
@@ -526,4 +527,186 @@ html {
 
 .exchange-glow {
   animation: exchangeGlow 3s ease-in-out infinite;
+}
+
+/* ── Responsive dashboard utilities ── */
+
+/* Prevent horizontal page overflow on small screens */
+.dashboard-shell {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Touch-friendly horizontal table scroll */
+.responsive-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.scroll-table-hint {
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.7rem;
+  color: #888;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (min-width: 1024px) {
+  .scroll-table-hint {
+    display: none;
+  }
+}
+
+/* Mobile-friendly modals */
+@media (max-width: 639px) {
+  .modal-sheet-mobile {
+    max-height: 92vh;
+    border-radius: 1rem 1rem 0 0;
+    margin-top: auto;
+  }
+}
+
+/* Live monitoring: relax fixed heights on mobile/tablet */
+@media (max-width: 1023px) {
+  .live-monitoring-grid {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .live-monitoring-panel {
+    min-height: 280px;
+    max-height: none;
+    height: auto;
+  }
+
+  .live-monitoring-container {
+    height: auto;
+    min-height: 0;
+  }
+}
+
+/* Safe area for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* User Details / Audit modal — stable table headers & tabs across zoom */
+.audit-detail-tabs {
+  flex-shrink: 0;
+}
+
+.audit-detail-tabs-inner {
+  min-height: 52px;
+  padding-top: 8px;
+  padding-bottom: 0;
+}
+
+.audit-detail-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 16px;
+  margin-bottom: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.audit-detail-tab-idle {
+  color: #9ca3af;
+}
+
+.audit-detail-tab-idle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.audit-detail-tab-active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom-color: #f72585;
+}
+
+.audit-detail-content {
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.audit-table-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.audit-table-scroll {
+  overflow: auto;
+  max-height: 480px;
+}
+
+.audit-data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  width: 100%;
+}
+
+.audit-data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.audit-table-th {
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+  padding: 0 20px;
+  vertical-align: middle;
+  box-sizing: border-box;
+  background-color: #1c1c1c;
+  color: #e5e7eb;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.audit-table-body tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.audit-table-body tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.audit-table-td {
+  padding: 14px 20px;
+  vertical-align: middle;
+  color: #d1d5db;
+  box-sizing: border-box;
+}
+
+.audit-list-table tbody td {
+  padding: 14px 20px;
+  vertical-align: middle;
+  color: #d1d5db;
+  text-align: center;
+  box-sizing: border-box;
 }

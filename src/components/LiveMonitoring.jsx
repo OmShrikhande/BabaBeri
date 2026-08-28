@@ -171,7 +171,7 @@ const LiveMonitoring = () => {
   };
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-hidden flex flex-col h-full">
+    <div className="flex-1 bg-[#1A1A1A] p-4 sm:p-6 overflow-hidden flex flex-col h-full live-monitoring-container">
       {/* Header */}
       <div className="mb-6 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -196,7 +196,7 @@ const LiveMonitoring = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0 overflow-hidden live-monitoring-grid">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-h-0 overflow-hidden live-monitoring-grid">
           {/* Left Panel - Live Users Grid */}
           <div className="lg:col-span-1 bg-[#121212] rounded-lg p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">

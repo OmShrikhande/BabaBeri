@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import authService from '../services/authService';
 import Pagination from './Pagination';
+import ModalPortal from './common/ModalPortal';
+import { DASHBOARD_MODAL_OVERLAY } from '../utils/dashboardSidebarClasses';
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -32,6 +34,39 @@ const formatType = (type) =>
     .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
     .join(' ');
 
+/** Align with /auth/api/user-full-data: { status, code, data: { profile, devices, ... } } */
+const parseUserFullDataResponse = (result) => {
+  if (!result?.success) {
+    return { error: result?.error || 'Failed to fetch detailed profile data.' };
+  }
+
+  const payload = result.data;
+  const fullData = payload?.data ?? payload;
+
+  if (!fullData || typeof fullData !== 'object') {
+    return { error: payload?.message || 'Invalid user full data response.' };
+  }
+
+  const profile = fullData.profile || fullData;
+  if (!profile?.code && !profile?.username) {
+    return { error: 'User profile not found in API response.' };
+  }
+
+  return {
+    data: {
+      ...fullData,
+      profile: fullData.profile || profile,
+      devices: Array.isArray(fullData.devices) ? fullData.devices : [],
+      walletHistory: fullData.walletHistory || [],
+      rechargeHistory: fullData.rechargeHistory || [],
+      vipPlans: fullData.vipPlans || [],
+      posts: fullData.posts || [],
+      followers: fullData.followers || [],
+      following: fullData.following || [],
+    },
+  };
+};
+
 const EmptyState = ({ message }) => (
   <div className="p-8 text-center text-gray-500 text-sm">{message}</div>
 );
@@ -39,30 +74,36 @@ const EmptyState = ({ message }) => (
 const DataTable = ({ columns, rows, emptyMessage = 'No records found.' }) => {
   if (!rows || rows.length === 0) {
     return (
-      <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
+      <div className="border border-white/10 rounded-xl overflow-hidden bg-[#0a0a0a]">
         <EmptyState message={emptyMessage} />
       </div>
     );
   }
 
   return (
-    <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+    <div className="audit-table-wrap border border-white/10 rounded-xl overflow-hidden bg-[#0a0a0a]">
+      <div className="audit-table-scroll responsive-table-scroll">
+        <table className="audit-data-table w-full min-w-[720px]">
           <thead>
-            <tr className="bg-white/5 border-b border-white/5 text-gray-400">
+            <tr>
               {columns.map((col) => (
-                <th key={col.key} className="px-4 py-3 whitespace-nowrap font-medium">
+                <th
+                  key={col.key}
+                  className={`audit-table-th text-center ${col.headerClassName || ''}`}
+                >
                   {col.label}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5 text-gray-300">
+          <tbody className="audit-table-body">
             {rows.map((row, idx) => (
-              <tr key={row.id ?? row.transactionno ?? row.transactionid ?? idx} className="hover:bg-white/[0.02]">
+              <tr key={row.id ?? row.transactionno ?? row.transactionid ?? idx}>
                 {columns.map((col) => (
-                  <td key={col.key} className={`px-4 py-3 ${col.className || ''}`}>
+                  <td
+                    key={col.key}
+                    className={`audit-table-td text-center ${col.className || ''}`}
+                  >
                     {col.render ? col.render(row) : (row[col.key] ?? '—')}
                   </td>
                 ))}
@@ -219,10 +260,11 @@ const UserDetailsList = () => {
 
     try {
       const result = await authService.getUserFullData(code);
-      if (result.success && result.data?.status === 'success') {
-        setUserDetailData(result.data.data);
+      const parsed = parseUserFullDataResponse(result);
+      if (parsed.data) {
+        setUserDetailData(parsed.data);
       } else {
-        setDetailError(result.error || result.data?.message || 'Failed to fetch detailed profile data.');
+        setDetailError(parsed.error || 'Failed to fetch detailed profile data.');
       }
     } catch (err) {
       setDetailError(err.message || 'An error occurred fetching user full data.');
@@ -336,7 +378,7 @@ const UserDetailsList = () => {
     if (activeTab === 'wallet') {
       return (
         <div className="space-y-4">
-          <h4 className="text-sm font-semibold text-white">Wallet History</h4>
+          <h4 className="text-sm font-semibold text-white mb-4 pb-2 border-b border-white/10">Wallet History</h4>
           <DataTable
             emptyMessage="No wallet history."
             rows={d.walletHistory || []}
@@ -730,10 +772,22 @@ const UserDetailsList = () => {
               rows={d.followers || []}
               columns={[
                 {
-                  key: 'follower',
+                  key: 'user',
                   label: 'Follower',
-                  render: (r) => <PersonCell user={r.follower} />,
+                  render: (r) => (
+                    <PersonCell
+                      user={{
+                        name: r.name,
+                        username: r.username,
+                        profilepic: r.profilepic,
+                        usercode: r.usercode,
+                      }}
+                    />
+                  ),
                 },
+                { key: 'usercode', label: 'Code', className: 'font-mono text-white', render: (r) => r.usercode || '—' },
+                { key: 'role', label: 'Role', render: (r) => r.role || '—' },
+                { key: 'country', label: 'Country', render: (r) => r.country || '—' },
                 { key: 'followedAt', label: 'Followed At', render: (r) => formatDate(r.followedAt) },
               ]}
             />
@@ -747,10 +801,22 @@ const UserDetailsList = () => {
               rows={d.following || []}
               columns={[
                 {
-                  key: 'following',
+                  key: 'user',
                   label: 'Following',
-                  render: (r) => <PersonCell user={r.following} />,
+                  render: (r) => (
+                    <PersonCell
+                      user={{
+                        name: r.name,
+                        username: r.username,
+                        profilepic: r.profilepic,
+                        usercode: r.usercode,
+                      }}
+                    />
+                  ),
                 },
+                { key: 'usercode', label: 'Code', className: 'font-mono text-white', render: (r) => r.usercode || '—' },
+                { key: 'role', label: 'Role', render: (r) => r.role || '—' },
+                { key: 'country', label: 'Country', render: (r) => r.country || '—' },
                 { key: 'followedAt', label: 'Followed At', render: (r) => formatDate(r.followedAt) },
               ]}
             />
@@ -814,12 +880,16 @@ const UserDetailsList = () => {
             {
               key: 'likes',
               label: 'Likes',
-              render: (r) => (Array.isArray(r.likes) ? r.likes.length : r.likes ?? 0),
+              render: (r) =>
+                r.likeCount ??
+                (Array.isArray(r.likes) ? r.likes.length : r.likes ?? 0),
             },
             {
               key: 'comments',
               label: 'Comments',
-              render: (r) => (Array.isArray(r.comments) ? r.comments.length : r.comments ?? 0),
+              render: (r) =>
+                r.commentCount ??
+                (Array.isArray(r.comments) ? r.comments.length : r.comments ?? 0),
             },
             { key: 'createdAt', label: 'Created', render: (r) => formatDate(r.createdAt) },
           ]}
@@ -828,34 +898,65 @@ const UserDetailsList = () => {
     }
 
     if (activeTab === 'devices') {
+      const deviceRows = Array.isArray(d.devices) ? d.devices : [];
+
       return (
-        <div className="space-y-3">
-          <p className="text-xs text-gray-500">
-            Device IDs come from <code className="text-gray-400">data.devices</code> in{' '}
-            <code className="text-gray-400">/auth/api/user-full-data</code>. Use these for Ban Device.
+        <div className="space-y-4">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Device sessions from <code className="text-gray-400">data.devices</code> in{' '}
+            <code className="text-gray-400">GET /auth/api/user-full-data?code=…</code>.
+            Fields: <code className="text-gray-400">id</code>,{' '}
+            <code className="text-gray-400">usercode</code>,{' '}
+            <code className="text-gray-400">deviceId</code>,{' '}
+            <code className="text-gray-400">loginAt</code>,{' '}
+            <code className="text-gray-400">loggedOutAt</code>,{' '}
+            <code className="text-gray-400">active</code>.
           </p>
+          {deviceRows.length === 0 && (
+            <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+              API returned an empty <code className="text-amber-200">devices</code> array for{' '}
+              <span className="font-mono">{d.profile?.code || selectedUserCode}</span>.
+              This user has no tracked device logins yet (e.g. PX100). Try{' '}
+              <span className="font-mono">PX104</span> to verify the table with live data.
+            </p>
+          )}
           <DataTable
-            emptyMessage="No linked devices for this user (devices array is empty)."
-            rows={d.devices || []}
+            emptyMessage="No device sessions in API response."
+            rows={deviceRows}
             columns={[
+              { key: 'id', label: 'ID', render: (r) => r.id ?? '—' },
+              {
+                key: 'usercode',
+                label: 'User Code',
+                className: 'font-mono text-white',
+                render: (r) => r.usercode ?? d.profile?.code ?? '—',
+              },
               {
                 key: 'deviceId',
                 label: 'Device ID',
-                className: 'font-mono text-white',
-                render: (r) => r.deviceId || r.deviceid || r.device_id || r.id || '—',
+                className: 'font-mono text-white break-all max-w-[240px]',
+                render: (r) => r.deviceId || r.deviceid || r.device_id || '—',
               },
               {
-                key: 'platform',
-                label: 'Platform',
-                render: (r) => r.platform || r.os || r.deviceType || '—',
+                key: 'loginAt',
+                label: 'Login At',
+                render: (r) => formatDate(r.loginAt || r.login_at),
               },
-              { key: 'model', label: 'Model', render: (r) => r.model || r.deviceName || '—' },
               {
-                key: 'lastSeen',
-                label: 'Last Seen',
-                render: (r) => formatDate(r.lastSeen || r.lastLogin || r.updatedAt || r.createdAt),
+                key: 'loggedOutAt',
+                label: 'Logged Out',
+                render: (r) => {
+                  const out = r.loggedOutAt ?? r.logged_out_at;
+                  return out ? formatDate(out) : '—';
+                },
               },
-              { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status || '—'} /> },
+              {
+                key: 'active',
+                label: 'Active',
+                render: (r) => (
+                  <StatusBadge status={r.active === true || r.active === 'true' ? 'ACTIVE' : 'INACTIVE'} />
+                ),
+              },
             ]}
           />
         </div>
@@ -983,29 +1084,29 @@ const UserDetailsList = () => {
         ) : error ? (
           <div className="text-center py-16 text-red-400">{error}</div>
         ) : (
-          <div className="bg-[#0c0c0c] border border-white/5 rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+          <div className="audit-list-table-wrap bg-[#0c0c0c] border border-white/10 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto responsive-table-scroll">
+              <table className="audit-data-table audit-list-table w-full min-w-[900px]">
                 <thead>
-                  <tr className="border-b border-white/5 text-xs text-gray-400 uppercase tracking-wider">
-                    <th className="px-6 py-4">User</th>
-                    <th className="px-6 py-4">Code</th>
-                    <th className="px-6 py-4">Role</th>
-                    <th className="px-6 py-4">Coins</th>
-                    <th className="px-6 py-4">Diamonds</th>
-                    <th className="px-6 py-4">Joined</th>
-                    <th className="px-6 py-4 text-right">Action</th>
+                  <tr>
+                    <th className="audit-table-th text-center">User</th>
+                    <th className="audit-table-th text-center">Code</th>
+                    <th className="audit-table-th text-center">Role</th>
+                    <th className="audit-table-th text-center">Coins</th>
+                    <th className="audit-table-th text-center">Diamonds</th>
+                    <th className="audit-table-th text-center">Joined</th>
+                    <th className="audit-table-th text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="audit-table-body">
                   {currentUsers.map((user) => (
                     <tr
                       key={user.code || user.id}
                       onClick={() => handleUserClick(user.code)}
                       className="hover:bg-white/[0.02] cursor-pointer transition-colors"
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                      <td className="px-5 py-3.5 text-center">
+                        <div className="flex items-center justify-center gap-3">
                           {user.profilepic ? (
                             <img src={user.profilepic} alt="" className="w-9 h-9 rounded-full object-cover" />
                           ) : (
@@ -1019,28 +1120,28 @@ const UserDetailsList = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 font-mono text-xs text-gray-300">{user.code || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-300">{user.role || '—'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-5 py-3.5 text-center font-mono text-xs text-gray-300">{user.code || '—'}</td>
+                      <td className="px-5 py-3.5 text-center text-sm text-gray-300">{user.role || '—'}</td>
+                      <td className="px-5 py-3.5 text-center whitespace-nowrap">
                         <div className="flex items-center gap-1 text-sm font-semibold text-yellow-400">
                           <Coins className="w-3.5 h-3.5" />
                           {user.coins ? user.coins.toLocaleString() : 0}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1 text-sm font-semibold text-violet-400">
+                      <td className="px-5 py-3.5 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1 text-sm font-semibold text-violet-400">
                           <Gem className="w-3.5 h-3.5" />
                           {user.diamond ? user.diamond.toLocaleString() : 0}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                        <div className="flex items-center gap-1.5">
+                      <td className="px-5 py-3.5 text-center whitespace-nowrap text-sm text-gray-400">
+                        <div className="flex items-center justify-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-gray-500" />
                           {user.joinDate ? new Date(user.joinDate).toLocaleDateString() : 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-xs">
-                        <button className="px-3 py-1.5 bg-white/5 hover:bg-gradient-to-r hover:from-[#F72585] hover:to-[#7209B7] hover:text-white rounded-lg transition-all text-gray-400 font-semibold flex items-center gap-1 ml-auto">
+                      <td className="px-5 py-3.5 text-center whitespace-nowrap text-xs">
+                        <button className="px-3 py-1.5 bg-white/5 hover:bg-gradient-to-r hover:from-[#F72585] hover:to-[#7209B7] hover:text-white rounded-lg transition-all text-gray-400 font-semibold flex items-center justify-center gap-1 mx-auto">
                           <Eye className="w-3.5 h-3.5" />
                           View Details
                         </button>
@@ -1070,9 +1171,14 @@ const UserDetailsList = () => {
         )}
       </div>
 
-      {selectedUserCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-6xl bg-[#0c0c0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+      <ModalPortal open={!!selectedUserCode}>
+        <div className={DASHBOARD_MODAL_OVERLAY}>
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            onClick={() => setSelectedUserCode(null)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-[min(100vw-1.5rem,72rem)] min-w-0 bg-[#0c0c0c] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[min(92vh,100dvh-1.5rem)]">
             <div className="px-6 py-4 border-b border-white/10 bg-white/[0.02] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <button
@@ -1111,8 +1217,8 @@ const UserDetailsList = () => {
                 </button>
               </div>
             ) : userDetailData ? (
-              <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-                <div className="p-6 bg-gradient-to-r from-[#111] to-black border-b border-white/5 flex flex-col md:flex-row items-start md:items-center gap-6">
+              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="shrink-0 p-6 bg-gradient-to-r from-[#111] to-black border-b border-white/10 flex flex-col md:flex-row items-start md:items-center gap-6">
                   {userDetailData.profile?.profilepic ? (
                     <img
                       src={userDetailData.profile.profilepic}
@@ -1149,34 +1255,38 @@ const UserDetailsList = () => {
                   </div>
                 </div>
 
-                <div className="flex border-b border-white/5 bg-white/[0.01] overflow-x-auto">
-                  {DETAIL_TABS.map((tab) => {
-                    const count = tabCount(tab.id);
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`px-4 py-3.5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
-                          activeTab === tab.id
-                            ? 'border-[#F72585] text-white bg-white/5'
-                            : 'border-transparent text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        {tab.label}
-                        {count != null ? ` (${count})` : ''}
-                      </button>
-                    );
-                  })}
+                <div className="shrink-0 audit-detail-tabs border-b border-white/10 bg-[#0f0f0f]">
+                  <div className="flex overflow-x-auto px-4 items-end gap-1 audit-detail-tabs-inner responsive-table-scroll">
+                    {DETAIL_TABS.map((tab) => {
+                      const count = tabCount(tab.id);
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`audit-detail-tab shrink-0 whitespace-nowrap ${
+                            isActive ? 'audit-detail-tab-active' : 'audit-detail-tab-idle'
+                          }`}
+                        >
+                          {tab.label}
+                          {count != null ? ` (${count})` : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="p-6 flex-1 min-h-[300px]">{renderDetailTab()}</div>
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 audit-detail-content">
+                  {renderDetailTab()}
+                </div>
               </div>
             ) : (
               <div className="flex-1 p-8 text-center text-gray-500">No profile found.</div>
             )}
           </div>
         </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

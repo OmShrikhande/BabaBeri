@@ -6,6 +6,7 @@ import authService from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { APP_CONFIG } from '../config/api';
 import { SUB_USER_ROLES, fetchSubUserCurrentGoal } from '../utils/subUserGoals';
+import { MobileDataCard, MobileCardRow, ScrollTableWrap } from './common/ResponsiveUI';
 
 const ownerBase = `/${APP_CONFIG.OWNER_SECRET_PATH}`;
 
@@ -650,10 +651,13 @@ const MasterAgency = ({ onNavigateToDetail }) => {
   return (
     <div className="flex-1 bg-[#1A1A1A] text-white min-h-full flex flex-col">
       {/* Header */}
-      <div className="bg-[#121212] border-b border-gray-800 p-6 flex-shrink-0">
+      <div className="bg-[#121212] border-b border-gray-800 p-4 sm:p-6 flex-shrink-0">
         <div className="flex items-center justify-between ">
           <div>
-            <h1 className="text-3xl font-bold text-white flex items-center"> <Building className="w-8 h-8 mr-3 text-[#F72585]" /> List of Master Agencies</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center">
+              <Building className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-[#F72585]" />
+              List of Master Agencies
+            </h1>
             {/* <p className="text-gray-400 mt-1">Manage all master agencies across sub-admins</p> */}
           </div>
           {/* <div className="flex items-center gap-4">
@@ -664,7 +668,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto table-scroll-container p-6">
+      <div className="flex-1 overflow-auto table-scroll-container p-4 sm:p-6">
         {/* Master Agencies List */}
         <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
           <div className="p-0">
@@ -713,9 +717,39 @@ const MasterAgency = ({ onNavigateToDetail }) => {
               </div>
             </div>
 
-            {/* Table Container with Scroll */}
-            <div className="overflow-x-auto">
-              <div className="min-w-[2000px]">
+            {/* Mobile cards */}
+            <div className="lg:hidden divide-y divide-gray-800">
+              {paginatedMasterAgencies.map((masterAgency) => (
+                <MobileDataCard
+                  key={`${masterAgency.agencyId}-${masterAgency.id}`}
+                  onClick={
+                    currentRole === 'super-admin' || currentRole === 'admin'
+                      ? () => setSelectedAgency(masterAgency)
+                      : undefined
+                  }
+                >
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="text-white font-bold truncate">{masterAgency.name}</p>
+                      <p className="text-gray-400 text-xs font-mono">{masterAgency.agencyId}</p>
+                    </div>
+                    <MoreVertical className="w-4 h-4 text-gray-500 shrink-0" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <MobileCardRow label="Sub Admin" value={masterAgency.subAdminName} />
+                    <MobileCardRow label="Agencies" value={masterAgency.totalAgency} />
+                    <MobileCardRow label="Diamonds" value={masterAgency.diamond} />
+                    <MobileCardRow label="Earning" value={formatNumber(masterAgency.myEarning)} />
+                    <MobileCardRow label="Coins" value={masterAgency.coins} />
+                    <MobileCardRow label="Joined" value={masterAgency.joinDate} />
+                  </div>
+                </MobileDataCard>
+              ))}
+            </div>
+
+            {/* Table Container with Scroll — desktop */}
+            <ScrollTableWrap className="hidden lg:block">
+              <div className="min-w-[1100px]">
                 {/* Table Header */}
                 <div className="bg-[#0A0A0A] border-b border-gray-800">
                   <div className="grid grid-cols-13 gap-4 px-4 py-4">
@@ -872,7 +906,7 @@ const MasterAgency = ({ onNavigateToDetail }) => {
                   ))}
                 </div>
               </div>
-            </div>
+            </ScrollTableWrap>
 
             {/* Empty State */}
             {sortedMasterAgencies.length === 0 && (

@@ -1,5 +1,6 @@
 import React from 'react';
-import CashoutRequestCard from '../CashoutRequestCard';
+import CashoutRequestCard, { formatDateTime, formatMoney, statusBadgeClass } from '../CashoutRequestCard';
+import { MobileDataCard, MobileCardRow } from '../common/ResponsiveUI';
 
 const TABLE_HEADERS = [
   'ID',
@@ -42,11 +43,62 @@ const CashoutRequestsSection = ({
         </p>
       </div>
 
-      <div className="w-full overflow-x-auto coin-scroll">
+      <div className="w-full responsive-table-scroll">
         {loadingRequests ? (
           <div className="text-center py-10 text-gray-400">Loading cashout requests...</div>
         ) : cashoutRequests.length > 0 ? (
-          <table className="w-full min-w-[1100px] border-collapse">
+          <>
+            {/* Mobile cards */}
+            <div className="lg:hidden divide-y divide-gray-700">
+              {cashoutRequests.map((request) => {
+                if (!request || typeof request !== 'object') return null;
+                const status = String(request?.status || 'PENDING').toUpperCase();
+                const isPending = status === 'PENDING';
+                const loading = actionLoadingId === request.id;
+                return (
+                  <MobileDataCard key={request.id ?? request.transactionno}>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div>
+                        <p className="text-white font-medium">{request.usercode || '—'}</p>
+                        <p className="text-gray-500 text-xs font-mono truncate">{request.transactionno || '—'}</p>
+                      </div>
+                      <span className={`inline-flex px-2 py-1 rounded-md text-xs font-medium border shrink-0 ${statusBadgeClass(status)}`}>
+                        {status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <MobileCardRow label="Diamonds" value={formatMoney(request.diamonds)} />
+                      <MobileCardRow label="Cash" value={formatMoney(request.cashAmount)} />
+                      <MobileCardRow label="Role" value={request.role || '—'} />
+                      <MobileCardRow label="Date" value={formatDateTime(request.redeemed_request_date)} />
+                    </div>
+                    {isPending && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => onApprove?.(request.id)}
+                          className="flex-1 px-3 py-2 bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg text-xs font-medium disabled:opacity-50"
+                        >
+                          {loading ? '…' : 'Approve'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => onReject?.(request.id)}
+                          className="flex-1 px-3 py-2 bg-gray-600 text-white rounded-lg text-xs font-medium disabled:opacity-50"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </MobileDataCard>
+                );
+              })}
+            </div>
+
+            {/* Desktop table */}
+            <table className="hidden lg:table w-full min-w-[1100px] border-collapse">
             <thead>
               <tr className="bg-[#121212] border-b border-gray-700">
                 {TABLE_HEADERS.map((label) => (
@@ -73,7 +125,8 @@ const CashoutRequestsSection = ({
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </>
         ) : (
           <div className="text-center py-10 text-gray-400">
             {error ? `Error: ${error}` : 'No pending cashout requests found'}

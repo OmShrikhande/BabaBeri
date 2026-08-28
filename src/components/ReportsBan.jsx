@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Flag, CheckCircle, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Flag, CheckCircle, XCircle, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import authService from '../services/authService';
 import ConfirmDialog from './RoleStages/ConfirmDialog';
 import BanDialog from './RoleStages/BanDialog';
+import UserReportsPanel from './UserReportsPanel';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -31,6 +33,8 @@ const normalizeHostUser = (user) => {
 };
 
 const ReportsBan = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'reports' ? 'reports' : 'ban';
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
@@ -44,6 +48,7 @@ const ReportsBan = () => {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    if (activeTab === 'reports') return undefined;
     let ignore = false;
 
     const fetchUsers = async () => {
@@ -82,7 +87,7 @@ const ReportsBan = () => {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => {
     let filtered = [...users];
@@ -249,13 +254,63 @@ const ReportsBan = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
+  const setTab = (tab) => {
+    if (tab === 'reports') {
+      setSearchParams({ tab: 'reports' });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  if (activeTab === 'reports') {
+    return (
+      <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full">
+        <div className="p-4 sm:p-6">
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Reports / Ban Requests</h1>
+              <p className="text-gray-400 text-sm mt-1">User reports from the platform</p>
+            </div>
+            <div className="flex items-center gap-2 p-1 rounded-xl bg-[#121212] border border-gray-800">
+              <button
+                type="button"
+                onClick={() => setTab('ban')}
+                className="px-4 py-2 rounded-lg text-sm font-bold text-gray-400 hover:text-white transition-all"
+              >
+                Ban Management
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('reports')}
+                className="px-4 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg"
+              >
+                User Reports
+              </button>
+            </div>
+          </div>
+          <UserReportsPanel embedded />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto bg-black/70 w-full min-h-full">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Page Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Reports / Ban Requests</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage user statuses and ban requests</p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Reports / Ban Requests</h1>
+            <p className="text-gray-400 text-sm mt-1">Manage user statuses and ban requests</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTab('reports')}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#7209B7] to-[#4361EE] text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg"
+          >
+            <Bell className="w-4 h-4" />
+            View User Reports
+          </button>
         </div>
 
         {/* Error State */}
@@ -315,7 +370,7 @@ const ReportsBan = () => {
         {/* Users Table */}
         <div className="bg-[#121212] rounded-xl border border-gray-800 overflow-hidden">
           {loading ? (
-            <div className="p-6 space-y-4">
+            <div className="p-4 sm:p-6 space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="bg-[#1A1A1A] rounded-xl p-4 animate-pulse">
                   <div className="flex items-center gap-4">

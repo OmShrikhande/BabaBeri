@@ -368,7 +368,7 @@ const VipLevels = () => {
   );
 
   return (
-    <div className="flex-1 bg-[#1A1A1A] p-6 overflow-y-auto">
+    <div className="flex-1 bg-[#1A1A1A] p-4 sm:p-6 overflow-y-auto">
       <div className="min-h-full flex flex-col">
 
         {/* Header */}
@@ -607,8 +607,9 @@ const VipLevels = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1100px] border-collapse">
+              <div className="responsive-table-scroll">
+                <p className="scroll-table-hint lg:hidden">Swipe horizontally to see more columns →</p>
+                <table className="w-full min-w-[900px] border-collapse">
                   <thead>
                     <tr className="border-b border-gray-700 bg-[#0F0F0F]">
                       <th className="text-left py-3 px-4 pl-6 text-gray-400 font-medium text-sm w-10">#</th>

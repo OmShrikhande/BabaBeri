@@ -3,11 +3,14 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import OwnerSidebar from './owner/OwnerSidebar';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
+import { useDashboardSidebarOffset } from '../hooks/useDashboardSidebarOffset';
 
 const OwnerAreaPage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+
+  useDashboardSidebarOffset(sidebarOpen);
 
   const handleLogout = () => {
     logout();
@@ -15,7 +18,7 @@ const OwnerAreaPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-[#1A1A1A] overflow-hidden">
+    <div className="flex h-screen bg-[#1A1A1A] overflow-hidden dashboard-shell">
       <OwnerSidebar 
         isOpen={sidebarOpen} 
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -29,7 +32,7 @@ const OwnerAreaPage = () => {
           onLogout={handleLogout}
           onProfileClick={() => navigate('/ownerarea/profile')}
         />
-        <div className="flex-1 overflow-y-auto bg-[#1A1A1A] relative z-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#1A1A1A] mobile-scroll-fix">
           <Outlet />
         </div>
       </div>

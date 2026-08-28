@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Menu, X, Users, Mic, Settings, UserPlus, Building, Ban, CreditCard, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, X, Users, Mic, Settings, UserPlus, Building, Ban, CreditCard, BarChart2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
+import { useDashboardSidebarOffset, closeSidebarOnMobile } from '../hooks/useDashboardSidebarOffset';
+import { getDashboardAsideClasses } from '../utils/dashboardSidebarClasses';
 
 const AdminLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+
+  useDashboardSidebarOffset(sidebarOpen);
 
   const handleLogout = () => {
     logout();
@@ -26,7 +30,7 @@ const AdminLayout = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-[#1A1A1A] overflow-hidden">
+    <div className="flex h-screen bg-[#1A1A1A] overflow-hidden dashboard-shell">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
@@ -36,31 +40,27 @@ const AdminLayout = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`
-        fixed left-0 top-0 h-full w-72 bg-[#121212] transform transition-transform duration-300 z-50 flex flex-col
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        lg:relative lg:flex shadow-2xl lg:shadow-none border-r border-gray-800
-      `}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-800">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center">
+      <aside className={getDashboardAsideClasses(sidebarOpen)}>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-800 min-w-72">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center shrink-0">
               <LayoutDashboard className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white">Admin Portal</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white truncate">Admin Portal</h1>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400">
+          <button type="button" onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-white shrink-0" aria-label="Close sidebar">
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <nav className="p-4 flex-1 overflow-y-auto enhanced-scrollbar">
+        <nav className="p-4 flex-1 overflow-y-auto enhanced-scrollbar min-w-72">
           <ul className="space-y-2">
             {navItems.map((item) => (
               <li key={item.path}>
                 <NavLink
                   to={item.path}
                   end={item.path === '/admin'}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => closeSidebarOnMobile(() => setSidebarOpen(false))}
                   className={({ isActive }) => `
                     w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-300
                     ${isActive
@@ -77,7 +77,7 @@ const AdminLayout = () => {
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800 min-w-72">
           <div className="mb-4 p-3 bg-[#1A1A1A] rounded-lg border border-gray-700">
             <p className="text-sm font-semibold text-white truncate">{currentUser?.username}</p>
             <p className="text-xs text-gray-400 font-mono">Admin</p>
@@ -99,7 +99,7 @@ const AdminLayout = () => {
           onLogout={handleLogout}
           onProfileClick={() => navigate('/ownerarea/profile')}
         />
-        <div className="flex-1 overflow-y-auto bg-[#1A1A1A]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#1A1A1A] mobile-scroll-fix">
           <Outlet />
         </div>
       </div>

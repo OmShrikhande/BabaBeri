@@ -169,7 +169,7 @@ const SuperAdminWallet = ({ currentUser }) => {
   return (
     <>
       {/* Wallet Display */}
-      <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300">
+      <div className="flex items-center gap-2 sm:gap-4 bg-white/5 px-2 sm:px-4 py-2 rounded-xl border border-white/10 backdrop-blur-sm hover:bg-white/10 transition-all duration-300 max-w-full">
         {/* Coins Section */}
         <div className="flex items-center gap-2">
           <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">

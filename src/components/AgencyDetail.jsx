@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Search, Filter, Eye, User, Building2, Diamond, TrendingUp, Coins, ChevronDown, Lock, Shield, Crown } from 'lucide-react';
 import { TableSkeleton } from './LoadingSkeleton';
+import { MobileDataCard, MobileCardRow, ScrollTableWrap } from './common/ResponsiveUI';
+
+const formatJoinDate = (value) => {
+  if (!value || value === '—') return '—';
+  if (value instanceof Date) return value.toLocaleDateString();
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 import authService from '../services/authService';
 import { SUB_USER_ROLES, fetchSubUserCurrentGoal } from '../utils/subUserGoals';
 
@@ -62,7 +71,7 @@ const AgencyDetail = ({
             redeem: Number(host.redeem) || 0,
             earnings: host.earning,
             coins: Number(host.coins) || 0,
-            joiningDate: host.joiningdate || host.createdAt || new Date(),
+            joiningDate: host.joiningdate || host.joinDate || host.createdAt || '—',
           }));
           setHosts(transformedHosts);
 
@@ -347,28 +356,52 @@ const AgencyDetail = ({
           <TableSkeleton rows={10} columns={6} showHeader={true} />
         ) : (
           <div className="bg-[#2A2A2A] border border-gray-800 rounded-xl overflow-hidden">
-            <div className="p-6 border-b border-gray-800">
-              <h2 className="text-xl font-semibold text-white">List of Hosts for Agency: {hosttoagnc}</h2>
+            <div className="p-4 sm:p-6 border-b border-gray-800">
+              <h2 className="text-lg sm:text-xl font-semibold text-white truncate">
+                List of Hosts for Agency: {hosttoagnc}
+              </h2>
             </div>
-            
-            <div className="overflow-x-auto">
-              <div className="min-w-[2000px]">
-                <table className="w-full">
+
+            {/* Mobile cards */}
+            <div className="lg:hidden divide-y divide-gray-800">
+              {filteredHosts.map((host) => (
+                <MobileDataCard key={host.id}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      {host.name?.charAt(0) || 'H'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-white font-medium truncate">{host.name}</p>
+                      <p className="text-gray-400 text-xs font-mono">{host.id}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <MobileCardRow label="Diamonds" value={host.overalldiamonds} />
+                    <MobileCardRow label="Stage" value={host.stage || '—'} />
+                    <MobileCardRow label="Coins" value={host.coins || '—'} />
+                    <MobileCardRow label="Joined" value={formatJoinDate(host.joiningDate)} />
+                  </div>
+                </MobileDataCard>
+              ))}
+            </div>
+
+            <ScrollTableWrap className="hidden lg:block">
+              <table className="w-full min-w-[900px]">
                   <thead className="bg-[#1A1A1A]">
                     <tr>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm min-w-[250px]">Host Name</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host code</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Master Agency code</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Host count</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Overall diamonds</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Stage</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Current Slab</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">active cashout host</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Redeem</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">My Earning</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Availble coins</th>
-                      <th className="text-left py-4 px-6 text-gray-400 font-medium text-sm">Joining date</th>
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm min-w-[180px]">Host Name</th>
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Host code</th>
+                      {/* <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Master Agency</th> */}
+                      {/* <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Master Agency code</th> */}
+                      {/* <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Host count</th> */}
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Overall diamonds</th>
+                      {/* <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Current Stage</th> */}
+                      {/* <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Current Slab</th> */}
+                      {/* <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">active cashout host</th> */}
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Redeem</th>
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">My Earning</th>
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Availble coins</th>
+                      <th className="text-center py-3 px-4 text-gray-400 font-medium text-sm">Joining date</th>
                       {/* <th className="text-right py-4 px-6 text-gray-400 font-medium text-sm">Actions</th> */}
                     </tr>
                   </thead>
@@ -379,8 +412,8 @@ const AgencyDetail = ({
                         className="hover:bg-[#1A1A1A] transition-colors"
                       >
                         {/* Host Name */}
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-r from-[#F72585] to-[#7209B7] rounded-lg flex items-center justify-center text-white font-bold text-sm">
                               {host.name?.charAt(0) || 'H'}
                             </div>
@@ -391,66 +424,64 @@ const AgencyDetail = ({
                         </td>
 
                         {/* Host Code */}
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 font-mono text-sm">{host.id}</span>
                         </td>
 
                         {/* Master Agency (Owner) */}
-                        <td className="py-4 px-6">
+                        {/* <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.owner || '--'}</span>
-                        </td>
+                        </td> */}
 
                         {/* Master Agency Code */}
-                        <td className="py-4 px-6">
+                        {/* <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 font-mono text-sm">{host.ownerId}</span>
-                        </td>
+                        </td> */}
 
                         {/* Host Count (N/A for Host) */}
-                        <td className="py-4 px-6">
+                        {/* <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">--</span>
-                        </td>
+                        </td> */}
 
                         {/* Overall Diamonds */}
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.overalldiamonds}</span>
                         </td>
 
                         {/* Current Stage */}
-                        <td className="py-4 px-6">
+                        {/* <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.stage}</span>
-                        </td>
+                        </td> */}
 
                         {/* Current Slab */}
-                        <td className="py-4 px-6">
+                        {/* <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.currentslab}</span>
-                        </td>
+                        </td> */}
 
                         {/* Active Cashout Host */}
-                        <td className="py-4 px-6">
+                        {/* <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.activehost}</span>
-                        </td>
+                        </td> */}
 
                         {/* Redeem */}
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.redeem}</span>
                         </td>
 
                         {/* My Earning */}
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 font-semibold">{host.redeem}</span>
                         </td>
 
                         {/* Available Coins */}
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4 text-center">
                           <span className="text-gray-300 text-sm">{host.coins}</span>
                         </td>
 
                         {/* Joining Date */}
-                        <td className="py-4 px-6">
+                        <td className="py-3 px-4 text-center">
                            <span className="text-gray-300 text-sm">
-                            {host.joiningDate && typeof host.joiningDate === 'string' 
-                                ? new Date(host.joiningDate).toLocaleDateString() 
-                                : String(host.joiningDate)}
+                            {formatJoinDate(host.joiningDate)}
                            </span>
                         </td>
 
@@ -466,8 +497,7 @@ const AgencyDetail = ({
                     ))}
                   </tbody>
                 </table>
-              </div>
-            </div>
+            </ScrollTableWrap>
             
             {filteredHosts.length === 0 && !loading && (
               <div className="py-12 text-center">

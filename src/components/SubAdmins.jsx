@@ -3,6 +3,7 @@ import { Users, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { APP_CONFIG } from '../config/api';
+import { MobileDataCard, MobileCardRow } from './common/ResponsiveUI';
 
 const ownerBase = `/${APP_CONFIG.OWNER_SECRET_PATH}`;
 
@@ -68,18 +69,46 @@ const SubAdmins = () => {
 
   return (
     <div className="flex-1 bg-[#1A1A1A] text-white min-h-full flex flex-col overflow-hidden">
-      <div className="bg-[#121212] border-b border-gray-800 p-6 flex-shrink-0">
-        <h1 className="text-3xl font-bold text-white flex items-center">
-          <Users className="w-8 h-8 mr-3 text-[#F72585]" />
+      <div className="bg-[#121212] border-b border-gray-800 p-4 sm:p-6 flex-shrink-0">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center">
+          <Users className="w-7 h-7 sm:w-8 sm:h-8 mr-2 sm:mr-3 text-[#F72585]" />
           List of Admins
         </h1>
       </div>
 
-      <div className="flex-1 p-6 overflow-hidden flex flex-col">
+      <div className="flex-1 p-4 sm:p-6 overflow-hidden flex flex-col">
         <div className="h-full flex flex-col">
           <div className="bg-[#121212] border border-gray-800 rounded-xl overflow-hidden flex-1 flex flex-col">
-            <div className="overflow-x-auto flex-1">
-              <div className="min-w-[1200px] flex flex-col">
+            {/* Mobile cards */}
+            <div className="lg:hidden divide-y divide-gray-800">
+              {listLoading && (
+                <div className="px-4 py-8 text-gray-400 text-center">Loading admins...</div>
+              )}
+              {!listLoading && listError && (
+                <div className="px-4 py-8 text-red-400 text-center">{listError}</div>
+              )}
+              {!listLoading && !listError && paginatedSubAdmins.map((subAdmin) => (
+                <MobileDataCard key={subAdmin.adminId || subAdmin.id} onClick={() => handleViewSubAdmin(subAdmin)}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="text-white font-bold truncate">{subAdmin.name}</p>
+                      <p className="text-gray-400 text-xs font-mono">{subAdmin.adminId}</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-gray-500 shrink-0" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <MobileCardRow label="Master Agencies" value={subAdmin.masterAgencyCount} />
+                    <MobileCardRow label="Diamonds" value={subAdmin.diamond} />
+                    <MobileCardRow label="Slab" value={subAdmin.slab} />
+                    <MobileCardRow label="Coins" value={subAdmin.coins} />
+                    <MobileCardRow label="Joined" value={subAdmin.jod} />
+                  </div>
+                </MobileDataCard>
+              ))}
+            </div>
+
+            <div className="hidden lg:block overflow-x-auto flex-1">
+              <div className="min-w-[900px] flex flex-col">
                 <div className="bg-[#0A0A0A] border-b border-gray-800 flex-shrink-0">
                   <div className="grid grid-cols-8 gap-4 px-2 py-2">
                     <div className="text-gray-400 font-bold text-xs uppercase tracking-wider text-center">Admin Name</div>

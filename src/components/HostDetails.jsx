@@ -5,6 +5,8 @@ import Pagination from './Pagination';
 import authService from '../services/services';
 import { API_CONFIG } from '../config/api';
 import { useAuth } from '../context/AuthContext';
+import ModalPortal from './common/ModalPortal';
+import { DASHBOARD_MODAL_OVERLAY } from '../utils/dashboardSidebarClasses';
 
 const HostDetails = () => {
   const { loading: authLoading } = useAuth();
@@ -189,19 +191,11 @@ const HostDetails = () => {
         </div>
       </main>
 
-      {/* Sidebar Overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity"
-          onClick={closeSidebar}
-        />
-      )}
-
-      {/* Right Sidebar */}
-      <div className={`fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0" onClick={closeSidebar} />
-        <div className={`relative bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col transition-all duration-300 transform ${isSidebarOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}>
-          <div className="p-6 overflow-y-auto flex-1">
+      <ModalPortal open={isSidebarOpen}>
+        <div className={DASHBOARD_MODAL_OVERLAY}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closeSidebar} aria-hidden="true" />
+          <div className="relative bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-[min(100vw-1.5rem,42rem)] max-h-[min(90vh,100dvh-1.5rem)] flex flex-col overflow-hidden">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Host Details</h2>
               <button
@@ -224,16 +218,16 @@ const HostDetails = () => {
             ) : selectedHost ? (
               <div className="space-y-6">
                 {/* Basic Info */}
-                <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                <div className="bg-gray-800/30 rounded-xl p-4 sm:p-5 border border-gray-700/50">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Personal Info</h3>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
-                      <label className="text-xs text-gray-500 block">Full Name</label>
+                      <label className="text-xs text-gray-500 block mb-1">Full Name</label>
                       <p className="text-gray-200">{selectedHost.name}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div>
                         <label className="text-xs text-gray-500 block">Nationality</label>
                         <p className="text-gray-200">{selectedHost.nationality}</p>
@@ -247,7 +241,7 @@ const HostDetails = () => {
                 </div>
 
                 {/* Contact Info */}
-                <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                <div className="bg-gray-800/30 rounded-xl p-4 sm:p-5 border border-gray-700/50">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Contact Info</h3>
 
                   <div className="space-y-3">
@@ -271,10 +265,10 @@ const HostDetails = () => {
                 </div>
 
                 {/* System Info */}
-                <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/50">
+                <div className="bg-gray-800/30 rounded-xl p-4 sm:p-5 border border-gray-700/50">
                   <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">System Info</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div>
                       <label className="text-xs text-gray-500 block">User Code</label>
                       <code className="text-[#F72585] font-mono">{selectedHost.usercode}</code>
@@ -353,9 +347,10 @@ const HostDetails = () => {
                 </div>
               </div>
             ) : null}
+            </div>
           </div>
         </div>
-      </div>
+      </ModalPortal>
     </div>
   );
 };

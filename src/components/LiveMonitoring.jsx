@@ -180,42 +180,42 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration, o
           <img
             src={thumbnail}
             alt={username}
-            className="w-20 h-20 rounded-full object-cover border-4 border-[#F72585] shadow-xl animate-pulse mb-3"
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-[#F72585] shadow-2xl animate-pulse mb-4"
             onError={(e) => {
               e.target.src = `https://ui-avatars.com/api/?name=${username}&background=F72585&color=fff&size=128`;
             }}
           />
-          <p className="text-white text-xs font-bold mb-1">
+          <p className="text-white text-sm font-bold mb-1">
             {connecting ? 'Connecting Live Stream...' : 'Live Stream Active'}
           </p>
-          <span className="text-[10px] text-gray-400">
-            {connecting ? 'Connecting to WebRTC...' : 'Waiting for host camera'}
+          <span className="text-xs text-gray-400">
+            {connecting ? 'Establishing WebRTC connection...' : 'Waiting for host camera'}
           </span>
         </div>
       )}
 
       {/* Overlay UI Badges */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 p-2.5 flex flex-col justify-between pointer-events-none">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/60 p-3 flex flex-col justify-between pointer-events-none">
         {/* Top Badges */}
         <div className="flex items-center justify-between pointer-events-auto">
-          <div className="bg-red-600/90 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-md">
-            <RadioReceiver className="w-3 h-3 animate-pulse" />
+          <div className="bg-red-600/90 text-white px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
+            <RadioReceiver className="w-3.5 h-3.5 animate-pulse" />
             LIVE 9:16
           </div>
 
           {/* Sound Toggle Button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="bg-black/70 backdrop-blur-md hover:bg-black/90 text-white px-2 py-0.5 rounded-full text-[10px] font-semibold border border-gray-700 flex items-center gap-1 transition-all shadow-md"
+            className="bg-black/80 backdrop-blur-md hover:bg-black text-white px-3 py-1 rounded-full text-xs font-semibold border border-gray-700 flex items-center gap-1.5 transition-all shadow-lg"
           >
             {isMuted ? (
               <>
-                <VolumeX className="w-3 h-3 text-red-400" />
+                <VolumeX className="w-3.5 h-3.5 text-red-400" />
                 Muted
               </>
             ) : (
               <>
-                <Volume2 className="w-3 h-3 text-green-400 animate-pulse" />
+                <Volume2 className="w-3.5 h-3.5 text-green-400 animate-pulse" />
                 Sound On
               </>
             )}
@@ -224,11 +224,11 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration, o
 
         {/* Bottom Details */}
         <div className="flex items-center justify-between text-xs text-gray-200">
-          <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-gray-700 text-[10px] font-medium">
+          <span className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-gray-700 text-xs font-medium">
             {category}
           </span>
-          <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-gray-700 text-[10px] font-medium flex items-center gap-1 text-yellow-400">
-            <Clock className="w-3 h-3" /> {duration}
+          <span className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-gray-700 text-xs font-medium flex items-center gap-1 text-yellow-400">
+            <Clock className="w-3.5 h-3.5" /> {duration}
           </span>
         </div>
       </div>
@@ -708,10 +708,10 @@ const LiveMonitoring = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 min-h-0 overflow-hidden live-monitoring-grid">
-        {/* Left Panel - Live Users Grid */}
-        <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
+      {/* Main Content - 12 Column Layout with Prominent Center Stage Video */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-h-0 overflow-y-auto lg:overflow-hidden live-monitoring-grid">
+        {/* Left Panel - Live Users Grid (3 Cols) */}
+        <div className="lg:col-span-3 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-semibold text-white flex items-center gap-2">
               <Radio className="w-4 h-4 text-[#F72585]" />
@@ -762,7 +762,7 @@ const LiveMonitoring = () => {
           {/* Users Grid */}
           <div className="flex-1 overflow-y-auto scroll-container">
             {currentUsers.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
                 {currentUsers.map((user) => (
                   <UserCard
                     key={user.id}
@@ -809,54 +809,54 @@ const LiveMonitoring = () => {
           )}
         </div>
 
-        {/* Center Panel - Focused Host Preview (9:16 Portrait) & Live Comments */}
-        <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col h-full min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
+        {/* Center Panel - PROMINENT BIG 9:16 LIVE STREAM PLAYER (6 Cols - 50% Screen Width) */}
+        <div className="lg:col-span-6 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col h-full min-h-0 overflow-hidden live-monitoring-panel shadow-2xl">
           {selectedUser ? (
             <div className="h-full flex flex-col min-h-0">
               {/* TOP: Host Details Header */}
-              <div className="bg-[#181818] p-3 rounded-xl border border-gray-800 mb-3 flex items-center justify-between shrink-0">
+              <div className="bg-[#181818] p-3 rounded-xl border border-gray-800 mb-3 flex items-center justify-between shrink-0 shadow-md">
                 <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={selectedUser.thumbnail}
                     alt={selectedUser.username}
-                    className="w-10 h-10 rounded-full object-cover border-2 border-[#F72585] shadow-md shrink-0"
+                    className="w-11 h-11 rounded-full object-cover border-2 border-[#F72585] shadow-md shrink-0"
                     onError={(e) => {
                       e.target.src = `https://ui-avatars.com/api/?name=${selectedUser.username}&background=F72585&color=fff&size=64`;
                     }}
                   />
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-white font-bold text-xs sm:text-sm truncate">{selectedUser.username}</h3>
-                      <span className="bg-green-500/20 text-green-400 border border-green-500/40 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
-                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                      <h3 className="text-white font-bold text-sm sm:text-base truncate">{selectedUser.username}</h3>
+                      <span className="bg-green-500/20 text-green-400 border border-green-500/40 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
+                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                         LIVE
                       </span>
                       {selectedUser.rank != null && (
-                        <span className="bg-[#F72585]/20 text-[#F72585] border border-[#F72585]/40 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                          <Award className="w-3 h-3 text-[#F72585]" />
+                        <span className="bg-[#F72585]/20 text-[#F72585] border border-[#F72585]/40 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5 text-[#F72585]" />
                           Position #{selectedUser.rank}
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-400 text-[11px] truncate mt-0.5">{selectedUser.streamTitle}</p>
+                    <p className="text-gray-400 text-xs truncate mt-0.5">{selectedUser.streamTitle}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs shrink-0 pl-2">
+                <div className="flex items-center gap-4 text-xs shrink-0 pl-2">
                   <div className="text-right">
-                    <span className="text-blue-400 font-bold text-xs flex items-center justify-end gap-1">
-                      <Users className="w-3.5 h-3.5" /> {selectedUser.viewerCount}
+                    <span className="text-blue-400 font-bold text-sm flex items-center justify-end gap-1">
+                      <Users className="w-4 h-4" /> {selectedUser.viewerCount}
                     </span>
-                    <span className="text-purple-400 font-bold text-xs flex items-center justify-end gap-1 mt-0.5">
-                      <Diamond className="w-3.5 h-3.5" /> {selectedUser.diamondCount}
+                    <span className="text-purple-400 font-bold text-sm flex items-center justify-end gap-1 mt-0.5">
+                      <Diamond className="w-4 h-4" /> {selectedUser.diamondCount}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* CENTER: 9:16 Mobile Vertical Portrait Host WebRTC Stream Screen (Height constrained to prevent overlap) */}
-              <div className="flex-1 min-h-0 flex justify-center items-center py-1 overflow-hidden">
-                <div className="h-full max-h-[290px] aspect-[9/16] bg-black rounded-2xl overflow-hidden relative border-2 border-gray-800 shadow-2xl flex flex-col shrink-0">
+              {/* CENTER: BIG PROMINENT 9:16 VERTICAL MOBILE STREAM PLAYER */}
+              <div className="flex-1 min-h-0 flex justify-center items-center py-2 overflow-hidden">
+                <div className="h-full max-h-[460px] sm:max-h-[500px] xl:max-h-[540px] aspect-[9/16] bg-black rounded-2xl overflow-hidden relative border-2 border-[#F72585]/50 shadow-2xl flex flex-col shrink-0 transition-all hover:border-[#F72585]">
                   <LiveStreamPlayer
                     key={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
                     roomName={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
@@ -871,17 +871,17 @@ const LiveMonitoring = () => {
                 </div>
               </div>
 
-              {/* BOTTOM: Small Semi-Black Box for Live Comments (Fixed height to prevent overflow) */}
-              <div className="mt-3 bg-black/70 backdrop-blur-md rounded-xl p-3 border border-gray-800/80 flex flex-col shrink-0 h-[210px] shadow-lg">
-                <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800/60 shrink-0">
+              {/* BOTTOM: Compact Host Room Comments Box */}
+              <div className="mt-3 bg-black/80 backdrop-blur-md rounded-xl p-3 border border-gray-800 flex flex-col shrink-0 h-[170px] shadow-xl">
+                <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800/80 shrink-0">
                   <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5 text-[#F72585]" />
                     Host Room Comments ({roomComments.length})
                   </span>
-                  <span className="text-[10px] text-gray-400 animate-pulse">Live</span>
+                  <span className="text-[10px] text-gray-400 animate-pulse">Live Broadcast Sync</span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1 scroll-container text-xs">
+                <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 scroll-container text-xs">
                   {roomComments.length > 0 ? (
                     roomComments.map((msg, idx) => (
                       <div
@@ -889,7 +889,7 @@ const LiveMonitoring = () => {
                         className={`p-2 rounded-lg ${
                           msg.kind === 'system'
                             ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-200 font-medium'
-                            : 'bg-black/50 border border-gray-800 text-white'
+                            : 'bg-black/60 border border-gray-800 text-white'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-0.5">
@@ -901,7 +901,7 @@ const LiveMonitoring = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="h-full flex items-center justify-center text-gray-400 text-center py-4">
+                    <div className="h-full flex items-center justify-center text-gray-400 text-center py-2">
                       <p className="text-xs text-gray-400">No comments posted in host's room yet</p>
                     </div>
                   )}
@@ -919,7 +919,7 @@ const LiveMonitoring = () => {
                   <button
                     type="submit"
                     disabled={sendingComment || !customComment.trim()}
-                    className="bg-[#F72585] text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50"
+                    className="bg-[#F72585] text-white px-4 py-1.5 rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
                   >
                     Send
                   </button>
@@ -929,15 +929,15 @@ const LiveMonitoring = () => {
           ) : (
             <div className="h-full flex items-center justify-center text-gray-500 p-6 text-center">
               <div>
-                <Eye className="w-12 h-12 mx-auto mb-3 opacity-40 text-gray-400" />
-                <p className="text-sm font-medium">Select a host to monitor 9:16 live stream</p>
+                <Eye className="w-14 h-14 mx-auto mb-3 opacity-40 text-gray-400" />
+                <p className="text-base font-medium text-gray-300">Select a host to view prominent 9:16 stream</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Right Panel - Action Buttons & Details */}
-        <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
+        {/* Right Panel - Action Buttons & Details (3 Cols) */}
+        <div className="lg:col-span-3 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
           <h2 className="text-base font-semibold text-white mb-3 flex-shrink-0 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-yellow-500" />
             Host Actions & Live Feed Rank

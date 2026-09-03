@@ -271,21 +271,36 @@ const LiveMonitoring = () => {
     return parseFloat(s) || 0;
   };
 
+  // Persistent cache for host card-info (profilepic, usercode, vipBadge, totalDiamonds)
+  const cardInfoCacheRef = useRef({});
+
   // Helper to fetch MySQL DB profilepic, usercode, and vipBadgeUri via card-info
   const enrichUserWithCardInfo = useCallback(async (userObj) => {
     if (!userObj?.roomName) return userObj;
+    
+    if (cardInfoCacheRef.current[userObj.roomName]) {
+      return {
+        ...userObj,
+        ...cardInfoCacheRef.current[userObj.roomName],
+      };
+    }
+
     try {
       const res = await fetch(`${LIVE_BACKEND_URL}/live/card-info/${encodeURIComponent(userObj.roomName)}`);
       if (res.ok) {
         const info = await res.json();
-        return {
-          ...userObj,
+        const enriched = {
           profilepic: info.profilepic || userObj.profilepic || userObj.thumbnail,
           usercode: info.hostCode || userObj.usercode,
           vipBadgeUri: info.vipBadgeUri || userObj.vipBadgeUri,
           vipPlanName: info.vipPlanName || userObj.vipPlanName,
           isVip: Boolean(info.isVip),
           totalDiamonds: info.totalDiamonds != null ? String(info.totalDiamonds) : userObj.diamondCount,
+        };
+        cardInfoCacheRef.current[userObj.roomName] = enriched;
+        return {
+          ...userObj,
+          ...enriched,
         };
       }
     } catch {
@@ -340,24 +355,56 @@ const LiveMonitoring = () => {
       }
 
       if (rawList.length > 0) {
-        const mapped = rawList.map(mapSessionToUser);
-        setLiveUsers(mapped);
+        const mapped = rawList.map((session, idx) => {
+          const user = mapSessionToUser(session, idx);
+          if (cardInfoCacheRef.current[user.roomName]) {
+            return { ...user, ...cardInfoCacheRef.current[user.roomName] };
+          }
+          return user;
+        });
+
+        setLiveUsers((prevUsers) => {
+          return mapped.map((newUser) => {
+            const existing = prevUsers.find((p) => p.roomName === newUser.roomName || p.id === newUser.id);
+            if (existing) {
+              return {
+                ...newUser,
+                profilepic: existing.profilepic || newUser.profilepic,
+                usercode: existing.usercode || newUser.usercode,
+                vipBadgeUri: existing.vipBadgeUri || newUser.vipBadgeUri,
+                vipPlanName: existing.vipPlanName || newUser.vipPlanName,
+                isVip: existing.isVip ?? newUser.isVip,
+                totalDiamonds: existing.totalDiamonds || newUser.totalDiamonds,
+              };
+            }
+            return newUser;
+          });
+        });
+
         setSelectedUser((prev) => {
           if (!prev) return mapped[0];
           const found = mapped.find((m) => m.id === prev.id || m.roomName === prev.roomName);
-          return found || mapped[0];
+          return found ? { ...prev, ...found } : mapped[0];
         });
         setUsingMockData(false);
 
-        // Background enrich with DB profilepic, usercode, & VIP badge details
-        Promise.all(mapped.map(enrichUserWithCardInfo)).then((enriched) => {
-          setLiveUsers(enriched);
-          setSelectedUser((prev) => {
-            if (!prev) return enriched[0];
-            const found = enriched.find((m) => m.id === prev.id || m.roomName === prev.roomName);
-            return found || enriched[0];
+        // Fetch any un-cached rooms in background
+        const uncachedRooms = mapped.filter((u) => !cardInfoCacheRef.current[u.roomName]);
+        if (uncachedRooms.length > 0) {
+          Promise.all(uncachedRooms.map(enrichUserWithCardInfo)).then((enrichedList) => {
+            setLiveUsers((prevUsers) =>
+              prevUsers.map((u) => {
+                const updated = enrichedList.find((e) => e.roomName === u.roomName);
+                return updated ? { ...u, ...updated } : u;
+              })
+            );
+            setSelectedUser((prev) => {
+              if (!prev) return null;
+              const updated = enrichedList.find((e) => e.roomName === prev.roomName);
+              return updated ? { ...prev, ...updated } : prev;
+            });
           });
-        });
+        }
       } else {
         // No active live streams right now
         setLiveUsers([]);

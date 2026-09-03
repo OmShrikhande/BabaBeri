@@ -5,20 +5,40 @@ import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity }
 import { mockLiveUsers, streamCategories, sortOptions } from '../data/liveMonitoringData';
 import authService from '../services/services';
 
-const mapSessionToUser = (session, index) => ({
-  id: session.id || session.session_id || session.sessionId || index + 1,
-  username: session.username || session.host_name || session.hostName || session.host_id || 'Unknown',
-  thumbnail: session.thumbnail || session.avatar || session.profilePic || '',
-  viewerCount: String(session.viewer_count ?? session.viewerCount ?? session.viewers ?? '0'),
-  diamondCount: String(session.diamond_count ?? session.diamondCount ?? session.diamonds ?? '0'),
-  isLive: session.status === 'active' || session.isLive === true,
-  status: session.status || 'streaming',
-  streamTitle: session.stream_title || session.streamTitle || session.room_name || session.roomName || 'Live Stream',
-  category: session.category || 'General',
-  duration: session.duration || session.elapsed || '0m',
-  country: session.country || session.nationality || '—',
-  sessionId: session.session_id || session.sessionId || session.id,
-});
+const mapSessionToUser = (session, index) => {
+  const name =
+    session.username ||
+    session.hostName ||
+    session.host_name ||
+    session.hostDisplayName ||
+    session.hostUsername ||
+    session.host_id ||
+    `Host ${session.roomName || index + 1}`;
+  const id = session.id || session.session_id || session.sessionId || session.roomName || index + 1;
+  const roomName = session.roomName || session.room_name || session.session_id || session.sessionId || session.id || `room-${index}`;
+  const thumbnail =
+    session.thumbnail ||
+    session.avatar ||
+    session.profilepic ||
+    session.profilePic ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=F72585&color=fff&size=128`;
+
+  return {
+    id,
+    username: name,
+    thumbnail,
+    viewerCount: String(session.viewerCount ?? session.viewer_count ?? session.viewers ?? '0'),
+    diamondCount: String(session.totalDiamonds ?? session.diamond_count ?? session.diamondCount ?? session.diamonds ?? '0'),
+    isLive: session.status === 'active' || session.isLive === true || !session.offline,
+    status: session.status || 'streaming',
+    streamTitle: session.title || session.stream_title || session.streamTitle || session.room_name || session.roomName || 'Live Stream',
+    category: session.category || 'General',
+    duration: session.duration || session.elapsed || 'Live',
+    country: session.country || session.nationality || '—',
+    sessionId: session.session_id || session.sessionId || session.roomName || session.id,
+    roomName,
+  };
+};
 
 const LiveMonitoring = () => {
   const [liveUsers, setLiveUsers] = useState(mockLiveUsers);
@@ -45,19 +65,35 @@ const LiveMonitoring = () => {
   const fetchLiveSessions = useCallback(async () => {
     setIsLoading(true);
     try {
+      let rawList = [];
       const result = await authService.getAdminLiveSessions({ status: 'active' });
       if (result.success && result.data) {
-        const rawList = Array.isArray(result.data)
+        rawList = Array.isArray(result.data)
           ? result.data
-          : (result.data.sessions || result.data.data || []);
-        if (rawList.length > 0) {
-          const mapped = rawList.map(mapSessionToUser);
-          setLiveUsers(mapped);
-          setSelectedUser(mapped[0]);
-          setUsingMockData(false);
-          return;
+          : (result.data.sessions || result.data.data || result.data.rooms || []);
+      }
+
+      // If no admin live sessions found, fetch active live rooms directly from discover endpoint
+      if (!rawList.length) {
+        try {
+          const res = await fetch('https://livebackend.proxstreamapi.in/discover?kind=all');
+          if (res.ok) {
+            const data = await res.json();
+            rawList = (data.rooms || data.data || []).filter((r) => !r.offline);
+          }
+        } catch {
+          /* ignore */
         }
       }
+
+      if (rawList.length > 0) {
+        const mapped = rawList.map(mapSessionToUser);
+        setLiveUsers(mapped);
+        setSelectedUser(mapped[0]);
+        setUsingMockData(false);
+        return;
+      }
+
       setLiveUsers(mockLiveUsers);
       setSelectedUser(mockLiveUsers[0]);
       setUsingMockData(true);

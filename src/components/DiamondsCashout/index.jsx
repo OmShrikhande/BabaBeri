@@ -4,11 +4,12 @@ import ToastList from '../ToastList';
 import ExchangeRateBar from './ExchangeRateBar';
 import DiamondCreditsModal from './DiamondCreditsModal';
 import CashoutRequestsSection from './CashoutRequestsSection';
+import DiamondTransferHistorySection from './DiamondTransferHistorySection';
 import { useWalletData } from './hooks/useWalletData';
 import { useCreditManagement } from './hooks/useCreditManagement';
 import { useCashoutRequests } from './hooks/useCashoutRequests';
 import authService from '../../services/authService';
-import { ArrowLeftRight, X } from 'lucide-react';
+import { ArrowLeftRight, History, Send, X } from 'lucide-react';
 
 const ConvertDiamondsModal = ({ isOpen, onClose, onSuccess, addToast }) => {
   const [diamonds, setDiamonds] = useState('');
@@ -79,6 +80,7 @@ const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => 
   const { toasts, addToast, removeToast } = useToast();
   const [componentError, setComponentError] = useState(null);
   const [convertModalOpen, setConvertModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'history'
 
   useEffect(() => { setComponentError(null); }, []);
 
@@ -111,32 +113,67 @@ const DiamondsCashout = ({ onNavigateToWallet, onNavigateToDiamondsWallet }) => 
   }
 
   return (
-    <div className="p-6 space-y-6 main-content-scroll">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Diamonds Cashout</h1>
-        <div className="flex items-center gap-3">
+    <div className="p-6 space-y-6 main-content-scroll bg-black/70">
+      {/* Top Header & Action Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Diamonds Cashout</h1>
+          <p className="text-xs text-gray-400 mt-1">Manage cashout requests and diamond transfer logs</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Navigation Tabs */}
+          <div className="flex items-center bg-[#121212] p-1 rounded-xl border border-gray-800">
+            <button
+              onClick={() => setActiveTab('requests')}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${activeTab === 'requests'
+                ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg'
+                : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              <Send className="w-3.5 h-3.5" />
+              Cashout Requests
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${activeTab === 'history'
+                ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-lg'
+                : 'text-gray-400 hover:text-white'
+                }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              Transfer History
+            </button>
+          </div>
+
           <button
             onClick={() => setConvertModalOpen(true)}
-            className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg px-4 py-2 font-medium text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+            className="bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white rounded-lg px-4 py-2 font-medium text-xs flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
-            <ArrowLeftRight className="w-4 h-4" />
+            <ArrowLeftRight className="w-3.5 h-3.5" />
             Convert to Coins
           </button>
         </div>
       </div>
 
-      <ExchangeRateBar />
+      {activeTab === 'requests' ? (
+        <>
+          <ExchangeRateBar />
+          <div className="w-full">
+            <CashoutRequestsSection
+              cashoutRequests={cashoutReqs.cashoutRequests}
+              loadingRequests={cashoutReqs.loadingRequests}
+              error={cashoutReqs.error}
+              onApprove={cashoutReqs.handleApprove}
+              onReject={cashoutReqs.handleReject}
+              actionLoadingId={cashoutReqs.actionLoadingId}
+            />
+          </div>
+        </>
+      ) : (
+        <DiamondTransferHistorySection addToast={addToast} />
+      )}
 
-      <div className="w-full">
-        <CashoutRequestsSection
-          cashoutRequests={cashoutReqs.cashoutRequests}
-          loadingRequests={cashoutReqs.loadingRequests}
-          error={cashoutReqs.error}
-          onApprove={cashoutReqs.handleApprove}
-          onReject={cashoutReqs.handleReject}
-          actionLoadingId={cashoutReqs.actionLoadingId}
-        />
-      </div>
 
       <DiamondCreditsModal
         isOpen={creditMgmt.creditModalOpen}

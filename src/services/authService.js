@@ -1725,6 +1725,26 @@ class AuthService {
     }
   }
 
+  // Get all diamond transfer history (Super Admin only)
+  async getDiamondTransferHistory(page = 0, size = 20) {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Not authenticated.' };
+    const baseUrl = API_CONFIG.BASE_URL || 'https://proxstreamapi.in';
+    const url = `${baseUrl}/auth/superadmin/all-diamond-transfer-history?page=${page}&size=${size}`;
+    try {
+      const response = await this.makeAuthenticatedRequest(url, { method: 'GET' });
+      const raw = await response.text().catch(() => '');
+      let data = null;
+      try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+      if (!response.ok) throw new Error(data?.message || `Failed to fetch history: ${response.status}`);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Fetch diamond transfer history error:', error);
+      return { success: false, error: error.message || 'Failed to fetch diamond transfer history.' };
+    }
+  }
+
+
   // Get all role percentages
   async getAllPercentages() {
     const token = this.getToken();

@@ -127,13 +127,12 @@ const StatusBadge = ({ status }) => {
   const warn = s === 'PENDING' || s === 'NOTVERIFIED';
   return (
     <span
-      className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-        ok
+      className={`px-2 py-0.5 rounded text-[10px] font-bold border ${ok
           ? 'bg-green-500/10 text-green-400 border-green-500/20'
           : warn
             ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
             : 'bg-red-500/10 text-red-400 border-red-500/20'
-      }`}
+        }`}
     >
       {status || '—'}
     </span>
@@ -671,7 +670,7 @@ const UserDetailsList = () => {
                   ['Status', app.status],
                   ['Joined', formatDate(app.joiningDate)],
                 ].map(([label, value]) => (
-                  <div key={label} className="bg-black/30 rounded-lg p-3">
+                  <div key={label} className="bg-black/90 rounded-lg p-3">
                     <p className="text-gray-500 uppercase tracking-wider text-[10px] mb-1">{label}</p>
                     <p className="text-gray-200 break-all">{value || '—'}</p>
                   </div>
@@ -1053,11 +1052,10 @@ const UserDetailsList = () => {
               <button
                 key={role}
                 onClick={() => setSelectedRole(role)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all ${
-                  selectedRole === role
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all ${selectedRole === role
                     ? 'bg-gradient-to-r from-[#F72585] to-[#7209B7] text-white shadow-md'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
+                  }`}
               >
                 {role === 'MASTERAGENCY' ? 'MASTER AGENCY' : role === 'SUBADMIN' ? 'SUB ADMIN' : role}
               </button>
@@ -1265,9 +1263,8 @@ const UserDetailsList = () => {
                           key={tab.id}
                           type="button"
                           onClick={() => setActiveTab(tab.id)}
-                          className={`audit-detail-tab shrink-0 whitespace-nowrap ${
-                            isActive ? 'audit-detail-tab-active' : 'audit-detail-tab-idle'
-                          }`}
+                          className={`audit-detail-tab shrink-0 whitespace-nowrap ${isActive ? 'audit-detail-tab-active' : 'audit-detail-tab-idle'
+                            }`}
                         >
                           {tab.label}
                           {count != null ? ` (${count})` : ''}

@@ -88,8 +88,8 @@ const AuthTest = () => {
               <div className="space-y-4">
                 {/* Login Test Results */}
                 <div className={`border rounded-lg p-4 ${testResults.login?.success
-                    ? 'bg-green-500/10 border-green-500/20'
-                    : 'bg-red-500/10 border-red-500/20'
+                  ? 'bg-green-500/10 border-green-500/20'
+                  : 'bg-red-500/10 border-red-500/20'
                   }`}>
                   <h3 className="font-semibold mb-2">
                     {testResults.login?.success ? '✅ Login Test: SUCCESS' : '❌ Login Test: FAILED'}
@@ -101,7 +101,7 @@ const AuthTest = () => {
                       {testResults.login.data && (
                         <div>
                           <p className="text-gray-400">API Response:</p>
-                          <pre className="text-xs bg-black/30 p-2 rounded mt-1 overflow-auto">
+                          <pre className="text-xs bg-black/90 p-2 rounded mt-1 overflow-auto">
                             {JSON.stringify(testResults.login.data, null, 2)}
                           </pre>
                         </div>
@@ -115,8 +115,8 @@ const AuthTest = () => {
                 {/* Token Validation Results */}
                 {testResults.tokenValidation && (
                   <div className={`border rounded-lg p-4 ${testResults.tokenValidation.isValid
-                      ? 'bg-green-500/10 border-green-500/20'
-                      : 'bg-yellow-500/10 border-yellow-500/20'
+                    ? 'bg-green-500/10 border-green-500/20'
+                    : 'bg-yellow-500/10 border-yellow-500/20'
                     }`}>
                     <h3 className="font-semibold mb-2">
                       {testResults.tokenValidation.isValid ? '✅ Token Validation: VALID' : '⚠️ Token Validation: INVALID'}
@@ -129,7 +129,7 @@ const AuthTest = () => {
                       {testResults.tokenValidation.decoded && (
                         <div>
                           <p className="text-gray-400">Decoded Token:</p>
-                          <pre className="text-xs bg-black/30 p-2 rounded mt-1 overflow-auto">
+                          <pre className="text-xs bg-black/90 p-2 rounded mt-1 overflow-auto">
                             {JSON.stringify(testResults.tokenValidation.decoded, null, 2)}
                           </pre>
                         </div>

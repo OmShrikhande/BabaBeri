@@ -87,6 +87,11 @@ const RoleStagesList = ({ stages, onEdit, onDelete }) => {
                           <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
                             Achievement Tier
                           </span>
+                          {(stage.percentage != null || stage.percent != null) && (
+                            <p className="text-sm font-bold text-[#F72585] mt-1">
+                              {Number(stage.percentage ?? stage.percent)}% share
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">

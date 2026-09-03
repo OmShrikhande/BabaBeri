@@ -163,8 +163,8 @@ const DpVerificationModal = ({
     <div
       className={
         fullPage
-          ? "absolute inset-0 bg-[#121212] flex flex-col overflow-hidden"
-          : "fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          ? "w-full h-full min-h-0 flex flex-col overflow-hidden bg-[#121212]"
+          : "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       }
       role="dialog"
       aria-modal="true"
@@ -180,10 +180,10 @@ const DpVerificationModal = ({
         <div
           className={`${
             fullPage
-              ? 'flex-1 grid grid-cols-1 lg:grid-cols-12'
+              ? 'flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12'
               : 'grid grid-cols-1 lg:grid-cols-12'
           } gap-0 overflow-hidden`}
-          style={fullPage ? { height: 'calc(100vh - 80px)' } : { height: '80vh' }}
+          style={fullPage ? { height: 'calc(100vh - 120px)' } : { height: '80vh' }}
         >
           {/* Left: List */}
           <div className={`lg:col-span-5 xl:col-span-4 border-r border-gray-800 flex flex-col overflow-hidden ${fullPage && mobileActiveView === 'detail' ? 'hidden lg:flex' : 'flex'}`}>

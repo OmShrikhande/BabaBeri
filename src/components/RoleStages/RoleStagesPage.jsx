@@ -31,6 +31,7 @@ const RoleStagesPage = () => {
   const [formData, setFormData] = useState({
     name: 'Silver',
     goalFor: 'AGENCY',
+    percentage: '',
     goals: [
       { goalType: 'DIAMOND', minValue: '' },
       { goalType: 'CASHOUT', minValue: '' }
@@ -65,6 +66,7 @@ const RoleStagesPage = () => {
     setFormData({
       name: stage.name,
       goalFor: stage.goalFor,
+      percentage: stage.percentage ?? stage.percent ?? '',
       goals: stage.goals.map(g => ({
         goalType: g.goalType,
         minValue: g.minValue
@@ -147,16 +149,23 @@ const RoleStagesPage = () => {
     setIsLoading(true);
 
     try {
-      // Ensure minValues are numbers
+      const percentage = Number(formData.percentage);
+      if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+        showNotification('Please enter a valid percentage between 0 and 100', 'error');
+        setIsLoading(false);
+        return;
+      }
+
+      // POST /auth/superadmin/savetiers — same shape as backend curl contract
       const payload = {
-        ...formData,
+        name: formData.name,
+        goalFor: formData.goalFor,
+        percentage,
         goals: formData.goals.map(g => ({
-          ...g,
+          goalType: g.goalType,
           minValue: Number(g.minValue)
         }))
       };
-
-      console.log('Submitting Tier Data:', payload);
       let result;
       if (editingStage) {
         result = await authService.updateTier(editingStage.id, payload);
@@ -173,6 +182,7 @@ const RoleStagesPage = () => {
         setFormData({
           name: 'Silver',
           goalFor: 'AGENCY',
+          percentage: '',
           goals: [
             { goalType: 'DIAMOND', minValue: '' },
             { goalType: 'CASHOUT', minValue: '' }
@@ -228,7 +238,7 @@ const RoleStagesPage = () => {
                   Configuration Details
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="space-y-3">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Stage Name</label>
                     <div className="relative">
@@ -266,6 +276,27 @@ const RoleStagesPage = () => {
                       </select>
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
                         <Plus className="w-4 h-4 rotate-45" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Revenue Percentage</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="percentage"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={formData.percentage}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 10"
+                        className="w-full bg-black/80 border border-white/10 rounded-xl px-5 py-4 pr-12 text-white focus:outline-none focus:border-[#F72585] transition-all font-mono"
+                        required
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                        <Percent className="w-4 h-4" />
                       </div>
                     </div>
                   </div>
@@ -377,6 +408,11 @@ const RoleStagesPage = () => {
                         </div>
                         <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest bg-white/5 px-2 py-1 rounded">ID: {stage.id}</span>
                       </div>
+                      {(stage.percentage != null || stage.percent != null) && (
+                        <p className="text-xs font-bold text-[#F72585] mb-3">
+                          {Number(stage.percentage ?? stage.percent)}% revenue share
+                        </p>
+                      )}
                       <div className="grid grid-cols-2 gap-4">
                         {stage.goals.map((g, i) => (
                           <div key={i} className="bg-white/5 p-3 rounded-xl border border-white/5">

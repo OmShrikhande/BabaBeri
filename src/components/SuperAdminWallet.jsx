@@ -62,8 +62,8 @@ const SuperAdminWallet = ({ currentUser }) => {
       setError('Please enter a valid amount');
       return;
     }
-    if (amount > 100000) {
-      setError('Maximum amount per transaction is 100,000 coins');
+    if (amount > 10000000) {
+      setError('Maximum amount per transaction is 10,000,000 coins');
       return;
     }
     setError('');

@@ -30,8 +30,8 @@ const CashoutRequestsSection = ({
   ).length;
 
   return (
-    <div className="w-full bg-[#1A1A1A] rounded-lg border border-gray-700">
-      <div className="p-4 border-b border-gray-700 flex items-center justify-between gap-3">
+    <div className="w-full bg-black/90 rounded-xl border border-gray-800 shadow-md">
+      <div className="p-4 border-b border-gray-800 flex items-center justify-between gap-3">
         <div className="flex items-center space-x-2">
           <h3 className="text-lg font-semibold text-white">Cashout Requests</h3>
           <div className="w-6 h-6 bg-[#F72585] rounded-full flex items-center justify-center glow-pink">
@@ -99,32 +99,32 @@ const CashoutRequestsSection = ({
 
             {/* Desktop table */}
             <table className="hidden lg:table w-full min-w-[1100px] border-collapse">
-            <thead>
-              <tr className="bg-[#121212] border-b border-gray-700">
-                {TABLE_HEADERS.map((label) => (
-                  <th
-                    key={label}
-                    className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap"
-                  >
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {cashoutRequests.map((request) => {
-                if (!request || typeof request !== 'object') return null;
-                return (
-                  <CashoutRequestCard
-                    key={request.id ?? request.transactionno}
-                    request={request}
-                    onApprove={onApprove}
-                    onReject={onReject}
-                    actionLoading={actionLoadingId === request.id}
-                  />
-                );
-              })}
-            </tbody>
+              <thead>
+                <tr className="bg-[#121212] border-b border-gray-700">
+                  {TABLE_HEADERS.map((label) => (
+                    <th
+                      key={label}
+                      className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap"
+                    >
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {cashoutRequests.map((request) => {
+                  if (!request || typeof request !== 'object') return null;
+                  return (
+                    <CashoutRequestCard
+                      key={request.id ?? request.transactionno}
+                      request={request}
+                      onApprove={onApprove}
+                      onReject={onReject}
+                      actionLoading={actionLoadingId === request.id}
+                    />
+                  );
+                })}
+              </tbody>
             </table>
           </>
         ) : (

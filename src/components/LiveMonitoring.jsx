@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import UserCard from './UserCard';
 import WarningModal from './WarningModal';
 import { Room, RoomEvent, Track } from 'livekit-client';
-import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity, MessageSquare, AlertTriangle, ShieldAlert, Ban, Radio, Volume2, VolumeX, RadioReceiver, ArrowUpDown, Award } from 'lucide-react';
+import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity, MessageSquare, AlertTriangle, ShieldAlert, Ban, Radio, Volume2, VolumeX, RadioReceiver, ArrowUpDown, Award, Crown } from 'lucide-react';
 import { mockLiveUsers, streamCategories, sortOptions, violationTypes } from '../data/liveMonitoringData';
 import authService from '../services/services';
 
@@ -31,8 +31,10 @@ const mapSessionToUser = (session, index) => {
     id,
     username: name,
     thumbnail,
+    profilepic: session.profilepic || session.profilePic || thumbnail,
     viewerCount: String(session.viewerCount ?? session.viewer_count ?? session.viewers ?? '0'),
     diamondCount: String(session.totalDiamonds ?? session.diamond_count ?? session.diamondCount ?? session.diamonds ?? '0'),
+    totalDiamonds: session.totalDiamonds != null ? String(session.totalDiamonds) : null,
     isLive: session.status === 'active' || session.isLive === true || !session.offline,
     status: session.status || 'streaming',
     streamTitle: session.title || session.stream_title || session.streamTitle || session.room_name || session.roomName || 'Live Stream Broadcast',
@@ -43,6 +45,9 @@ const mapSessionToUser = (session, index) => {
     roomName,
     usercode: session.usercode || session.hostCode || session.host_code,
     rank: session.rank != null ? Number(session.rank) : null,
+    vipBadgeUri: session.vipBadgeUri || null,
+    vipPlanName: session.vipPlanName || null,
+    isVip: Boolean(session.isVip),
   };
 };
 
@@ -182,7 +187,7 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration, o
             alt={username}
             className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-[#F72585] shadow-2xl animate-pulse mb-4"
             onError={(e) => {
-              e.target.src = `https://ui-avatars.com/api/?name=${username}&background=F72585&color=fff&size=128`;
+              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=F72585&color=fff&size=128`;
             }}
           />
           <p className="text-white text-sm font-bold mb-1">
@@ -266,6 +271,29 @@ const LiveMonitoring = () => {
     return parseFloat(s) || 0;
   };
 
+  // Helper to fetch MySQL DB profilepic, usercode, and vipBadgeUri via card-info
+  const enrichUserWithCardInfo = useCallback(async (userObj) => {
+    if (!userObj?.roomName) return userObj;
+    try {
+      const res = await fetch(`${LIVE_BACKEND_URL}/live/card-info/${encodeURIComponent(userObj.roomName)}`);
+      if (res.ok) {
+        const info = await res.json();
+        return {
+          ...userObj,
+          profilepic: info.profilepic || userObj.profilepic || userObj.thumbnail,
+          usercode: info.hostCode || userObj.usercode,
+          vipBadgeUri: info.vipBadgeUri || userObj.vipBadgeUri,
+          vipPlanName: info.vipPlanName || userObj.vipPlanName,
+          isVip: Boolean(info.isVip),
+          totalDiamonds: info.totalDiamonds != null ? String(info.totalDiamonds) : userObj.diamondCount,
+        };
+      }
+    } catch {
+      /* ignore */
+    }
+    return userObj;
+  }, []);
+
   const fetchLiveSessions = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -320,6 +348,16 @@ const LiveMonitoring = () => {
           return found || mapped[0];
         });
         setUsingMockData(false);
+
+        // Background enrich with DB profilepic, usercode, & VIP badge details
+        Promise.all(mapped.map(enrichUserWithCardInfo)).then((enriched) => {
+          setLiveUsers(enriched);
+          setSelectedUser((prev) => {
+            if (!prev) return enriched[0];
+            const found = enriched.find((m) => m.id === prev.id || m.roomName === prev.roomName);
+            return found || enriched[0];
+          });
+        });
       } else {
         // No active live streams right now
         setLiveUsers([]);
@@ -334,7 +372,7 @@ const LiveMonitoring = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [enrichUserWithCardInfo]);
 
   // Poll live backend sessions every 5 seconds
   useEffect(() => {
@@ -427,7 +465,8 @@ const LiveMonitoring = () => {
   useEffect(() => {
     let filtered = liveUsers.filter(user => {
       const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.streamTitle?.toLowerCase().includes(searchTerm.toLowerCase());
+                           user.streamTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           user.usercode?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'All Categories' || user.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -442,7 +481,7 @@ const LiveMonitoring = () => {
         case 'viewers':
           return parseMetric(b.viewerCount) - parseMetric(a.viewerCount);
         case 'diamonds':
-          return parseMetric(b.diamondCount) - parseMetric(a.diamondCount);
+          return parseMetric(b.totalDiamonds || b.diamondCount) - parseMetric(a.totalDiamonds || a.diamondCount);
         case 'duration':
           return String(b.duration).localeCompare(String(a.duration));
         case 'recent':
@@ -726,7 +765,7 @@ const LiveMonitoring = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search users or streams..."
+                placeholder="Search users, title, or code..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-[#1A1A1A] border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-400 focus:border-[#F72585] focus:outline-none transition-colors text-xs"
@@ -813,20 +852,35 @@ const LiveMonitoring = () => {
         <div className="lg:col-span-6 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col h-full min-h-0 overflow-hidden live-monitoring-panel shadow-2xl">
           {selectedUser ? (
             <div className="h-full flex flex-col min-h-0">
-              {/* TOP: Host Details Header */}
+              {/* TOP: Host Details Header (Profile Pic, User Code, & VIP Badge) */}
               <div className="bg-[#181818] p-3 rounded-xl border border-gray-800 mb-3 flex items-center justify-between shrink-0 shadow-md">
                 <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={selectedUser.thumbnail}
-                    alt={selectedUser.username}
-                    className="w-11 h-11 rounded-full object-cover border-2 border-[#F72585] shadow-md shrink-0"
-                    onError={(e) => {
-                      e.target.src = `https://ui-avatars.com/api/?name=${selectedUser.username}&background=F72585&color=fff&size=64`;
-                    }}
-                  />
+                  <div className="relative shrink-0">
+                    <img
+                      src={selectedUser.profilepic || selectedUser.thumbnail}
+                      alt={selectedUser.username}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-[#F72585] shadow-md"
+                      onError={(e) => {
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username)}&background=F72585&color=fff&size=64`;
+                      }}
+                    />
+                    {selectedUser.vipBadgeUri && (
+                      <img
+                        src={selectedUser.vipBadgeUri}
+                        alt="VIP Badge"
+                        className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full object-contain border border-yellow-400 bg-black shadow-md"
+                        title={selectedUser.vipPlanName || 'VIP Member'}
+                      />
+                    )}
+                  </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-white font-bold text-sm sm:text-base truncate">{selectedUser.username}</h3>
+                      {selectedUser.usercode && (
+                        <span className="bg-gray-800 text-pink-400 border border-gray-700 text-xs px-2 py-0.5 rounded-md font-mono font-bold">
+                          Code: {selectedUser.usercode}
+                        </span>
+                      )}
                       <span className="bg-green-500/20 text-green-400 border border-green-500/40 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
                         <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                         LIVE
@@ -838,7 +892,15 @@ const LiveMonitoring = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs truncate mt-0.5">{selectedUser.streamTitle}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <p className="text-gray-400 text-xs truncate">{selectedUser.streamTitle}</p>
+                      {selectedUser.vipPlanName && (
+                        <span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                          <Crown className="w-3 h-3 text-yellow-400" />
+                          {selectedUser.vipPlanName}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -848,7 +910,7 @@ const LiveMonitoring = () => {
                       <Users className="w-4 h-4" /> {selectedUser.viewerCount}
                     </span>
                     <span className="text-purple-400 font-bold text-sm flex items-center justify-end gap-1 mt-0.5">
-                      <Diamond className="w-4 h-4" /> {selectedUser.diamondCount}
+                      <Diamond className="w-4 h-4" /> {selectedUser.totalDiamonds || selectedUser.diamondCount}
                     </span>
                   </div>
                 </div>
@@ -860,7 +922,7 @@ const LiveMonitoring = () => {
                   <LiveStreamPlayer
                     key={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
                     roomName={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
-                    thumbnail={selectedUser.thumbnail}
+                    thumbnail={selectedUser.profilepic || selectedUser.thumbnail}
                     username={selectedUser.username}
                     category={selectedUser.category}
                     duration={selectedUser.duration}
@@ -947,19 +1009,40 @@ const LiveMonitoring = () => {
             <div className="flex-1 overflow-y-auto space-y-4 pr-1 scroll-container">
               {/* Selected User Header */}
               <div className="bg-[#181818] rounded-xl p-3.5 border border-gray-800 flex items-center gap-3">
-                <img
-                  src={selectedUser.thumbnail}
-                  alt={selectedUser.username}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-[#F72585]"
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${selectedUser.username}&background=F72585&color=fff&size=48`;
-                  }}
-                />
+                <div className="relative shrink-0">
+                  <img
+                    src={selectedUser.profilepic || selectedUser.thumbnail}
+                    alt={selectedUser.username}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-[#F72585]"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.username)}&background=F72585&color=fff&size=48`;
+                    }}
+                  />
+                  {selectedUser.vipBadgeUri && (
+                    <img
+                      src={selectedUser.vipBadgeUri}
+                      alt="VIP Badge"
+                      className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full object-contain border border-yellow-400 bg-black"
+                    />
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white font-bold text-sm truncate">{selectedUser.username}</p>
-                  <p className="text-gray-400 text-xs truncate">
-                    {selectedUser.viewerCount} viewers • {selectedUser.diamondCount} diamonds
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-white font-bold text-sm truncate">{selectedUser.username}</p>
+                    {selectedUser.usercode && (
+                      <span className="bg-gray-800 text-pink-400 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">
+                        {selectedUser.usercode}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-400 text-xs truncate mt-0.5">
+                    {selectedUser.viewerCount} viewers • {selectedUser.totalDiamonds || selectedUser.diamondCount} diamonds
                   </p>
+                  {selectedUser.vipPlanName && (
+                    <p className="text-yellow-400 text-[10px] font-bold mt-0.5 flex items-center gap-1">
+                      <Crown className="w-3 h-3 text-yellow-400" /> {selectedUser.vipPlanName} Member
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1018,40 +1101,50 @@ const LiveMonitoring = () => {
                   Live Stream Statistics
                 </h3>
                 <div className="space-y-2 text-xs">
+                  {selectedUser.usercode && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">User Code:</span>
+                      <span className="text-pink-400 font-mono font-bold">{selectedUser.usercode}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Viewers:</span>
+                    <span className="text-gray-400 font-medium">Viewers:</span>
                     <span className="text-white font-semibold">
                       {sessionStats?.viewer_count ?? sessionStats?.viewerCount ?? selectedUser.viewerCount}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Diamonds:</span>
+                    <span className="text-gray-400 font-medium">Total Diamonds:</span>
                     <span className="text-purple-400 font-semibold">
-                      {sessionStats?.diamond_count ?? sessionStats?.diamondCount ?? selectedUser.diamondCount}
+                      {selectedUser.totalDiamonds || sessionStats?.diamond_count ?? sessionStats?.diamondCount ?? selectedUser.diamondCount}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Duration:</span>
+                    <span className="text-gray-400 font-medium">Duration:</span>
                     <span className="text-yellow-400 font-semibold">
                       {sessionStats?.duration ?? sessionStats?.elapsed ?? selectedUser.duration}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Category:</span>
+                    <span className="text-gray-400 font-medium">Category:</span>
                     <span className="text-[#F72585] font-semibold">{selectedUser.category}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Country / Region:</span>
+                    <span className="text-gray-400 font-medium">VIP Tier:</span>
+                    <span className="text-yellow-400 font-semibold">{selectedUser.vipPlanName || 'Standard'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400 font-medium">Country / Region:</span>
                     <span className="text-blue-400 font-semibold">{selectedUser.country}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Feed Position:</span>
+                    <span className="text-gray-400 font-medium">Feed Position:</span>
                     <span className="text-[#F72585] font-semibold">
                       {selectedUser.rank ? `Position #${selectedUser.rank}` : 'Default (Engaged)'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Status:</span>
+                    <span className="text-gray-400 font-medium">Status:</span>
                     <span className="text-green-400 capitalize font-semibold">{selectedUser.status}</span>
                   </div>
                   {statsLoading && (

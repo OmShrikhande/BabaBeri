@@ -47,7 +47,7 @@ const mapSessionToUser = (session, index) => {
 };
 
 /** Real-time WebRTC LiveKit Video & Audio Player Component */
-const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration }) => {
+const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration, onRoomConnected }) => {
   const videoRef = useRef(null);
   const audioRef = useRef(null);
   const [isMuted, setIsMuted] = useState(false);
@@ -117,6 +117,7 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration })
           if (!cancelled) {
             setIsConnected(false);
             setHasVideo(false);
+            onRoomConnected?.(null);
           }
         });
 
@@ -125,6 +126,7 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration })
 
         if (!cancelled) {
           setIsConnected(true);
+          onRoomConnected?.(room);
 
           // Attach any already published tracks in the room
           room.remoteParticipants.forEach((participant) => {
@@ -152,6 +154,7 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration })
     return () => {
       cancelled = true;
       if (room) {
+        onRoomConnected?.(null);
         room.disconnect();
       }
     };
@@ -248,6 +251,9 @@ const LiveMonitoring = () => {
   const [sessionStats, setSessionStats] = useState(null);
   const [sessionGifters, setSessionGifters] = useState([]);
   const [statsLoading, setStatsLoading] = useState(false);
+
+  // Active WebRTC LiveKit Room ref for publishing real-time warnings & chat
+  const activeRoomRef = useRef(null);
 
   // Real-time Room Chat Comments State
   const [roomComments, setRoomComments] = useState([]);
@@ -528,14 +534,27 @@ const LiveMonitoring = () => {
         }),
       }).catch(() => {});
 
-      // 2. End live stream room on backend
+      // 2. Broadcast WebRTC DataPacket directly to room participants
+      if (activeRoomRef.current && activeRoomRef.current.state === 'connected') {
+        const payload = new TextEncoder().encode(
+          JSON.stringify({
+            t: 'system',
+            kind: 'system',
+            text: `🚫 Host ${selectedUser.username} has been blocked and the live stream is terminated by Admin.`,
+            msgId: `block_${Date.now()}`,
+          })
+        );
+        await activeRoomRef.current.localParticipant.publishData(payload, { reliable: true }).catch(() => {});
+      }
+
+      // 3. End live stream room on backend
       await fetch(`${LIVE_BACKEND_URL}/live/end`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roomName: String(roomName) }),
       }).catch(() => {});
 
-      // 3. Deactivate seller if usercode exists
+      // 4. Deactivate seller if usercode exists
       if (selectedUser.usercode) {
         await authService.activeDeactiveSeller(selectedUser.usercode, false).catch(() => {});
       }
@@ -563,6 +582,7 @@ const LiveMonitoring = () => {
     const warningText = `⚠️ ADMIN WARNING: Host ${selectedUser.username} has been issued a warning for ${violationLabel}. Please follow community guidelines.`;
 
     try {
+      // 1. Append warning to backend DB history
       await fetch(`${LIVE_BACKEND_URL}/live/chat/append`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -574,6 +594,19 @@ const LiveMonitoring = () => {
           text: warningText,
         }),
       });
+
+      // 2. Broadcast live WebRTC DataPacket directly to host's phone & all live viewers!
+      if (activeRoomRef.current && activeRoomRef.current.state === 'connected') {
+        const payload = new TextEncoder().encode(
+          JSON.stringify({
+            t: 'system',
+            kind: 'system',
+            text: warningText,
+            msgId: `warn_${Date.now()}`,
+          })
+        );
+        await activeRoomRef.current.localParticipant.publishData(payload, { reliable: true }).catch(() => {});
+      }
 
       setRoomComments((prev) => [
         ...prev,
@@ -601,6 +634,7 @@ const LiveMonitoring = () => {
     const text = customComment.trim();
     setSendingComment(true);
     try {
+      // 1. Append comment to backend DB history
       await fetch(`${LIVE_BACKEND_URL}/live/chat/append`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -612,6 +646,20 @@ const LiveMonitoring = () => {
           text,
         }),
       });
+
+      // 2. Broadcast live WebRTC DataPacket directly to host's phone & all live viewers!
+      if (activeRoomRef.current && activeRoomRef.current.state === 'connected') {
+        const payload = new TextEncoder().encode(
+          JSON.stringify({
+            t: 'chat_v2',
+            from: 'Admin',
+            fromName: 'System Moderator',
+            text: text,
+          })
+        );
+        await activeRoomRef.current.localParticipant.publishData(payload, { reliable: true }).catch(() => {});
+      }
+
       setCustomComment('');
       fetchRoomComments(roomName);
     } catch (err) {
@@ -816,6 +864,9 @@ const LiveMonitoring = () => {
                     username={selectedUser.username}
                     category={selectedUser.category}
                     duration={selectedUser.duration}
+                    onRoomConnected={(room) => {
+                      activeRoomRef.current = room;
+                    }}
                   />
                 </div>
               </div>

@@ -1116,7 +1116,7 @@ const LiveMonitoring = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-400 font-medium">Total Diamonds:</span>
                     <span className="text-purple-400 font-semibold">
-                      {selectedUser.totalDiamonds || sessionStats?.diamond_count ?? sessionStats?.diamondCount ?? selectedUser.diamondCount}
+                      {selectedUser.totalDiamonds || (sessionStats?.diamond_count ?? sessionStats?.diamondCount ?? selectedUser.diamondCount)}
                     </span>
                   </div>
                   <div className="flex justify-between">

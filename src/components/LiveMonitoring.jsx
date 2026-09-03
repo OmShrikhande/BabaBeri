@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import UserCard from './UserCard';
 import WarningModal from './WarningModal';
-import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity, MessageSquare, AlertTriangle, ShieldAlert, Ban, Radio } from 'lucide-react';
+import { Room, RoomEvent, Track } from 'livekit-client';
+import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity, MessageSquare, AlertTriangle, ShieldAlert, Ban, Radio, Volume2, VolumeX, RadioReceiver } from 'lucide-react';
 import { mockLiveUsers, streamCategories, sortOptions, violationTypes } from '../data/liveMonitoringData';
 import authService from '../services/services';
 
 const LIVE_BACKEND_URL = import.meta.env.VITE_LIVE_BACKEND_URL || 'http://169.58.40.205:5000';
+const LIVEKIT_WS_URL = import.meta.env.VITE_LIVEKIT_WS_URL || 'ws://169.58.40.205:7880';
 
 const mapSessionToUser = (session, index) => {
   const name =
@@ -41,6 +43,193 @@ const mapSessionToUser = (session, index) => {
     roomName,
     usercode: session.usercode || session.hostCode || session.host_code,
   };
+};
+
+/** Real-time WebRTC LiveKit Video & Audio Player Component */
+const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration }) => {
+  const videoRef = useRef(null);
+  const audioRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [hasVideo, setHasVideo] = useState(false);
+  const [connecting, setConnecting] = useState(true);
+
+  useEffect(() => {
+    if (!roomName) return;
+
+    let room = null;
+    let cancelled = false;
+    setConnecting(true);
+    setHasVideo(false);
+    setIsConnected(false);
+
+    const connectToLiveRoom = async () => {
+      try {
+        // 1. Request viewer token from LiveKit backend
+        const tokenRes = await fetch(`${LIVE_BACKEND_URL}/getTokenLiveKit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomName: String(roomName),
+            participantName: `admin_monitor_${Math.random().toString(36).slice(2, 7)}`,
+            displayName: 'Super Admin Monitor',
+            isHost: false,
+          }),
+        });
+
+        if (!tokenRes.ok) {
+          throw new Error(`Token fetch failed: ${tokenRes.status}`);
+        }
+
+        const data = await tokenRes.json();
+        const token = data?.token;
+        if (cancelled || !token) return;
+
+        // 2. Create LiveKit Room instance
+        room = new Room({
+          adaptiveStream: true,
+          dynacast: true,
+        });
+
+        // 3. Register WebRTC track subscriptions
+        room.on(RoomEvent.TrackSubscribed, (track) => {
+          if (track.kind === Track.Kind.Video) {
+            setHasVideo(true);
+            if (videoRef.current) {
+              track.attach(videoRef.current);
+            }
+          } else if (track.kind === Track.Kind.Audio) {
+            if (audioRef.current) {
+              track.attach(audioRef.current);
+            }
+          }
+        });
+
+        room.on(RoomEvent.TrackUnsubscribed, (track) => {
+          track.detach();
+          if (track.kind === Track.Kind.Video) {
+            setHasVideo(false);
+          }
+        });
+
+        room.on(RoomEvent.Disconnected, () => {
+          if (!cancelled) {
+            setIsConnected(false);
+            setHasVideo(false);
+          }
+        });
+
+        // 4. Connect to LiveKit server
+        await room.connect(LIVEKIT_WS_URL, token);
+
+        if (!cancelled) {
+          setIsConnected(true);
+
+          // Attach any already published tracks in the room
+          room.remoteParticipants.forEach((participant) => {
+            participant.trackPublications.forEach((pub) => {
+              if (pub.isSubscribed && pub.track) {
+                if (pub.track.kind === Track.Kind.Video) {
+                  setHasVideo(true);
+                  if (videoRef.current) pub.track.attach(videoRef.current);
+                } else if (pub.track.kind === Track.Kind.Audio) {
+                  if (audioRef.current) pub.track.attach(audioRef.current);
+                }
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('LiveKit web player connection failed:', err);
+      } finally {
+        if (!cancelled) setConnecting(false);
+      }
+    };
+
+    connectToLiveRoom();
+
+    return () => {
+      cancelled = true;
+      if (room) {
+        room.disconnect();
+      }
+    };
+  }, [roomName]);
+
+  return (
+    <div className="relative w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-2xl">
+      {/* Real-time HTML5 Video Track */}
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted={isMuted}
+        className={`w-full h-full object-cover ${hasVideo ? 'block' : 'hidden'}`}
+      />
+
+      {/* Real-time HTML5 Audio Track */}
+      <audio ref={audioRef} autoPlay muted={isMuted} />
+
+      {/* Poster & Connecting Overlay when video loading */}
+      {!hasVideo && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-black to-[#121212] p-4 text-center">
+          <img
+            src={thumbnail}
+            alt={username}
+            className="w-24 h-24 rounded-full object-cover border-4 border-[#F72585] shadow-xl animate-pulse mb-3"
+            onError={(e) => {
+              e.target.src = `https://ui-avatars.com/api/?name=${username}&background=F72585&color=fff&size=128`;
+            }}
+          />
+          <p className="text-white text-xs font-bold mb-1">
+            {connecting ? 'Connecting Live Video/Audio...' : 'Live Broadcast Active'}
+          </p>
+          <span className="text-[10px] text-gray-400">
+            {connecting ? 'Establishing WebRTC stream...' : 'Waiting for host video track'}
+          </span>
+        </div>
+      )}
+
+      {/* Overlay UI Badge (Top & Bottom) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 p-3 flex flex-col justify-between pointer-events-none">
+        {/* Top Badges */}
+        <div className="flex items-center justify-between pointer-events-auto">
+          <div className="bg-red-600/90 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-md">
+            <RadioReceiver className="w-3 h-3 animate-pulse" />
+            LIVE 9:16
+          </div>
+
+          {/* Sound Toggle Button */}
+          <button
+            onClick={() => setIsMuted(!isMuted)}
+            className="bg-black/70 backdrop-blur-md hover:bg-black/90 text-white px-2.5 py-1 rounded-full text-[10px] font-semibold border border-gray-700 flex items-center gap-1 transition-all shadow-md"
+          >
+            {isMuted ? (
+              <>
+                <VolumeX className="w-3 h-3 text-red-400" />
+                Muted
+              </>
+            ) : (
+              <>
+                <Volume2 className="w-3 h-3 text-green-400 animate-pulse" />
+                Sound On
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Bottom Details */}
+        <div className="flex items-center justify-between text-xs text-gray-200">
+          <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-gray-700 text-[10px] font-medium">
+            {category}
+          </span>
+          <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-gray-700 text-[10px] font-medium flex items-center gap-1 text-yellow-400">
+            <Clock className="w-3 h-3" /> {duration}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const LiveMonitoring = () => {
@@ -523,7 +712,7 @@ const LiveMonitoring = () => {
           )}
         </div>
 
-        {/* Center Panel - Focused Host Preview (16:9) & Live Comments */}
+        {/* Center Panel - Focused Host Preview (9:16 Portrait) & Live Comments */}
         <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
           {selectedUser ? (
             <div className="h-full flex flex-col min-h-0">
@@ -562,42 +751,22 @@ const LiveMonitoring = () => {
                 </div>
               </div>
 
-              {/* CENTER: 16:9 Host Stream Preview Video Screen */}
-              <div className="w-full aspect-video bg-black rounded-xl overflow-hidden relative border border-gray-800 shadow-xl flex items-center justify-center shrink-0">
-                <img
-                  src={selectedUser.thumbnail}
-                  alt={selectedUser.username}
-                  className="w-full h-full object-cover opacity-80"
-                  onError={(e) => {
-                    e.target.src = `https://ui-avatars.com/api/?name=${selectedUser.username}&background=F72585&color=fff&size=256`;
-                  }}
-                />
-
-                {/* Overlay live indicators */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 p-3 flex flex-col justify-between pointer-events-none">
-                  <div className="flex items-center justify-between">
-                    <div className="bg-red-600/90 text-white px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 shadow-md">
-                      <Play className="w-3 h-3 fill-current" />
-                      LIVE PREVIEW
-                    </div>
-                    <span className="bg-black/60 backdrop-blur-md text-gray-200 px-2 py-0.5 rounded text-[10px] font-mono border border-gray-700">
-                      16:9 Stream
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-gray-200">
-                    <span className="bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-gray-700 text-[11px] font-medium">
-                      Category: {selectedUser.category}
-                    </span>
-                    <span className="bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-gray-700 text-[11px] font-medium flex items-center gap-1 text-yellow-400">
-                      <Clock className="w-3.5 h-3.5" /> {selectedUser.duration}
-                    </span>
-                  </div>
+              {/* CENTER: 9:16 Mobile Vertical Portrait Host WebRTC Stream Screen */}
+              <div className="flex-1 flex justify-center items-center py-1 min-h-0">
+                <div className="w-full max-w-[240px] aspect-[9/16] bg-black rounded-2xl overflow-hidden relative border-2 border-gray-800 shadow-2xl flex flex-col shrink-0">
+                  <LiveStreamPlayer
+                    key={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
+                    roomName={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
+                    thumbnail={selectedUser.thumbnail}
+                    username={selectedUser.username}
+                    category={selectedUser.category}
+                    duration={selectedUser.duration}
+                  />
                 </div>
               </div>
 
               {/* BOTTOM: Small Semi-Black Box for Live Comments (White Text) */}
-              <div className="mt-3 bg-black/70 backdrop-blur-md rounded-xl p-3 border border-gray-800/80 flex flex-col flex-1 min-h-0 shadow-lg">
+              <div className="mt-3 bg-black/70 backdrop-blur-md rounded-xl p-3 border border-gray-800/80 flex flex-col flex-1 min-h-[140px] shadow-lg">
                 <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800/60 shrink-0">
                   <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5 text-[#F72585]" />
@@ -655,7 +824,7 @@ const LiveMonitoring = () => {
             <div className="h-full flex items-center justify-center text-gray-500 p-6 text-center">
               <div>
                 <Eye className="w-12 h-12 mx-auto mb-3 opacity-40 text-gray-400" />
-                <p className="text-sm font-medium">Select a host to monitor focused 16:9 screen</p>
+                <p className="text-sm font-medium">Select a host to monitor 9:16 live stream</p>
               </div>
             </div>
           )}

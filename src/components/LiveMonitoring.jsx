@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import UserCard from './UserCard';
 import WarningModal from './WarningModal';
 import { Room, RoomEvent, Track } from 'livekit-client';
-import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity, MessageSquare, AlertTriangle, ShieldAlert, Ban, Radio, Volume2, VolumeX, RadioReceiver } from 'lucide-react';
+import { Eye, Users, Diamond, Play, Search, Filter, Clock, RefreshCw, Activity, MessageSquare, AlertTriangle, ShieldAlert, Ban, Radio, Volume2, VolumeX, RadioReceiver, ArrowUpDown, Award } from 'lucide-react';
 import { mockLiveUsers, streamCategories, sortOptions, violationTypes } from '../data/liveMonitoringData';
 import authService from '../services/services';
 
@@ -42,6 +42,7 @@ const mapSessionToUser = (session, index) => {
     sessionId: session.session_id || session.sessionId || session.roomName || session.id,
     roomName,
     usercode: session.usercode || session.hostCode || session.host_code,
+    rank: session.rank != null ? Number(session.rank) : null,
   };
 };
 
@@ -65,14 +66,14 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration })
 
     const connectToLiveRoom = async () => {
       try {
-        // 1. Request viewer token from LiveKit backend
+        // 1. Request viewer token from LiveKit backend (admin_monitor_ prefix prevents join alerts)
         const tokenRes = await fetch(`${LIVE_BACKEND_URL}/getTokenLiveKit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             roomName: String(roomName),
             participantName: `admin_monitor_${Math.random().toString(36).slice(2, 7)}`,
-            displayName: 'Super Admin Monitor',
+            displayName: 'Admin Monitor',
             isHost: false,
           }),
         });
@@ -176,25 +177,25 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration })
           <img
             src={thumbnail}
             alt={username}
-            className="w-24 h-24 rounded-full object-cover border-4 border-[#F72585] shadow-xl animate-pulse mb-3"
+            className="w-20 h-20 rounded-full object-cover border-4 border-[#F72585] shadow-xl animate-pulse mb-3"
             onError={(e) => {
               e.target.src = `https://ui-avatars.com/api/?name=${username}&background=F72585&color=fff&size=128`;
             }}
           />
           <p className="text-white text-xs font-bold mb-1">
-            {connecting ? 'Connecting Live Video/Audio...' : 'Live Broadcast Active'}
+            {connecting ? 'Connecting Live Stream...' : 'Live Stream Active'}
           </p>
           <span className="text-[10px] text-gray-400">
-            {connecting ? 'Establishing WebRTC stream...' : 'Waiting for host video track'}
+            {connecting ? 'Connecting to WebRTC...' : 'Waiting for host camera'}
           </span>
         </div>
       )}
 
-      {/* Overlay UI Badge (Top & Bottom) */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 p-3 flex flex-col justify-between pointer-events-none">
+      {/* Overlay UI Badges */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 p-2.5 flex flex-col justify-between pointer-events-none">
         {/* Top Badges */}
         <div className="flex items-center justify-between pointer-events-auto">
-          <div className="bg-red-600/90 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-md">
+          <div className="bg-red-600/90 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-md">
             <RadioReceiver className="w-3 h-3 animate-pulse" />
             LIVE 9:16
           </div>
@@ -202,7 +203,7 @@ const LiveStreamPlayer = ({ roomName, thumbnail, username, category, duration })
           {/* Sound Toggle Button */}
           <button
             onClick={() => setIsMuted(!isMuted)}
-            className="bg-black/70 backdrop-blur-md hover:bg-black/90 text-white px-2.5 py-1 rounded-full text-[10px] font-semibold border border-gray-700 flex items-center gap-1 transition-all shadow-md"
+            className="bg-black/70 backdrop-blur-md hover:bg-black/90 text-white px-2 py-0.5 rounded-full text-[10px] font-semibold border border-gray-700 flex items-center gap-1 transition-all shadow-md"
           >
             {isMuted ? (
               <>
@@ -375,15 +376,27 @@ const LiveMonitoring = () => {
     return () => { ignore = true; };
   }, [selectedUser?.sessionId, usingMockData]);
 
-  // Fetch real-time room comments
+  // Fetch real-time room comments (filtering out admin join notifications)
   const fetchRoomComments = useCallback(async (roomName) => {
     if (!roomName) return;
     try {
       const res = await fetch(`${LIVE_BACKEND_URL}/live/chat/history/${encodeURIComponent(roomName)}?limit=80`);
       if (res.ok) {
         const data = await res.json();
-        const messages = Array.isArray(data.messages) ? data.messages : [];
-        setRoomComments(messages);
+        const rawMessages = Array.isArray(data.messages) ? data.messages : [];
+        // Filter out Super Admin Monitor join messages so they stay hidden
+        const filtered = rawMessages.filter((m) => {
+          const text = String(m.text || '').toLowerCase();
+          const from = String(m.from || m.fromName || '').toLowerCase();
+          if (text.includes('admin monitor') || from.includes('admin monitor') || from.includes('super admin')) {
+            return false;
+          }
+          if (text.includes('admin monitor joined') || text.includes('super admin monitor joined')) {
+            return false;
+          }
+          return true;
+        });
+        setRoomComments(filtered);
       }
     } catch {
       /* ignore */
@@ -413,8 +426,12 @@ const LiveMonitoring = () => {
       return matchesSearch && matchesCategory;
     });
 
-    // Sort users
+    // Sort users by rank first if set, then selected sort option
     filtered.sort((a, b) => {
+      if (a.rank != null && b.rank != null) return a.rank - b.rank;
+      if (a.rank != null) return -1;
+      if (b.rank != null) return 1;
+
       switch (sortBy) {
         case 'viewers':
           return parseMetric(b.viewerCount) - parseMetric(a.viewerCount);
@@ -443,6 +460,38 @@ const LiveMonitoring = () => {
       const mapped = mockLiveUsers.map(mapSessionToUser);
       setLiveUsers(mapped);
       setSelectedUser(mapped[0]);
+    }
+  };
+
+  // Set Super Admin Live Feed Rank / Position
+  const handleSetLiveRank = async (rankVal) => {
+    if (!selectedUser) return;
+    const roomName = selectedUser.roomName || selectedUser.sessionId || selectedUser.id;
+    const numRank = rankVal !== '' && rankVal !== null && rankVal !== undefined ? Number(rankVal) : null;
+
+    try {
+      const res = await fetch(`${LIVE_BACKEND_URL}/live/rank`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomName: String(roomName),
+          rank: numRank,
+        }),
+      });
+
+      if (res.ok) {
+        setSelectedUser((prev) => (prev ? { ...prev, rank: numRank } : null));
+        setLiveUsers((prev) =>
+          prev.map((u) => (u.id === selectedUser.id || u.roomName === roomName ? { ...u, rank: numRank } : u))
+        );
+        alert(`Live feed rank updated for ${selectedUser.username}! Assigned Position: ${numRank ? numRank : 'Default'}`);
+        fetchLiveSessions();
+      } else {
+        alert('Failed to set live rank on backend.');
+      }
+    } catch (e) {
+      console.error('Set live rank error:', e);
+      alert('Error updating live rank.');
     }
   };
 
@@ -586,7 +635,7 @@ const LiveMonitoring = () => {
               <Activity className="w-6 h-6 text-[#F72585]" />
               Live Monitoring
             </h1>
-            <p className="text-gray-400 text-xs sm:text-sm">Real-time live backend stream monitoring and host moderation</p>
+            <p className="text-gray-400 text-xs sm:text-sm">Real-time live backend stream monitoring, ranking, and host moderation</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -713,7 +762,7 @@ const LiveMonitoring = () => {
         </div>
 
         {/* Center Panel - Focused Host Preview (9:16 Portrait) & Live Comments */}
-        <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
+        <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col h-full min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
           {selectedUser ? (
             <div className="h-full flex flex-col min-h-0">
               {/* TOP: Host Details Header */}
@@ -734,6 +783,12 @@ const LiveMonitoring = () => {
                         <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
                         LIVE
                       </span>
+                      {selectedUser.rank != null && (
+                        <span className="bg-[#F72585]/20 text-[#F72585] border border-[#F72585]/40 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                          <Award className="w-3 h-3 text-[#F72585]" />
+                          Position #{selectedUser.rank}
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-400 text-[11px] truncate mt-0.5">{selectedUser.streamTitle}</p>
                   </div>
@@ -751,9 +806,9 @@ const LiveMonitoring = () => {
                 </div>
               </div>
 
-              {/* CENTER: 9:16 Mobile Vertical Portrait Host WebRTC Stream Screen */}
-              <div className="flex-1 flex justify-center items-center py-1 min-h-0">
-                <div className="w-full max-w-[240px] aspect-[9/16] bg-black rounded-2xl overflow-hidden relative border-2 border-gray-800 shadow-2xl flex flex-col shrink-0">
+              {/* CENTER: 9:16 Mobile Vertical Portrait Host WebRTC Stream Screen (Height constrained to prevent overlap) */}
+              <div className="flex-1 min-h-0 flex justify-center items-center py-1 overflow-hidden">
+                <div className="h-full max-h-[290px] aspect-[9/16] bg-black rounded-2xl overflow-hidden relative border-2 border-gray-800 shadow-2xl flex flex-col shrink-0">
                   <LiveStreamPlayer
                     key={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
                     roomName={selectedUser.roomName || selectedUser.sessionId || selectedUser.id}
@@ -765,8 +820,8 @@ const LiveMonitoring = () => {
                 </div>
               </div>
 
-              {/* BOTTOM: Small Semi-Black Box for Live Comments (White Text) */}
-              <div className="mt-3 bg-black/70 backdrop-blur-md rounded-xl p-3 border border-gray-800/80 flex flex-col flex-1 min-h-[140px] shadow-lg">
+              {/* BOTTOM: Small Semi-Black Box for Live Comments (Fixed height to prevent overflow) */}
+              <div className="mt-3 bg-black/70 backdrop-blur-md rounded-xl p-3 border border-gray-800/80 flex flex-col shrink-0 h-[210px] shadow-lg">
                 <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-800/60 shrink-0">
                   <span className="text-xs font-semibold text-white flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5 text-[#F72585]" />
@@ -834,7 +889,7 @@ const LiveMonitoring = () => {
         <div className="lg:col-span-1 bg-[#121212] border border-gray-800 rounded-xl p-4 flex flex-col min-h-0 overflow-hidden live-monitoring-panel shadow-lg">
           <h2 className="text-base font-semibold text-white mb-3 flex-shrink-0 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4 text-yellow-500" />
-            Host Actions & Details
+            Host Actions & Live Feed Rank
           </h2>
           
           {selectedUser ? (
@@ -854,6 +909,36 @@ const LiveMonitoring = () => {
                   <p className="text-gray-400 text-xs truncate">
                     {selectedUser.viewerCount} viewers • {selectedUser.diamondCount} diamonds
                   </p>
+                </div>
+              </div>
+
+              {/* LIVE RANK POSITIONING CONTROLS */}
+              <div className="bg-[#181818] rounded-xl p-3.5 border border-gray-800">
+                <h3 className="text-white font-semibold text-xs mb-1.5 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-[#F72585]" />
+                  Live Feed Rank (Positioning)
+                </h3>
+                <p className="text-gray-400 text-[11px] mb-3">
+                  Pin or order this live stream position in the app "For You" feed
+                </p>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedUser.rank ?? ''}
+                    onChange={(e) => handleSetLiveRank(e.target.value)}
+                    className="flex-1 bg-black/70 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:border-[#F72585] focus:outline-none"
+                  >
+                    <option value="">Default Ranking (Viewer Count)</option>
+                    <option value="1">🥇 1st Position (Top Live)</option>
+                    <option value="2">🥈 2nd Position</option>
+                    <option value="3">🥉 3rd Position</option>
+                    <option value="4">Position 4 (4th Live)</option>
+                    <option value="5">Position 5</option>
+                    <option value="6">Position 6</option>
+                    <option value="7">Position 7</option>
+                    <option value="8">Position 8</option>
+                    <option value="9">Position 9</option>
+                    <option value="10">Position 10</option>
+                  </select>
                 </div>
               </div>
 
@@ -907,6 +992,12 @@ const LiveMonitoring = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-400">Country / Region:</span>
                     <span className="text-blue-400 font-semibold">{selectedUser.country}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Feed Position:</span>
+                    <span className="text-[#F72585] font-semibold">
+                      {selectedUser.rank ? `Position #${selectedUser.rank}` : 'Default (Engaged)'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Status:</span>

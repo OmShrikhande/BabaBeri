@@ -132,7 +132,7 @@ const Hero = () => {
 
           {/* Google Play Button */}
           <a
-            href="https://play.google.com/store"
+            href="https://drive.usercontent.google.com/download?id=1xRi_DWIGjFxNtt6IIOv5_ENrjE_eKdVJ&export=download&authuser=0"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto flex items-center justify-center gap-3.5 bg-black text-white px-6 py-3 rounded-2xl hover:bg-gray-900 transition-all shadow-xl hover:scale-105 border border-white/20 group"

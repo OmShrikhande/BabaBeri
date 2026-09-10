@@ -1,22 +1,13 @@
 import React from 'react';
 import Navbar from './landing/Navbar';
 import Hero from './landing/Hero';
-import Features from './landing/Features';
-import About from './landing/About';
-import EarlyAccess from './landing/EarlyAccess';
 import Footer from './landing/Footer';
 
 const LandingPage = () => {
   return (
-    <div
-      className="min-h-screen text-white font-sans overflow-x-hidden selection:bg-purple-500/30 selection:text-white"
-      style={{ background: '#050816' }}
-    >
+    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-yellow-400 selection:text-black">
       <Navbar />
       <Hero />
-      <Features />
-      <About />
-      <EarlyAccess />
       <Footer />
     </div>
   );

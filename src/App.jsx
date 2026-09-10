@@ -9,6 +9,7 @@ import PublicRoute from './components/guards/PublicRoute';
 
 // Pages
 import LandingPage from './pages/LandingPage';
+import AboutPage from './pages/AboutPage';
 import LoginPage from './pages/LoginPage';
 import OwnerAreaPage from './pages/OwnerAreaPage';
 
@@ -63,6 +64,7 @@ function App() {
         {/* Public Routes */}
       <Route element={<PublicRoute />}>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage />} />
       </Route>
 

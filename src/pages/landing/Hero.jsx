@@ -1,209 +1,373 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Apple } from 'lucide-react';
+import { 
+  Trophy, Flame, Heart, Gift, MessageCircle, Mic, Video, 
+  ChevronRight, Sparkles, UserPlus, Play, Award, Zap, Star
+} from 'lucide-react';
 import IOSNoticeModal from './IOSNoticeModal';
 
-// ─── CONFIG ────────────────────────────────────────────────────────────────────
-const APK_DOWNLOAD_URL = 'https://drive.google.com/uc?export=download&id=YOUR_FILE_ID';
-
-// ─── Animated Particle ────────────────────────────────────────────────────────
-const Particle = ({ style }) => (
-  <motion.div
-    className="absolute rounded-full pointer-events-none"
-    style={style}
-    animate={{
-      y: [0, -30, 0],
-      x: [0, Math.random() * 20 - 10, 0],
-      opacity: [0.3, 0.8, 0.3],
-    }}
-    transition={{
-      duration: 3 + Math.random() * 4,
-      repeat: Infinity,
-      ease: 'easeInOut',
-      delay: Math.random() * 3,
-    }}
-  />
-);
-
-// ─── Hero Section ─────────────────────────────────────────────────────────────
+// ─── HERO SECTION (Matching Image 1) ───────────────────────────────────────────
 const Hero = () => {
   const [iosModalOpen, setIosModalOpen] = useState(false);
 
-  // Generate particles once
-  const particles = useRef(
-    Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      style: {
-        width: `${2 + Math.random() * 4}px`,
-        height: `${2 + Math.random() * 4}px`,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        background: ['#A855F7', '#22D3EE', '#EC4899', '#3B82F6'][Math.floor(Math.random() * 4)],
-        boxShadow: `0 0 6px currentColor`,
-      },
-    }))
-  ).current;
-
   return (
-    <section
-      id="hero"
-      className="relative min-h-screen flex items-center overflow-hidden pt-20"
-    >
-      {/* ── Cyber Grid Background ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px',
-        }}
-      />
-
-      {/* ── Animated Gradient Blobs ── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-purple-700/20 rounded-full blur-[120px]"
-          animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute top-1/3 right-1/4 w-[400px] h-[400px] bg-cyan-600/15 rounded-full blur-[100px]"
-          animate={{ scale: [1.1, 1, 1.1], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-pink-600/15 rounded-full blur-[90px]"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        />
-      </div>
-
-      {/* ── Floating Particles ── */}
-      <div className="absolute inset-0 pointer-events-none">
-        {particles.map((p) => (
-          <Particle key={p.id} style={p.style} />
-        ))}
-      </div>
-
-      {/* ── Glowing Circles (decorative) ── */}
-      <div className="absolute top-20 right-10 w-32 h-32 rounded-full border border-purple-500/20 pointer-events-none" />
-      <div className="absolute top-32 right-24 w-48 h-48 rounded-full border border-cyan-500/10 pointer-events-none" />
-      <div className="absolute bottom-32 left-10 w-24 h-24 rounded-full border border-pink-500/20 pointer-events-none" />
-
-      {/* ── Content ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 w-full">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left: Text */}
-          <div>
-            {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-sm font-medium mb-8"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500" />
-              </span>
-              Next-Generation Streaming Platform
-            </motion.div>
-
-            {/* Heading */}
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.05] mb-6"
-            >
-              <span className="text-white">Meet </span>
-              <span
-                className="bg-clip-text text-transparent"
-                style={{
-                  backgroundImage: 'linear-gradient(135deg, #A855F7, #22D3EE, #EC4899)',
-                }}
-              >
-                Proxstream
-              </span>
-            </motion.h1>
-
-            {/* Subheading */}
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="text-lg md:text-xl text-gray-400 leading-relaxed mb-10 max-w-xl"
-            >
-              The next-generation live social streaming platform. Connect instantly, stream
-              effortlessly, and discover people around the world with a futuristic experience.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              {/* APK Download */}
-              <a
-                href={APK_DOWNLOAD_URL}
-                download
-                className="group flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold text-base transition-all duration-300 text-[#050816] select-none"
-                style={{
-                  background: 'linear-gradient(135deg, #22D3EE, #0ea5e9)',
-                  boxShadow: '0 0 20px rgba(34,211,238,0.3)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 40px rgba(34,211,238,0.6), 0 0 80px rgba(34,211,238,0.2)';
-                  e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 20px rgba(34,211,238,0.3)';
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                }}
-              >
-                <Download className="w-5 h-5 transition-transform duration-300 group-hover:-translate-y-0.5" />
-                Download APK
-              </a>
-
-              {/* iOS */}
-              <button
-                onClick={() => setIosModalOpen(true)}
-                className="group flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-semibold text-base text-purple-400 hover:text-white transition-all duration-300 bg-transparent border select-none"
-                style={{
-                  borderColor: 'rgba(168,85,247,0.5)',
-                  boxShadow: '0 0 0px rgba(168,85,247,0)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 30px rgba(168,85,247,0.4), inset 0 0 30px rgba(168,85,247,0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.9)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 0 0px rgba(168,85,247,0)';
-                  e.currentTarget.style.borderColor = 'rgba(168,85,247,0.5)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <Apple className="w-5 h-5" />
-                Download for iOS
-              </button>
-            </motion.div>
+    <section id="hero" className="bg-white text-gray-900 pt-24 pb-16 px-4 md:px-8 overflow-hidden">
+      <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+        
+        {/* Top Logo Badge */}
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-center gap-2 mb-6"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-[#FFDD00] flex items-center justify-center shadow-lg shadow-yellow-400/30 border border-yellow-300">
+            <div className="flex items-center font-black text-3xl tracking-tighter text-black select-none">
+              <span className="text-3xl">c</span>
+              <span className="text-4xl text-black -ml-0.5">2</span>
+            </div>
           </div>
+        </motion.div>
 
-          {/* Right: Floating Visual */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="hidden lg:flex items-center justify-center"
+        {/* Headline */}
+        <motion.h1 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight mb-4"
+        >
+          Go live, watch, earn!
+        </motion.h1>
+
+        {/* Download Subtitle */}
+        <motion.p 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-gray-500 font-medium text-lg mb-6"
+        >
+          Download now
+        </motion.p>
+
+        {/* Download Badges */}
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex flex-wrap items-center justify-center gap-4 mb-14"
+        >
+          {/* App Store Button */}
+          <button
+            onClick={() => setIosModalOpen(true)}
+            className="flex items-center gap-3 bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-all shadow-md hover:scale-105"
           >
-            <HeroVisual />
-          </motion.div>
+            <svg className="w-7 h-7 fill-current" viewBox="0 0 170 170">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.34.13-9.13-1.9-14.38-6.08-3.66-3.08-7.61-7.96-11.84-14.64-7.23-11.45-12.83-23.77-16.78-36.95-3.95-13.18-5.93-25.5-5.93-36.95 0-14.54 3.73-26.6 11.19-36.19 7.46-9.59 16.89-14.46 28.29-14.62 4.69 0 9.87 1.15 15.54 3.46 5.66 2.31 9.69 3.46 12.08 3.46 2.07 0 6.13-1.18 12.18-3.53 6.05-2.35 11.02-3.4 14.92-3.17 11.08.76 20.08 5.04 27.02 12.84-9.83 5.93-14.64 14.34-14.42 25.21.22 8.49 3.49 15.75 9.8 21.78 6.31 6.04 13.91 9.4 22.8 10.08-2.61 7.74-6.04 15.42-10.3 23.05zM119.22 31.95c0-6.75 2.45-13.18 7.35-18.29 4.9-5.11 11.13-8.06 18.68-8.85.33 1.2.49 2.23.49 3.09 0 6.64-2.5 13.07-7.51 18.29-5.01 5.23-11.16 8.17-18.46 8.82-.11-.76-.55-1.78-.55-3.06z"/>
+            </svg>
+            <div className="text-left leading-tight">
+              <div className="text-[10px] uppercase tracking-wider font-medium text-gray-300">Download on the</div>
+              <div className="text-base font-semibold text-white">App Store</div>
+            </div>
+          </button>
+
+          {/* Google Play Button */}
+          <a
+            href="https://play.google.com/store"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-all shadow-md hover:scale-105"
+          >
+            <svg className="w-7 h-7" viewBox="0 0 512 512">
+              <path fill="#410593" d="M74 38.6c-4.4 4.7-7 11.8-7 20.8v393.2c0 9 2.6 16.1 7 20.8l1.4 1.3L301.7 248.4v-4.8L75.4 37.3 74 38.6z"/>
+              <path fill="#04cae9" d="M377.3 324L301.7 248.4v-4.8L377.3 168l1.7 1 89.6 50.9c25.6 14.5 25.6 38.4 0 53L379 323l-1.7 1z"/>
+              <path fill="#fb8000" d="M379 323L301.7 248.4 74 473.7c8.4 8.9 22.3 10 37.7 1.3L379 323z"/>
+              <path fill="#fa0044" d="M379 169L111.7 17c-15.4-8.7-29.3-7.6-37.7 1.3l227.7 225.4L379 169z"/>
+            </svg>
+            <div className="text-left leading-tight">
+              <div className="text-[10px] uppercase tracking-wider font-medium text-gray-300">GET IT ON</div>
+              <div className="text-base font-semibold text-white">Google Play</div>
+            </div>
+          </a>
+        </motion.div>
+
+        {/* ── 6 FEATURE PHONE MOCKUPS (Matching Image 1) ────────────────────── */}
+        <div className="w-full overflow-x-auto pb-10 pt-4 scrollbar-thin scrollbar-thumb-gray-300">
+          <div className="flex items-start justify-start lg:justify-center gap-5 min-w-max px-4">
+            
+            {/* 1. GO LIVE */}
+            <PhoneShowcase title="Go Live">
+              <div className="relative w-full h-full bg-gradient-to-b from-blue-900 via-indigo-900 to-black text-white flex flex-col justify-between p-3 select-none">
+                {/* Host background image visual */}
+                <div className="absolute inset-0 z-0 overflow-hidden">
+                  <img 
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" 
+                    alt="Streamer" 
+                    className="w-full h-full object-cover opacity-90"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+                  
+                  {/* Underwater / Spotlight Jellyfish Graphic Effect */}
+                  <div className="absolute bottom-16 right-2 w-24 h-24 rounded-full bg-cyan-400/30 blur-md animate-pulse" />
+                  <div className="absolute bottom-20 right-4 text-3xl">🪼</div>
+                </div>
+
+                {/* Top Bar */}
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 border border-white/10">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" className="w-5 h-5 rounded-full object-cover" />
+                    <span className="text-[10px] font-semibold">Shelly</span>
+                    <span className="bg-yellow-500 text-[8px] text-black px-1 rounded font-bold">Lv.42</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] bg-black/40 px-2 py-1 rounded-full text-yellow-400 font-bold">
+                    <span>💎 230,067</span>
+                  </div>
+                </div>
+
+                {/* Bottom Comments */}
+                <div className="relative z-10 space-y-1.5 text-left text-[9px] mb-2">
+                  <div className="bg-black/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
+                    <span className="text-cyan-300 font-bold">Gabriella:</span>
+                    <span>Gave Shelly a Jellyfish 🪼</span>
+                  </div>
+                  <div className="bg-black/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
+                    <span className="text-yellow-300 font-bold">Zafiro:</span>
+                    <span>Activated a Spotlight 🌟</span>
+                  </div>
+                  <div className="bg-black/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
+                    <span className="text-pink-300 font-bold">Isabella:</span>
+                    <span>Hi Shelly!</span>
+                  </div>
+                </div>
+
+                {/* Bottom Bar */}
+                <div className="relative z-10 flex items-center justify-between bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
+                  <span className="text-[10px] text-gray-400">Chat...</span>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span>💬</span>
+                    <span>❤️</span>
+                    <span>🎁</span>
+                  </div>
+                </div>
+              </div>
+            </PhoneShowcase>
+
+            {/* 2. BUILD AN AUDIENCE */}
+            <PhoneShowcase title="Build an Audience">
+              <div className="relative w-full h-full bg-slate-900 text-white flex flex-col justify-between p-3 select-none">
+                {/* Profile Header */}
+                <div className="relative z-10 flex flex-col items-center text-center pt-2">
+                  <div className="relative">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80" className="w-12 h-12 rounded-full border-2 border-yellow-400 object-cover" />
+                    <span className="absolute -bottom-1 -right-1 bg-yellow-500 text-black text-[7px] font-black px-1 rounded-full">ELITE</span>
+                  </div>
+                  <h4 className="font-bold text-xs mt-1">DJ_Quinn</h4>
+                  
+                  {/* Stats Row */}
+                  <div className="flex items-center gap-2 text-[9px] text-gray-300 my-1 font-semibold">
+                    <span>💎 37.1M</span>
+                    <span>•</span>
+                    <span>❤️ 48.5M</span>
+                    <span>•</span>
+                    <span>🏆 1,245 wins</span>
+                  </div>
+
+                  <button className="bg-yellow-400 text-black font-extrabold text-[9px] px-4 py-1 rounded-full uppercase tracking-wider shadow">
+                    + FOLLOW
+                  </button>
+                  <p className="text-[8px] text-gray-400 mt-1 max-w-[140px] line-clamp-2">
+                    Barista by day, DJ by night! Watch me stream live from the club every night at 9. Top 3 gifters get VIP access on Fridays! 🎉✨
+                  </p>
+                </div>
+
+                {/* Stream Preview Card */}
+                <div className="relative z-10 rounded-xl overflow-hidden border border-white/20 h-28 my-auto shadow-lg">
+                  <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=400&q=80" className="w-full h-full object-cover" />
+                  <div className="absolute top-1.5 left-1.5 bg-red-600 text-[8px] font-bold px-1.5 py-0.5 rounded text-white flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                    LIVE
+                  </div>
+                </div>
+              </div>
+            </PhoneShowcase>
+
+            {/* 3. CO-HOST */}
+            <PhoneShowcase title="Co-Host">
+              <div className="relative w-full h-full bg-gray-950 text-white flex flex-col justify-between p-2 select-none">
+                {/* 4-Way Video Grid */}
+                <div className="grid grid-cols-2 gap-1 flex-1 relative z-10">
+                  <div className="relative rounded-lg overflow-hidden border border-purple-500/40">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Keshia</span>
+                  </div>
+                  <div className="relative rounded-lg overflow-hidden border border-blue-500/40">
+                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">That_Jenny</span>
+                  </div>
+                  <div className="relative rounded-lg overflow-hidden border border-cyan-500/40">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Tracy</span>
+                  </div>
+                  <div className="relative rounded-lg overflow-hidden border border-pink-500/40">
+                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Sara</span>
+                  </div>
+
+                  {/* Center Robot / Sci-Fi Overlay Graphic */}
+                  <div className="absolute inset-0 m-auto w-16 h-16 pointer-events-none flex flex-col items-center justify-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-yellow-500 rounded-full flex items-center justify-center border-2 border-white shadow-xl animate-bounce">
+                      <span className="text-xs">🤖</span>
+                    </div>
+                    <span className="bg-red-600 text-[6px] font-black text-white px-1 rounded mt-0.5">A.I. APOCALYPSE</span>
+                  </div>
+                </div>
+
+                {/* Control Bar */}
+                <div className="relative z-10 flex items-center justify-around bg-gray-900/90 rounded-xl py-1 mt-1 border border-white/10 text-xs text-gray-300">
+                  <Mic className="w-3.5 h-3.5 text-cyan-400" />
+                  <Video className="w-3.5 h-3.5 text-pink-400" />
+                  <span className="bg-red-600 text-[8px] px-1.5 py-0.5 rounded font-bold text-white">END</span>
+                  <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                  <Gift className="w-3.5 h-3.5 text-purple-400" />
+                </div>
+              </div>
+            </PhoneShowcase>
+
+            {/* 4. WATCH LIVE */}
+            <PhoneShowcase title="Watch Live">
+              <div className="relative w-full h-full bg-slate-900 text-white flex flex-col justify-between p-2 select-none">
+                {/* Header */}
+                <div className="flex items-center justify-between text-[10px] font-bold pb-1 border-b border-white/10">
+                  <span className="text-yellow-400">Live Trending</span>
+                  <span className="text-white font-extrabold text-xs">c2</span>
+                  <span className="text-gray-400">⚙️</span>
+                </div>
+
+                {/* Banner */}
+                <div className="relative rounded-lg overflow-hidden bg-gradient-to-r from-purple-800 to-indigo-900 p-2 my-1 border border-purple-400/30">
+                  <div className="text-[10px] font-black text-yellow-300 uppercase">c2 Got Talent</div>
+                  <div className="text-[7px] text-gray-200">With @LAYDEEMOODZ</div>
+                </div>
+
+                {/* Streamers Grid */}
+                <div className="grid grid-cols-2 gap-1.5 flex-1">
+                  <div className="relative rounded-lg overflow-hidden bg-gray-800">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80" className="w-full h-full object-cover" />
+                    <span className="absolute top-1 left-1 bg-red-600 text-[6px] font-bold px-1 rounded text-white">LIVE</span>
+                    <span className="absolute bottom-1 left-1 text-[7px] font-bold">DJ_Quinn</span>
+                  </div>
+                  <div className="relative rounded-lg overflow-hidden bg-gray-800">
+                    <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80" className="w-full h-full object-cover" />
+                    <span className="absolute top-1 left-1 bg-red-600 text-[6px] font-bold px-1 rounded text-white">LIVE</span>
+                    <span className="absolute bottom-1 left-1 text-[7px] font-bold">GamerLena</span>
+                  </div>
+                </div>
+
+                {/* Go Live Yellow Button */}
+                <div className="relative z-10 flex justify-center mt-1">
+                  <button className="bg-yellow-400 text-black font-extrabold text-[9px] px-3 py-1 rounded-full shadow-lg border border-yellow-300 flex items-center gap-1">
+                    <span>▶</span> GO LIVE
+                  </button>
+                </div>
+              </div>
+            </PhoneShowcase>
+
+            {/* 5. COMPETE */}
+            <PhoneShowcase title="Compete">
+              <div className="relative w-full h-full bg-slate-900 text-white flex flex-col justify-between p-2 select-none">
+                {/* Header */}
+                <div className="flex items-center justify-between text-[10px] font-bold pb-1">
+                  <span>Top 100</span>
+                  <span className="text-yellow-400 font-black">c2</span>
+                </div>
+
+                {/* Leaderboard Rankings List */}
+                <div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5">
+                  {[
+                    { rank: 1, name: 'Quinn', points: '37,123,965', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80', badge: '🥇' },
+                    { rank: 2, name: 'Chloe', points: '25,781,013', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&q=80', badge: '🥈' },
+                    { rank: 3, name: 'Hart', points: '21,369,559', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80', badge: '🥉' },
+                    { rank: 4, name: 'Derek', points: '20,632,386', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80', badge: '' },
+                    { rank: 5, name: 'LivHayes', points: '22,476,901', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80', badge: '' },
+                  ].map((user) => (
+                    <div key={user.rank} className="flex items-center justify-between bg-slate-800/80 p-1 rounded border border-white/5 text-[8px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-gray-400 w-3">{user.rank}</span>
+                        <img src={user.img} className="w-5 h-5 rounded-full object-cover" />
+                        <div>
+                          <div className="font-bold text-white flex items-center gap-1">
+                            {user.name} <span className="text-[6px] bg-yellow-500 text-black px-0.5 rounded font-black">ELITE</span>
+                          </div>
+                          <div className="text-yellow-400 text-[7px]">💎 {user.points}</div>
+                        </div>
+                      </div>
+                      <span className="text-xs">{user.badge}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </PhoneShowcase>
+
+            {/* 6. GET PAID */}
+            <PhoneShowcase title="Get Paid">
+              <div className="relative w-full h-full bg-gradient-to-b from-gray-900 to-black text-white flex flex-col justify-between p-2 select-none overflow-hidden">
+                {/* Streamer Background */}
+                <div className="absolute inset-0 z-0">
+                  <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80" className="w-full h-full object-cover opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                </div>
+
+                {/* Rocket Animation Overlay */}
+                <div className="relative z-10 flex flex-col items-center pt-4">
+                  <motion.div 
+                    animate={{ y: [-5, 5, -5] }} 
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="text-center"
+                  >
+                    <div className="text-yellow-400 font-extrabold text-sm shadow-md animate-pulse">
+                      +50,000
+                    </div>
+                    <div className="text-[8px] bg-black/60 px-2 py-0.5 rounded-full text-gray-200 mt-0.5 border border-yellow-400/50">
+                      Hannah gave you a Rocket! 🚀
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Flying Rocket 🚀 */}
+                <div className="absolute right-3 bottom-20 z-10 text-5xl transform -rotate-45 animate-bounce">
+                  🚀
+                </div>
+
+                {/* Gift Shop Grid Overlay */}
+                <div className="relative z-10 bg-black/90 backdrop-blur-md rounded-xl p-1.5 border border-white/10 text-[7px]">
+                  <div className="flex items-center justify-between text-gray-400 font-bold mb-1 border-b border-white/10 pb-0.5">
+                    <span>GIFTS</span>
+                    <span className="text-yellow-400">BUY COINS</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1 text-center">
+                    <div className="bg-white/5 p-1 rounded border border-white/5">
+                      <div>🐼</div>
+                      <div className="text-yellow-400 font-bold">300</div>
+                    </div>
+                    <div className="bg-white/5 p-1 rounded border border-white/5">
+                      <div>🛸</div>
+                      <div className="text-yellow-400 font-bold">50,000</div>
+                    </div>
+                    <div className="bg-white/5 p-1 rounded border border-white/5">
+                      <div>🚤</div>
+                      <div className="text-yellow-400 font-bold">4,500</div>
+                    </div>
+                    <div className="bg-yellow-500/20 p-1 rounded border border-yellow-400">
+                      <div>🚀</div>
+                      <div className="text-yellow-400 font-black">50,000</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </PhoneShowcase>
+
+          </div>
         </div>
+
       </div>
 
       {/* iOS Modal */}
@@ -212,102 +376,24 @@ const Hero = () => {
   );
 };
 
-// ─── Hero Visual (floating phone mockup illustration) ─────────────────────────
-const HeroVisual = () => (
-  <motion.div
-    animate={{ y: [0, -18, 0] }}
-    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-    className="relative"
-  >
-    {/* Outer glow ring */}
-    <motion.div
-      className="absolute inset-0 rounded-[3rem] pointer-events-none"
-      animate={{ opacity: [0.4, 0.9, 0.4] }}
-      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-      style={{
-        boxShadow: '0 0 80px rgba(168,85,247,0.4), 0 0 160px rgba(34,211,238,0.15)',
-      }}
-    />
-
-    {/* Card */}
-    <div
-      className="w-72 h-[420px] rounded-[3rem] border flex flex-col overflow-hidden relative"
-      style={{
-        background: 'linear-gradient(135deg, rgba(11,17,32,0.9) 0%, rgba(168,85,247,0.08) 100%)',
-        borderColor: 'rgba(168,85,247,0.3)',
-        backdropFilter: 'blur(20px)',
-      }}
-    >
-      {/* Status bar */}
-      <div className="flex items-center justify-between px-6 pt-5 pb-2">
-        <div className="flex gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-red-400/60" />
-          <div className="w-2 h-2 rounded-full bg-yellow-400/60" />
-          <div className="w-2 h-2 rounded-full bg-green-400/60" />
-        </div>
-        <div className="text-xs text-gray-500 font-mono">LIVE</div>
+// ─── PHONE SHOWCASE CONTAINER (Matching Image 1 Phone Frame Aesthetic) ─────────
+const PhoneShowcase = ({ title, children }) => (
+  <div className="flex flex-col items-center">
+    <h3 className="font-extrabold text-sm sm:text-base text-gray-900 mb-3 tracking-tight">
+      {title}
+    </h3>
+    <div className="w-[195px] h-[395px] sm:w-[210px] sm:h-[425px] rounded-[38px] bg-black p-2 border-4 border-gray-800 shadow-2xl shadow-black/30 relative flex flex-col overflow-hidden">
+      {/* Dynamic Island / iPhone Notch */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-16 h-4 bg-black rounded-full z-30 border border-gray-800 flex items-center justify-end px-1.5">
+        <div className="w-1.5 h-1.5 bg-blue-900 rounded-full" />
       </div>
-
-      {/* Screen content */}
-      <div className="flex-1 flex flex-col px-5 pb-6 gap-4">
-        {/* Profile row */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
-            P
-          </div>
-          <div>
-            <div className="text-white text-sm font-semibold">Proxstream User</div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block animate-pulse" />
-              Live Now
-            </div>
-          </div>
-          <div className="ml-auto text-xs font-mono text-cyan-400">1.2k</div>
-        </div>
-
-        {/* Stream preview */}
-        <div
-          className="flex-1 rounded-2xl relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #1a0533 0%, #0a1a2e 50%, #001a1a 100%)',
-          }}
-        >
-          {/* Grid lines inside preview */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `linear-gradient(rgba(168,85,247,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.06) 1px, transparent 1px)`,
-              backgroundSize: '30px 30px',
-            }}
-          />
-          {/* Glow dot */}
-          <motion.div
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-purple-500/30 blur-xl"
-            animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600/50 to-cyan-600/50 border border-white/20 flex items-center justify-center">
-              <span className="text-white text-xl">▶</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Comment row */}
-        <div className="space-y-2">
-          {[
-            { color: 'text-cyan-400', name: 'user_x42', msg: 'Amazing stream!' },
-            { color: 'text-pink-400', name: 'neon_vibe', msg: '🔥🔥🔥' },
-          ].map((c) => (
-            <div key={c.name} className="flex items-center gap-2 text-xs">
-              <span className={`font-semibold ${c.color}`}>{c.name}</span>
-              <span className="text-gray-400">{c.msg}</span>
-            </div>
-          ))}
-        </div>
+      
+      {/* Screen Container */}
+      <div className="w-full h-full rounded-[30px] overflow-hidden relative border border-white/10">
+        {children}
       </div>
     </div>
-  </motion.div>
+  </div>
 );
 
 export default Hero;

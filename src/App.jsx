@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { APP_CONFIG } from './config/api';
 import { AuthProvider } from './context/AuthContext';
+import { LandingThemeProvider } from './context/LandingThemeContext';
 
 // Guards
 import ProtectedRoute from './components/guards/ProtectedRoute';
@@ -10,6 +11,8 @@ import PublicRoute from './components/guards/PublicRoute';
 // Pages
 import LandingPage from './pages/LandingPage';
 import AboutPage from './pages/AboutPage';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 import LoginPage from './pages/LoginPage';
 import OwnerAreaPage from './pages/OwnerAreaPage';
 
@@ -60,11 +63,14 @@ import AgencyFinancialPage from './pages/agency/AgencyFinancialPage';
 function App() {
   return (
     <AuthProvider>
+      <LandingThemeProvider>
       <Routes>
         {/* Public Routes */}
       <Route element={<PublicRoute />}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/login" element={<LoginPage />} />
       </Route>
 
@@ -171,6 +177,7 @@ function App() {
       {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </LandingThemeProvider>
     </AuthProvider>
   );
 }

@@ -180,11 +180,10 @@ const Login = ({ onLogin }) => {
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-full ${dense ? 'py-2 px-3 text-sm rounded-lg' : 'py-3 px-4 rounded-xl'} font-semibold text-white transition-all duration-300 ${
-            isLoading
-              ? 'bg-gray-600 cursor-not-allowed'
-              : 'bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:shadow-lg hover:shadow-[#F72585]/25 hover:scale-[1.02] active:scale-[0.98]'
-          }`}
+          className={`w-full ${dense ? 'py-2 px-3 text-sm rounded-lg' : 'py-3 px-4 rounded-xl'} font-semibold text-white transition-all duration-300 ${isLoading
+            ? 'bg-gray-600 cursor-not-allowed'
+            : 'bg-gradient-to-r from-[#F72585] to-[#7209B7] hover:shadow-lg hover:shadow-[#F72585]/25 hover:scale-[1.02] active:scale-[0.98]'
+            }`}
         >
           {isLoading ? (
             <div className="flex items-center justify-center space-x-2">
@@ -256,8 +255,8 @@ const Login = ({ onLogin }) => {
           <div className="bg-[#1A1A1A] rounded-2xl shadow-2xl border border-gray-800 overflow-hidden w-full">
             <div className="bg-gradient-to-r from-[#F72585] to-[#7209B7] p-4 text-center">
               <div className="flex items-center justify-center mb-3">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <LayoutDashboard className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm p-2">
+                  <img src="/Logos/Logo.png" alt="Proxstream Logo" className="w-full h-full object-contain" />
                 </div>
               </div>
               <h1 className="text-xl font-bold text-white mb-1">PRO X STREAM</h1>
@@ -284,12 +283,12 @@ const Login = ({ onLogin }) => {
                   <div className="absolute bottom-10 right-10 w-24 h-24 border border-white/20 rounded-full" />
                   <div className="absolute top-1/2 left-1/4 w-16 h-16 border border-white/20 rounded-full" />
                 </div>
-                <div className="relative z-10">
-                  <div className="w-24 h-24 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm mb-6">
-                    <LayoutDashboard className="w-12 h-12 text-white" />
+                <div className="relative z-10 flex flex-col items-center justify-center text-center w-full">
+                  <div className="w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center mx-auto mb-3">
+                    <img src="/Logos/Logo.png" alt="Proxstream Logo" className="w-full h-full object-contain filter drop-shadow-lg" />
                   </div>
-                  <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4">PRO X STREAM</h1>
-                  <p className="text-white/90 text-lg mb-6">Admin Dashboard</p>
+                  <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">PRO X STREAM</h1>
+                  {/* <p className="text-white/90 text-lg mb-6">Admin Dashboard</p> */}
                   <div className="space-y-3 text-white/80">
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-white rounded-full" />

@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Trophy, Flame, Heart, Gift, Mic, Video, 
-  Sparkles, Zap, Star
-} from 'lucide-react';
+import { Flame, Sparkles, Zap } from 'lucide-react';
 import IOSNoticeModal from './IOSNoticeModal';
 import { useLandingTheme } from '../../context/LandingThemeContext';
+
+const showcases = [
+  { id: 'solo-live', title: 'Go Live', src: '/Screens/solo_live_screen.jpeg' },
+  { id: 'feed', title: 'Feed', src: '/Screens/feed_screen.jpeg' },
+  { id: 'vs', title: 'Battle Mode', src: '/Screens/VS_screen.jpeg' },
+  { id: 'play-live', title: 'Watch Live', src: '/Screens/play_Live_Screen.jpeg' },
+  { id: 'profile', title: 'Profile', src: '/Screens/profile_screen.jpeg' },
+  { id: 'banners', title: 'Banners', src: '/Screens/banners_screen.jpeg' },
+  { id: 'notifications', title: 'Notifications', src: '/Screens/notification_screen.jpeg' },
+];
 
 const Hero = () => {
   const [iosModalOpen, setIosModalOpen] = useState(false);
   const { isDark } = useLandingTheme();
-
-  const showcases = [
-    { id: 'go-live', title: 'Go Live', type: 'go-live' },
-    { id: 'audience', title: 'Build an Audience', type: 'audience' },
-    { id: 'co-host', title: 'Co-Host', type: 'co-host' },
-    { id: 'watch-live', title: 'Watch Live', type: 'watch-live' },
-    { id: 'compete', title: 'Compete', type: 'compete' },
-    { id: 'get-paid', title: 'Get Paid', type: 'get-paid' },
-  ];
 
   // Tripled for flawless seamless infinite scrolling loop
   const marqueeItems = [...showcases, ...showcases, ...showcases];
@@ -157,14 +155,17 @@ const Hero = () => {
             animate={{ x: ['0%', '-33.333%'] }}
             transition={{
               ease: 'linear',
-              duration: 32,
+              duration: 36,
               repeat: Infinity,
             }}
           >
             {marqueeItems.map((item, idx) => (
-              <PhoneShowcase key={`${item.id}-${idx}`} title={item.title} isDark={isDark}>
-                {renderPhoneContent(item.type)}
-              </PhoneShowcase>
+              <PhoneShowcase
+                key={`${item.id}-${idx}`}
+                title={item.title}
+                src={item.src}
+                isDark={isDark}
+              />
             ))}
           </motion.div>
         </div>
@@ -177,263 +178,8 @@ const Hero = () => {
   );
 };
 
-// ─── PHONE MOCKUP RENDERER ────────────────────────────────────────────────────
-const renderPhoneContent = (type) => {
-  switch (type) {
-    case 'go-live':
-      return (
-        <div className="relative w-full h-full bg-gradient-to-b from-blue-950 via-purple-950 to-black text-white flex flex-col justify-between p-3 select-none">
-          <div className="absolute inset-0 z-0 overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80" 
-              alt="Streamer" 
-              className="w-full h-full object-cover opacity-90"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
-            <div className="absolute bottom-16 right-2 w-20 h-20 rounded-full bg-cyan-400/30 blur-md animate-pulse" />
-            <div className="absolute bottom-20 right-4 text-3xl">🪼</div>
-          </div>
-
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md rounded-full px-2 py-1 border border-white/10">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" className="w-5 h-5 rounded-full object-cover" />
-              <span className="text-[10px] font-semibold">Shelly</span>
-              <span className="bg-yellow-500 text-[8px] text-black px-1 rounded font-bold">Lv.42</span>
-            </div>
-            <div className="flex items-center gap-1 text-[9px] bg-black/40 px-2 py-1 rounded-full text-yellow-400 font-bold">
-              <span>💎 230,067</span>
-            </div>
-          </div>
-
-          <div className="relative z-10 space-y-1.5 text-left text-[9px] mb-2">
-            <div className="bg-black/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
-              <span className="text-cyan-300 font-bold">Gabriella:</span>
-              <span>Gave Shelly a Jellyfish 🪼</span>
-            </div>
-            <div className="bg-black/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
-              <span className="text-yellow-300 font-bold">Zafiro:</span>
-              <span>Activated a Spotlight 🌟</span>
-            </div>
-            <div className="bg-black/50 backdrop-blur-sm p-1.5 rounded-lg border border-white/10 flex items-center gap-1">
-              <span className="text-pink-300 font-bold">Isabella:</span>
-              <span>Hi Shelly!</span>
-            </div>
-          </div>
-
-          <div className="relative z-10 flex items-center justify-between bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
-            <span className="text-[10px] text-gray-400">Chat...</span>
-            <div className="flex items-center gap-2 text-xs">
-              <span>💬</span>
-              <span>❤️</span>
-              <span>🎁</span>
-            </div>
-          </div>
-        </div>
-      );
-
-    case 'audience':
-      return (
-        <div className="relative w-full h-full bg-slate-900 text-white flex flex-col justify-between p-3 select-none">
-          <div className="relative z-10 flex flex-col items-center text-center pt-2">
-            <div className="relative">
-              <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80" className="w-12 h-12 rounded-full border-2 border-yellow-400 object-cover" />
-              <span className="absolute -bottom-1 -right-1 bg-yellow-500 text-black text-[7px] font-black px-1 rounded-full">ELITE</span>
-            </div>
-            <h4 className="font-bold text-xs mt-1">DJ_Quinn</h4>
-            
-            <div className="flex items-center gap-2 text-[9px] text-gray-300 my-1 font-semibold">
-              <span>💎 37.1M</span>
-              <span>•</span>
-              <span>❤️ 48.5M</span>
-              <span>•</span>
-              <span>🏆 1,245</span>
-            </div>
-
-            <button className="bg-yellow-400 text-black font-extrabold text-[9px] px-4 py-1 rounded-full uppercase tracking-wider shadow hover:scale-105 transition">
-              + FOLLOW
-            </button>
-            <p className="text-[8px] text-gray-400 mt-1 max-w-[140px] line-clamp-2">
-              Barista by day, DJ by night! Watch me stream live every night at 9! 🎉✨
-            </p>
-          </div>
-
-          <div className="relative z-10 rounded-xl overflow-hidden border border-white/20 h-28 my-auto shadow-lg">
-            <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=400&q=80" className="w-full h-full object-cover" />
-            <div className="absolute top-1.5 left-1.5 bg-red-600 text-[8px] font-bold px-1.5 py-0.5 rounded text-white flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-              LIVE
-            </div>
-          </div>
-        </div>
-      );
-
-    case 'co-host':
-      return (
-        <div className="relative w-full h-full bg-gray-950 text-white flex flex-col justify-between p-2 select-none">
-          <div className="grid grid-cols-2 gap-1 flex-1 relative z-10">
-            <div className="relative rounded-lg overflow-hidden border border-purple-500/40">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
-              <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Keshia</span>
-            </div>
-            <div className="relative rounded-lg overflow-hidden border border-blue-500/40">
-              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
-              <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Jenny</span>
-            </div>
-            <div className="relative rounded-lg overflow-hidden border border-cyan-500/40">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
-              <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Tracy</span>
-            </div>
-            <div className="relative rounded-lg overflow-hidden border border-pink-500/40">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=300&q=80" className="w-full h-full object-cover" />
-              <span className="absolute bottom-1 left-1 bg-black/60 px-1 py-0.5 text-[7px] rounded">Sara</span>
-            </div>
-
-            <div className="absolute inset-0 m-auto w-14 h-14 pointer-events-none flex flex-col items-center justify-center">
-              <div className="w-9 h-9 bg-gradient-to-br from-red-600 to-yellow-500 rounded-full flex items-center justify-center border-2 border-white shadow-xl animate-bounce">
-                <span className="text-xs">🤖</span>
-              </div>
-              <span className="bg-red-600 text-[6px] font-black text-white px-1 rounded mt-0.5">A.I. HOST</span>
-            </div>
-          </div>
-
-          <div className="relative z-10 flex items-center justify-around bg-gray-900/90 rounded-xl py-1 mt-1 border border-white/10 text-xs text-gray-300">
-            <Mic className="w-3.5 h-3.5 text-cyan-400" />
-            <Video className="w-3.5 h-3.5 text-pink-400" />
-            <span className="bg-red-600 text-[8px] px-1.5 py-0.5 rounded font-bold text-white">END</span>
-            <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-            <Gift className="w-3.5 h-3.5 text-purple-400" />
-          </div>
-        </div>
-      );
-
-    case 'watch-live':
-      return (
-        <div className="relative w-full h-full bg-slate-900 text-white flex flex-col justify-between p-2 select-none">
-          <div className="flex items-center justify-between text-[10px] font-bold pb-1 border-b border-white/10">
-            <span className="text-yellow-400">Live Trending</span>
-            <span className="text-white font-extrabold text-xs">c2</span>
-            <span className="text-gray-400">⚙️</span>
-          </div>
-
-          <div className="relative rounded-lg overflow-hidden bg-gradient-to-r from-purple-800 to-indigo-900 p-2 my-1 border border-purple-400/30">
-            <div className="text-[10px] font-black text-yellow-300 uppercase">c2 Got Talent</div>
-            <div className="text-[7px] text-gray-200">With @LAYDEEMOODZ</div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1.5 flex-1">
-            <div className="relative rounded-lg overflow-hidden bg-gray-800">
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80" className="w-full h-full object-cover" />
-              <span className="absolute top-1 left-1 bg-red-600 text-[6px] font-bold px-1 rounded text-white">LIVE</span>
-              <span className="absolute bottom-1 left-1 text-[7px] font-bold">DJ_Quinn</span>
-            </div>
-            <div className="relative rounded-lg overflow-hidden bg-gray-800">
-              <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=250&q=80" className="w-full h-full object-cover" />
-              <span className="absolute top-1 left-1 bg-red-600 text-[6px] font-bold px-1 rounded text-white">LIVE</span>
-              <span className="absolute bottom-1 left-1 text-[7px] font-bold">GamerLena</span>
-            </div>
-          </div>
-
-          <div className="relative z-10 flex justify-center mt-1">
-            <button className="bg-yellow-400 text-black font-extrabold text-[9px] px-3 py-1 rounded-full shadow-lg border border-yellow-300 flex items-center gap-1">
-              <span>▶</span> GO LIVE
-            </button>
-          </div>
-        </div>
-      );
-
-    case 'compete':
-      return (
-        <div className="relative w-full h-full bg-slate-900 text-white flex flex-col justify-between p-2 select-none">
-          <div className="flex items-center justify-between text-[10px] font-bold pb-1">
-            <span>Top 100</span>
-            <span className="text-yellow-400 font-black">c2</span>
-          </div>
-
-          <div className="space-y-1.5 flex-1 overflow-y-auto pr-0.5">
-            {[
-              { rank: 1, name: 'Quinn', points: '37,123,965', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80', badge: '🥇' },
-              { rank: 2, name: 'Chloe', points: '25,781,013', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=100&q=80', badge: '🥈' },
-              { rank: 3, name: 'Hart', points: '21,369,559', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80', badge: '🥉' },
-              { rank: 4, name: 'Derek', points: '20,632,386', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80', badge: '' },
-              { rank: 5, name: 'LivHayes', points: '22,476,901', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80', badge: '' },
-            ].map((user) => (
-              <div key={user.rank} className="flex items-center justify-between bg-slate-800/80 p-1 rounded border border-white/5 text-[8px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-gray-400 w-3">{user.rank}</span>
-                  <img src={user.img} className="w-5 h-5 rounded-full object-cover" />
-                  <div>
-                    <div className="font-bold text-white flex items-center gap-1">
-                      {user.name} <span className="text-[6px] bg-yellow-500 text-black px-0.5 rounded font-black">ELITE</span>
-                    </div>
-                    <div className="text-yellow-400 text-[7px]">💎 {user.points}</div>
-                  </div>
-                </div>
-                <span className="text-xs">{user.badge}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'get-paid':
-    default:
-      return (
-        <div className="relative w-full h-full bg-gradient-to-b from-gray-900 to-black text-white flex flex-col justify-between p-2 select-none overflow-hidden">
-          <div className="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80" className="w-full h-full object-cover opacity-80" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-          </div>
-
-          <div className="relative z-10 flex flex-col items-center pt-4">
-            <motion.div 
-              animate={{ y: [-5, 5, -5] }} 
-              transition={{ repeat: Infinity, duration: 1.5 }}
-              className="text-center"
-            >
-              <div className="text-yellow-400 font-extrabold text-sm shadow-md animate-pulse">
-                +50,000
-              </div>
-              <div className="text-[8px] bg-black/60 px-2 py-0.5 rounded-full text-gray-200 mt-0.5 border border-yellow-400/50">
-                Hannah gave you a Rocket! 🚀
-              </div>
-            </motion.div>
-          </div>
-
-          <div className="absolute right-3 bottom-20 z-10 text-5xl transform -rotate-45 animate-bounce">
-            🚀
-          </div>
-
-          <div className="relative z-10 bg-black/90 backdrop-blur-md rounded-xl p-1.5 border border-white/10 text-[7px]">
-            <div className="flex items-center justify-between text-gray-400 font-bold mb-1 border-b border-white/10 pb-0.5">
-              <span>GIFTS</span>
-              <span className="text-yellow-400">BUY COINS</span>
-            </div>
-            <div className="grid grid-cols-4 gap-1 text-center">
-              <div className="bg-white/5 p-1 rounded border border-white/5">
-                <div>🐼</div>
-                <div className="text-yellow-400 font-bold">300</div>
-              </div>
-              <div className="bg-white/5 p-1 rounded border border-white/5">
-                <div>🛸</div>
-                <div className="text-yellow-400 font-bold">50,000</div>
-              </div>
-              <div className="bg-white/5 p-1 rounded border border-white/5">
-                <div>🚤</div>
-                <div className="text-yellow-400 font-bold">4,500</div>
-              </div>
-              <div className="bg-yellow-500/20 p-1 rounded border border-yellow-400">
-                <div>🚀</div>
-                <div className="text-yellow-400 font-black">50,000</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-  }
-};
-
 // ─── PHONE SHOWCASE CONTAINER ──────────────────────────────────────────────────
-const PhoneShowcase = ({ title, isDark, children }) => (
+const PhoneShowcase = ({ title, src, isDark }) => (
   <div className="flex flex-col items-center group">
     <h3 className={`font-extrabold text-xs sm:text-sm md:text-base mb-3 tracking-tight transition-colors ${
       isDark ? 'text-gray-200 group-hover:text-white' : 'text-gray-800 group-hover:text-black'
@@ -447,8 +193,14 @@ const PhoneShowcase = ({ title, isDark, children }) => (
       </div>
       
       {/* Screen Container */}
-      <div className="w-full h-full rounded-[28px] overflow-hidden relative border border-white/10">
-        {children}
+      <div className="w-full h-full rounded-[28px] overflow-hidden relative border border-white/10 bg-black">
+        <img
+          src={src}
+          alt={title}
+          className="w-full h-full object-cover object-top"
+          draggable={false}
+          loading="lazy"
+        />
       </div>
     </div>
   </div>

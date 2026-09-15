@@ -187,6 +187,7 @@ export const APP_CONFIG = {
   APP_NAME: import.meta.env.VITE_APP_NAME || 'ProxStream',
   APP_URL: import.meta.env.VITE_APP_URL || 'https://proxstream.com',
   OWNER_SECRET_PATH: import.meta.env.VITE_OWNER_SECRET_PATH || 'ownerarea',
+  GOOGLE_PLAY_URL: import.meta.env.VITE_GOOGLE_PLAY_URL || 'https://drive.usercontent.google.com/download?id=1xRi_DWIGjFxNtt6IIOv5_ENrjE_eKdVJ&export=download&authuser=0',
 };
 
 export default API_CONFIG;

@@ -198,7 +198,7 @@ const Login = ({ onLogin }) => {
         </button>
       </form>
 
-      <div
+      {/* <div
         className={`${dense ? 'mt-4 p-3 rounded-lg' : 'mt-6 p-4 rounded-xl'} bg-[#121212] border border-gray-800`}
       >
         <h4 className={`${dense ? 'text-xs' : 'text-sm'} font-semibold text-gray-300 mb-2`}>
@@ -207,7 +207,7 @@ const Login = ({ onLogin }) => {
         <div className={`${dense ? 'text-xs' : 'text-sm'} text-gray-400 space-y-1`}>
           <p>Role-based access will be automatically assigned.</p>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 
@@ -267,7 +267,7 @@ const Login = ({ onLogin }) => {
             <div className="p-4">{animatedPanel(true)}</div>
           </div>
           <div className="text-center mt-4">
-            <p className="text-gray-500 text-xs">© 2024 PRO X STREAM. All rights reserved.</p>
+            <p className="text-gray-500 text-xs">© 2026 PRO X STREAM. All rights reserved.</p>
           </div>
         </div>
       </div>
@@ -310,7 +310,7 @@ const Login = ({ onLogin }) => {
                 <div className="max-w-md mx-auto w-full">
                   {animatedPanel(false)}
                   <div className="text-center mt-6">
-                    <p className="text-gray-500 text-sm">© 2024 PRO X STREAM. All rights reserved.</p>
+                    <p className="text-gray-500 text-sm">© 2026 PRO X STREAM. All rights reserved.</p>
                   </div>
                 </div>
               </div>

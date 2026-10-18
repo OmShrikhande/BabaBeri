@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck,
   Eye, Mic, Building2, Crown, Gift, Trophy, UserX,
-  Flag, Percent, LogOut, X, UserRoundPlus
+  Flag, Percent, LogOut, X, UserRoundPlus, Bell
 } from 'lucide-react';
 import { navigationItems } from '../../data/dashboardData';
 import { APP_CONFIG } from '../../config/api';
@@ -13,7 +13,7 @@ import { closeSidebarOnMobile } from '../../hooks/useDashboardSidebarOffset';
 const iconMap = {
   LayoutDashboard, Users, Building, Coins, Gem, Shield, UserCheck,
   Eye, Mic, Building2, Crown, Gift, Trophy, UserX,
-  Flag, Percent, UserRoundPlus
+  Flag, Percent, UserRoundPlus, Bell
 };
 
 const OwnerSidebar = ({ isOpen, toggleSidebar, currentUser, onLogout }) => {

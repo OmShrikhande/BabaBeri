@@ -59,6 +59,7 @@ import GiftsAndBannersLayout from './components/Gifts_and_Banner';
 import AdminFinancialPage from './pages/admin/AdminFinancialPage';
 import MasterAgencyFinancialPage from './pages/masteragency/MasterAgencyFinancialPage';
 import AgencyFinancialPage from './pages/agency/AgencyFinancialPage';
+import SystemNoticesManager from './components/SystemNotices/SystemNoticesManager';
 
 function App() {
   return (
@@ -113,6 +114,7 @@ function App() {
         <Route path="gifts-banners" element={<GiftsAndBannersLayout />} />
         <Route path="block-users" element={<BlockUsers />} />
         <Route path="user-activation" element={<UserActivation />} />
+        <Route path="system-notices" element={<SystemNoticesManager />} />
         <Route path="reports-ban" element={<ReportsBan />} />
         <Route path="role-percentage" element={<RolePercentage />} />
         <Route path="profile" element={<Profile />} />

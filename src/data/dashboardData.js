@@ -139,6 +139,7 @@ export const navigationItems = [
   { id: 'user-details', label: 'User Details', icon: 'Users', path: '/ownerarea/user-details' },
   { id: 'gifts-banners', label: 'Gifts / Banners', icon: 'Gift', path: '/ownerarea/gifts-banners' },
   { id: 'user-activation', label: 'Coinseller Activation', icon: 'Shield', path: '/ownerarea/user-activation' },
+  { id: 'system-notices', label: 'System Notices & Alerts', icon: 'Bell', path: '/ownerarea/system-notices' },
   { id: 'reports-ban', label: 'Reports / Ban Request', icon: 'Flag', path: '/ownerarea/reports-ban' },
   { id: 'block-user', label: 'Banned Users', icon: 'UserX', path: '/ownerarea/block-users' },
 ];

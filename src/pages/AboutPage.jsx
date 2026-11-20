@@ -3,10 +3,18 @@ import Navbar from './landing/Navbar';
 import Footer from './landing/Footer';
 import SupportContactModal from '../components/SupportContactModal';
 import { useLandingTheme } from '../context/LandingThemeContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 const AboutPage = () => {
   const { isDark } = useLandingTheme();
   const [supportOpen, setSupportOpen] = useState(false);
+
+  usePageSEO({
+    title: 'About ProxStream | Leading Live Streaming & Creator Community',
+    description:
+      'Learn about ProxStream, our mission to empower live creators worldwide, safety standards, interactive PK battles, and next-generation broadcasting technology.',
+    canonicalPath: '/about',
+  });
 
   const muted = isDark ? 'text-purple-300 font-semibold' : 'text-purple-900 font-bold';
   const body = isDark ? 'text-gray-300' : 'text-gray-700';

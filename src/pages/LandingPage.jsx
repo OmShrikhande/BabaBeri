@@ -3,9 +3,17 @@ import Navbar from './landing/Navbar';
 import Hero from './landing/Hero';
 import Footer from './landing/Footer';
 import { useLandingTheme } from '../context/LandingThemeContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 const LandingPage = () => {
   const { isDark } = useLandingTheme();
+
+  usePageSEO({
+    title: 'ProxStream - 24/7 Live Streaming, Creator Battles & Rewards',
+    description:
+      'Join ProxStream - The premier live streaming and creator rewards platform. Watch 24/7 live video broadcasts, participate in interactive PK battles, earn instant creator payouts, and connect with top talent worldwide.',
+    canonicalPath: '/',
+  });
 
   return (
     <div
@@ -28,4 +36,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-

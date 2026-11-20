@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Homepage / Main Landing Page -->
+  <url>
+    <loc>https://proxstream.com/</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://proxstream.com/Logos/Logo.png</image:loc>
+      <image:title>ProxStream Official Logo</image:title>
+      <image:caption>ProxStream Live Streaming, PK Battles &amp; Creator Rewards</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://proxstream.com/Screens/solo_live_screen.jpeg</image:loc>
+      <image:title>ProxStream Solo Live Streaming</image:title>
+      <image:caption>Go Live 24/7 with crystal clear video streaming</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://proxstream.com/Screens/VS_screen.jpeg</image:loc>
+      <image:title>ProxStream Battle Mode (PK Battles)</image:title>
+      <image:caption>Engage in live PK battles and win instant creator rewards</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://proxstream.com/Screens/play_Live_Screen.jpeg</image:loc>
+      <image:title>ProxStream Watch Live Stream</image:title>
+      <image:caption>Interact with top live creators, send gifts and chat</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://proxstream.com/Screens/feed_screen.jpeg</image:loc>
+      <image:title>ProxStream Community Feed</image:title>
+      <image:caption>Explore trending creators and live broadcasts</image:caption>
+    </image:image>
+  </url>
+
+  <!-- About ProxStream Page -->
+  <url>
+    <loc>https://proxstream.com/about</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://proxstream.com/Logos/Logo.png</image:loc>
+      <image:title>About ProxStream - The Next-Gen Live Streaming Platform</image:title>
+    </image:image>
+  </url>
+
+  <!-- Portal / Login Page -->
+  <url>
+    <loc>https://proxstream.com/login</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Terms of Service -->
+  <url>
+    <loc>https://proxstream.com/terms</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://proxstream.com/privacy</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>

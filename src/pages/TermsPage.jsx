@@ -4,6 +4,7 @@ import Navbar from './landing/Navbar';
 import Footer from './landing/Footer';
 import SupportContactModal from '../components/SupportContactModal';
 import { useLandingTheme } from '../context/LandingThemeContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 const SECTIONS = [
   {
@@ -421,6 +422,13 @@ const SECTIONS = [
 const TermsPage = () => {
   const { isDark } = useLandingTheme();
   const [supportOpen, setSupportOpen] = useState(false);
+
+  usePageSEO({
+    title: 'Terms of Service | ProxStream Live Platform',
+    description:
+      'Read the Terms of Service for using ProxStream streaming app, agency portals, virtual currency, and creator services.',
+    canonicalPath: '/terms',
+  });
 
   return (
     <div

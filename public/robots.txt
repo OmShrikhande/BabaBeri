@@ -1,0 +1,26 @@
+# ProxStream robots.txt
+# https://proxstream.com
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /login
+Allow: /terms
+Allow: /privacy
+Allow: /Screens/
+Allow: /Logos/
+Allow: /Png/
+
+# Disallow internal management & authenticated dashboards
+Disallow: /admin/
+Disallow: /master-agency/
+Disallow: /agency/
+Disallow: /ownerarea/
+
+# Disallow backend and API routes
+Disallow: /api/
+Disallow: /auth/
+
+# Sitemap location
+Sitemap: https://proxstream.com/sitemap.xml
+Host: https://proxstream.com

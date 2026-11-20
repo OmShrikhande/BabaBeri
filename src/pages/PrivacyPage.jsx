@@ -4,6 +4,7 @@ import Navbar from './landing/Navbar';
 import Footer from './landing/Footer';
 import SupportContactModal from '../components/SupportContactModal';
 import { useLandingTheme } from '../context/LandingThemeContext';
+import usePageSEO from '../hooks/usePageSEO';
 
 const JURISDICTIONS = [
   {
@@ -775,6 +776,13 @@ const SectionCard = ({ section, isDark }) => (
 const PrivacyPage = () => {
   const { isDark } = useLandingTheme();
   const [supportOpen, setSupportOpen] = useState(false);
+
+  usePageSEO({
+    title: 'Privacy Policy | ProxStream Data Protection & Security',
+    description:
+      'ProxStream Privacy Policy outlines how we collect, protect, and respect your personal data and privacy across all streaming services.',
+    canonicalPath: '/privacy',
+  });
 
   return (
     <div
